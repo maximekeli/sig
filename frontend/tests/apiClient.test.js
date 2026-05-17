@@ -51,4 +51,47 @@ describe('createApiClient', () => {
     client.logout();
     assert.equal(client.getToken(), '');
   });
+
+  it('réponse 204', async () => {
+    const fetchFn = async () => ({
+      ok: true,
+      status: 204,
+      headers: { get: () => '' },
+    });
+    const client = createApiClient({ baseUrl: 'http://test/api/v1', fetchFn });
+    assert.equal(await client.api('/x/'), null);
+  });
+
+  it('réponse non JSON', async () => {
+    const fetchFn = async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => 'text/plain' },
+    });
+    const client = createApiClient({ baseUrl: 'http://test/api/v1', fetchFn });
+    const res = await client.api('/export/');
+    assert.ok(res.headers);
+  });
+
+  it('erreur JSON fallback', async () => {
+    const fetchFn = async () => ({
+      ok: false,
+      status: 500,
+      statusText: 'Error',
+      json: async () => { throw new Error('no json'); },
+    });
+    const client = createApiClient({ baseUrl: 'http://test/api/v1', fetchFn });
+    await assert.rejects(() => client.api('/x/'), /Error/);
+  });
+
+  it('erreur avec detail', async () => {
+    const fetchFn = async () => ({
+      ok: false,
+      status: 400,
+      statusText: 'Bad',
+      json: async () => ({ detail: 'ph requis' }),
+    });
+    const client = createApiClient({ baseUrl: 'http://test/api/v1', fetchFn });
+    await assert.rejects(() => client.api('/ml/predict/'), /ph requis/);
+  });
 });
