@@ -23,3 +23,27 @@ def test_train_and_predict():
     result = predict_fertility({'ph': 6.5, 'humidity_pct': 40, 'soil_type': 'limoneux'})
     assert result['predicted_class'] in ('faible', 'moyenne', 'elevee')
     assert result['inference_ms'] < 3000
+    assert result['recommendation']
+
+
+@pytest.mark.django_db
+def test_predict_api(api_client):
+    r = api_client.post('/api/v1/ml/predict/', {
+        'ph': 6.2,
+        'humidity_pct': 35,
+        'soil_type': 'limoneux',
+    }, format='json')
+    assert r.status_code == 200
+    assert 'predicted_class' in r.json()
+
+
+@pytest.mark.django_db
+def test_predict_missing_ph(api_client):
+    r = api_client.post('/api/v1/ml/predict/', {'humidity_pct': 35}, format='json')
+    assert r.status_code == 400
+
+
+@pytest.mark.django_db
+def test_metrics_api(api_client):
+    r = api_client.get('/api/v1/ml/metrics/')
+    assert r.status_code == 200
