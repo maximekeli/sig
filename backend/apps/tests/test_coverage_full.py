@@ -261,7 +261,6 @@ class TestNasaCoverage:
         assert extract_point_value(str(p), 1.2, 6.3) is None
         mock_open.side_effect = None
         mock_open.return_value.__enter__.return_value = src
-        assert ndvi_from_mod13(str(p), 1.2, 6.3, ) is None or ndvi_from_mod13(str(p), 1.2, 6.3) is not None
         src.read.return_value = np.array([[5000.0]])
         assert ndvi_from_mod13(str(p), 1.2, 6.3) == 0.5
         src.read.return_value = np.array([[0.42]])
@@ -314,11 +313,9 @@ class TestNasaCoverage:
         fake_file.write_bytes(b'1')
         with patch('nasa.ingestion.search_granules', return_value=[{'id': 'stac1'}]), \
              patch('nasa.ingestion.search_and_download', return_value=[str(fake_file)]), \
-             patch('nasa.ingestion.clip_raster_to_bbox', return_value=str(tmp_path / 'clipped.tif')):
-            from nasa import ingestion
-            with patch.object(ingestion, 'clip_raster_to_bbox',
-                              return_value=str(tmp_path / 'clipped.tif')):
-                n = ingest_product('GPM', 'gpm', days_back=3)
+             patch('nasa.raster_utils.clip_raster_to_bbox',
+                   return_value=str(tmp_path / 'clipped.tif')):
+            n = ingest_product('GPM', 'gpm', days_back=3)
         assert n >= 0
 
     def test_enrich_soil_points(self, settings, tmp_path):
