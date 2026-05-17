@@ -460,9 +460,11 @@ class TestMlCoverage:
 
     def test_pipeline_xgboost_native(self):
         import pandas as pd
-        pytest.importorskip('xgboost')
         from ml_predict.pipeline import train_and_save
-        with patch('ml_predict.pipeline.build_training_dataframe') as m:
+        fake_xgb = MagicMock()
+        fake_xgb.XGBClassifier.return_value = MagicMock()
+        with patch.dict(sys.modules, {'xgboost': fake_xgb}), \
+             patch('ml_predict.pipeline.build_training_dataframe') as m:
             m.return_value = pd.DataFrame([{
                 'ph': 6, 'humidity_pct': 30, 'soil_type': 'limoneux', 'slope_pct': 3,
                 'ndvi_3m_avg': 0.4, 'smap_moisture_avg': 0.2, 'temperature': 28,
@@ -470,6 +472,7 @@ class TestMlCoverage:
             }] * 40)
             metrics = train_and_save(algorithm='XGBoost')
         assert 'f1_macro' in metrics
+        fake_xgb.XGBClassifier.assert_called_once()
 
     def test_pipeline_xgboost_import_fallback(self):
         import pandas as pd
