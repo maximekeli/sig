@@ -490,8 +490,8 @@ class TestMlCoverage:
         from ml_predict import pipeline
         settings.ML_ARTIFACTS_DIR = tmp_path
         pipeline.MODEL_FILE = tmp_path / 'fertility_pipeline.pkl'
-        if pipeline.MODEL_FILE.exists():
-            pipeline.MODEL_FILE.unlink()
+        pipeline.MODEL_FILE.write_bytes(b'old')
+        pipeline.MODEL_FILE.unlink()
         with patch('ml_predict.pipeline.train_and_save', return_value={'f1_macro': 0.7}):
             with patch('ml_predict.pipeline.joblib.load', return_value={
                 'pipeline': MagicMock(
@@ -545,13 +545,15 @@ class TestSoilsCoverage:
         }, format='json')
         assert r.status_code in (200, 400)
 
-    def test_serializer_validation_error(self, auth_client, sample_soil_point):
-        r = auth_client.patch(f'/api/v1/points/{sample_soil_point.id}/', {
-            'type': 'Feature',
-            'geometry': {'type': 'Point', 'coordinates': [1.25, 6.35]},
-            'properties': {'ph': 2.0},
-        }, format='json')
-        assert r.status_code == 400
+    def test_serializer_validation_error(self, sample_soil_point):
+        from soils.serializers import SoilPointSerializer
+        ser = SoilPointSerializer(
+            instance=sample_soil_point,
+            data={'ph': 2.0, 'humidity_pct': sample_soil_point.humidity_pct},
+            partial=True,
+        )
+        assert ser.is_valid() is False
+        assert 'ph' in ser.errors
 
     def test_import_geojson(self, auth_client):
         import json
@@ -670,8 +672,10 @@ class TestSpatialCoverage:
         ))
         AdministrativeZone.objects.create(
             name='Degraded', code='DEG-1', zone_type='degraded',
-            geometry=MultiPolygon(degraded_poly),
+            geometry=MultiPolygon(degraded_poly, srid=4326),
         )
+        stats2 = services.spatial_statistics_by_zone()
+        assert stats2['degraded_surface_m2'] > 0
 
         for i, (slope, ndvi, smap) in enumerate([
             (6, 0.2, 0.1),
