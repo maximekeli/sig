@@ -298,6 +298,17 @@ class TestNasaCoverage:
             result = clip_raster_to_bbox(str(p), out, (0.9, 6, 1.8, 6.8))
         assert result == str(out)
 
+    @patch('rasterio.open', side_effect=OSError('clip fail'))
+    @patch('rasterio.mask.mask', side_effect=OSError('mask fail'))
+    def test_raster_clip_failure(self, mock_mask, mock_open, tmp_path):
+        from nasa.raster_utils import clip_raster_to_bbox, ndvi_from_mod13
+        p = tmp_path / 't.tif'
+        p.write_bytes(b'x')
+        with patch('xarray.open_dataarray', side_effect=RuntimeError('no rioxarray')):
+            assert clip_raster_to_bbox(str(p), tmp_path / 'out.tif', (0.9, 6, 1.8, 6.8)) is None
+        with patch('nasa.raster_utils.extract_point_value', return_value=None):
+            assert ndvi_from_mod13(str(p), 1.0, 6.0) is None
+
     @patch('xarray.open_dataarray')
     def test_raster_clip_rioxarray_path(self, mock_xr_open, tmp_path):
         from nasa.raster_utils import clip_raster_to_bbox
@@ -431,15 +442,40 @@ class TestMlCoverage:
             soil_type='limoneux', collected_at=date(2025, 8, 1), is_validated=True,
             fertility_class='', fertility_score=0.8,
         )
+        SoilPoint.objects.create(
+            location=Point(1.4, 6.3, srid=4326), ph=8.0, humidity_pct=50,
+            soil_type='limoneux', collected_at=date(2025, 8, 1), is_validated=True,
+            fertility_class='', fertility_score=0.9,
+        )
         df = build_training_dataframe()
-        assert len(df) >= 2
-        assert set(df['fertility_class']) <= {'faible', 'moyenne', 'elevee'}
+        assert len(df) >= 3
+        assert 'elevee' in set(df['fertility_class'])
+
+    def test_pipeline_xgboost_import_fallback(self):
+        import pandas as pd
+        from ml_predict.pipeline import train_and_save
+        real_import = __import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == 'xgboost':
+                raise ImportError('no xgboost')
+            return real_import(name, *args, **kwargs)
+
+        with patch('builtins.__import__', side_effect=fake_import), \
+             patch('ml_predict.pipeline.build_training_dataframe') as m:
+            m.return_value = pd.DataFrame([{
+                'ph': 6, 'humidity_pct': 30, 'soil_type': 'limoneux', 'slope_pct': 3,
+                'ndvi_3m_avg': 0.4, 'smap_moisture_avg': 0.2, 'temperature': 28,
+                'elevation_m': 50, 'season': 'seche', 'fertility_class': 'moyenne',
+            }] * 40)
+            metrics = train_and_save(algorithm='XGBoost')
+        assert 'f1_macro' in metrics
 
     def test_pipeline_roc_auc_fallback(self):
         import pandas as pd
         from ml_predict.pipeline import train_and_save
         with patch('ml_predict.pipeline.build_training_dataframe') as m, \
-             patch('sklearn.metrics.roc_auc_score', side_effect=ValueError('auc')):
+             patch('ml_predict.pipeline.roc_auc_score', side_effect=RuntimeError('auc')):
             m.return_value = pd.DataFrame([{
                 'ph': 6, 'humidity_pct': 30, 'soil_type': 'limoneux', 'slope_pct': 3,
                 'ndvi_3m_avg': 0.4, 'smap_moisture_avg': 0.2, 'temperature': 28,
@@ -480,10 +516,11 @@ class TestMlCoverage:
         settings.ML_RETRAIN_NEW_SAMPLES = 99999
         result = check_retrain_fertility_model()
         assert result['skipped'] is True
-        settings.ML_RETRAIN_NEW_SAMPLES = 1
-        SoilPoint.objects.filter(is_validated=True).delete()
-        with patch('ml_predict.tasks.train_and_save', return_value={'ok': True}):
-            check_retrain_fertility_model()
+        settings.ML_RETRAIN_NEW_SAMPLES = 0
+        with patch('ml_predict.tasks.train_and_save', return_value={'ok': True}) as mock_train:
+            result = check_retrain_fertility_model()
+        assert mock_train.called
+        assert result == {'ok': True}
         with patch('nasa.tasks.ingest_all', return_value={}):
             ingest_all_nasa_layers()
 
@@ -505,6 +542,14 @@ class TestSoilsCoverage:
             'properties': {'ph': 6.3},
         }, format='json')
         assert r.status_code in (200, 400)
+
+    def test_serializer_validation_error(self, auth_client, sample_soil_point):
+        r = auth_client.patch(f'/api/v1/points/{sample_soil_point.id}/', {
+            'type': 'Feature',
+            'geometry': {'type': 'Point', 'coordinates': [1.25, 6.35]},
+            'properties': {'ph': 2.0},
+        }, format='json')
+        assert r.status_code == 400
 
     def test_import_geojson(self, auth_client):
         import json
@@ -537,10 +582,23 @@ class TestSoilsCoverage:
         api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {RefreshToken.for_user(u).access_token}')
         assert api_client.post('/api/v1/points/import_data/', {}, format='multipart').status_code == 403
 
-    def test_seed_command_skip(self):
+    def test_seed_command_skip(self, db):
+        from soils.models import SoilPoint
+        for i in range(150):
+            SoilPoint.objects.create(
+                location=Point(1.0 + i * 0.001, 6.3, srid=4326),
+                ph=6, humidity_pct=30, soil_type='limoneux',
+                collected_at='2025-01-01', is_validated=True,
+            )
         out = StringIO()
         call_command('seed_demo_data', stdout=out)
-        assert 'ignoré' in out.getvalue().lower() or 'complete' in out.getvalue().lower()
+        assert 'ignoré' in out.getvalue().lower()
+
+    def test_seed_users_skip_existing(self, db):
+        User.objects.create_user('admin', password='admin123', role=User.Role.ADMIN,
+                                 is_superuser=True, is_staff=True)
+        from soils.management.commands.seed_demo_data import Command
+        Command()._users()
 
     def test_seed_command_full(self, db):
         from soils.models import SoilPoint
