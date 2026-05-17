@@ -463,8 +463,14 @@ class TestMlCoverage:
         from sklearn.ensemble import RandomForestClassifier
         from ml_predict.pipeline import train_and_save
         import types
+
+        class FakeXGBClassifier(RandomForestClassifier):
+            def __init__(self, *args, **kwargs):
+                kwargs.pop('verbosity', None)
+                super().__init__(*args, **kwargs)
+
         fake_xgb = types.ModuleType('xgboost')
-        fake_xgb.XGBClassifier = RandomForestClassifier
+        fake_xgb.XGBClassifier = FakeXGBClassifier
         with patch.dict(sys.modules, {'xgboost': fake_xgb}), \
              patch('ml_predict.pipeline.build_training_dataframe') as m:
             m.return_value = pd.DataFrame([{
