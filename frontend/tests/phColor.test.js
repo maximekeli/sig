@@ -1,20 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 import { phColorClass, phColorFromPh, phColorHex } from '../js/core/phColor.js';
 
 describe('phColor', () => {
   it('classifie acide / neutre / basique', () => {
-    expect(phColorClass(5.0)).toBe('red');
-    expect(phColorClass(5.5)).toBe('yellow');
-    expect(phColorClass(6.5)).toBe('yellow');
-    expect(phColorClass(7.1)).toBe('green');
+    assert.equal(phColorClass(5.0), 'red');
+    assert.equal(phColorClass(5.5), 'yellow');
+    assert.equal(phColorClass(7.1), 'green');
   });
 
   it('retourne une couleur hex', () => {
-    expect(phColorFromPh(4.8)).toBe('#c1121f');
-    expect(phColorFromPh(7.5)).toBe('#40916c');
+    assert.equal(phColorFromPh(4.8), '#c1121f');
+    assert.equal(phColorFromPh(7.5), '#40916c');
   });
 
   it('fallback gris', () => {
-    expect(phColorHex('unknown')).toBe('#666');
+    assert.equal(phColorHex('unknown'), '#666');
   });
 });

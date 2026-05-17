@@ -19,7 +19,7 @@ test:
 	docker compose exec web pytest apps/ -v --cov=apps --cov-report=term-missing --cov-fail-under=70
 
 test-frontend:
-	cd frontend && npm install && npm test
+	cd frontend && node --test tests/*.test.js
 
 test-all: test test-frontend
 

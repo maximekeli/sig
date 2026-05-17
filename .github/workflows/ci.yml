@@ -59,6 +59,4 @@ jobs:
         with:
           node-version: '20'
       - name: Unit tests frontend
-        run: |
-          npm install
-          npm test
+        run: node --test tests/*.test.js
