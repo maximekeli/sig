@@ -16,7 +16,7 @@ seed:
 	docker compose exec web python manage.py seed_demo_data
 
 test:
-	docker compose exec web pytest apps/ -v --cov=apps --cov-report=term-missing --cov-fail-under=70
+	docker compose exec web pytest apps/ -q --cov=apps --cov-config=.coveragerc --cov-fail-under=100
 
 test-frontend:
 	cd frontend && node --test tests/*.test.js
