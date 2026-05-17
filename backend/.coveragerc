@@ -1,0 +1,10 @@
+[run]
+source = apps
+omit =
+    */migrations/*
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+fail_under = 100
