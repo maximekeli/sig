@@ -92,10 +92,12 @@ class TestEducationCoverage:
 
     def test_quiz_question_auto_points(self, db):
         from education.models import QuizQuestion
-        q = QuizQuestion(text='Auto', difficulty='moyen', choices=['A', 'B', 'C', 'D'],
-                         correct_index=0, explanation='E', points=0)
-        q.save()
-        assert q.points == 10
+        for difficulty, expected in [('facile', 5), ('moyen', 10), ('difficile', 15), ('autre', 5)]:
+            q = QuizQuestion(text=f'Auto {difficulty}', difficulty=difficulty,
+                             choices=['A', 'B', 'C', 'D'], correct_index=0,
+                             explanation='E', points=0)
+            q.save()
+            assert q.points == expected
 
     def test_quiz_nasa_profile_and_difficult_finish(self, auth_client, agent_user, db):
         from education.models import QuizQuestion, QuizSession, UserQuizProfile
@@ -640,10 +642,10 @@ class TestSoilsCoverage:
 
 @pytest.mark.django_db
 class TestSpatialCoverage:
-    def test_api_errors(self, api_client):
-        assert api_client.post('/api/v1/spatial/intersection/', {}, format='json').status_code == 400
-        assert api_client.post('/api/v1/spatial/buffer/', {}, format='json').status_code == 400
-        assert api_client.post('/api/v1/spatial/area/', {}, format='json').status_code == 400
+    def test_api_errors(self, auth_client, api_client):
+        assert auth_client.post('/api/v1/spatial/intersection/', {}, format='json').status_code == 400
+        assert auth_client.post('/api/v1/spatial/buffer/', {}, format='json').status_code == 400
+        assert auth_client.post('/api/v1/spatial/area/', {}, format='json').status_code == 400
         assert api_client.get('/api/v1/spatial/statistics/').status_code == 200
         assert api_client.get('/api/v1/spatial/smap-correlation/').status_code == 200
 
@@ -671,10 +673,10 @@ class TestSpatialCoverage:
             geometry=MultiPolygon(degraded_poly),
         )
 
-        for i, (slope, ndvi, smap, expected) in enumerate([
-            (6, 0.2, 0.1, 'elevee'),
-            (6, 0.5, 0.1, 'moyenne'),
-            (2, 0.5, 0.3, 'faible'),
+        for i, (slope, ndvi, smap) in enumerate([
+            (6, 0.2, 0.1),
+            (6, 0.5, 0.3),
+            (2, 0.5, 0.3),
         ]):
             SoilPoint.objects.create(
                 location=Point(1.2 + i * 0.02, 6.3, srid=4326),
@@ -684,7 +686,7 @@ class TestSpatialCoverage:
             )
         vuln = services.vulnerability_zoning()
         levels = {v['vulnerability'] for v in vuln}
-        assert 'elevee' in levels
+        assert {'elevee', 'moyenne', 'faible'} <= levels
 
         sample_soil_point.smap_moisture_avg = 0.2
         sample_soil_point.humidity_pct = 25
