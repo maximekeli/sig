@@ -93,9 +93,24 @@ class TestEducationCoverage:
     def test_quiz_question_auto_points(self, db):
         from education.models import QuizQuestion
         q = QuizQuestion(text='Auto', difficulty='moyen', choices=['A', 'B', 'C', 'D'],
-                         correct_index=0, explanation='E')
+                         correct_index=0, explanation='E', points=0)
         q.save()
         assert q.points == 10
+
+    def test_quiz_nasa_profile_and_difficult_finish(self, auth_client, agent_user, db):
+        from education.models import QuizQuestion, QuizSession, UserQuizProfile
+        q = QuizQuestion.objects.create(
+            text='NASA Q', difficulty='facile', choices=['A', 'B', 'C', 'D'],
+            correct_index=0, explanation='E', points=5, is_nasa_topic=True,
+        )
+        s = QuizSession.objects.create(user=agent_user, difficulty='difficile', score=35)
+        auth_client.post(f'/api/v1/education/quiz/{s.id}/answer/', {
+            'question_id': q.id, 'selected_index': 0,
+        }, format='json')
+        auth_client.post(f'/api/v1/education/quiz/{s.id}/finish/', {}, format='json')
+        profile = UserQuizProfile.objects.get(user=agent_user)
+        assert profile.nasa_questions_total >= 1
+        assert profile.difficult_sessions_passed >= 1
 
     def test_quiz_mixte_and_nasa_answer(self, auth_client, db):
         from education.models import QuizQuestion
