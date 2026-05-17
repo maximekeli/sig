@@ -440,7 +440,12 @@ class TestMlCoverage:
             fertility_class='', fertility_score=None, ndvi_3m_avg=0.2,
         )
         SoilPoint.objects.create(
-            location=Point(1.3, 6.3, srid=4326), ph=7.5, humidity_pct=50,
+            location=Point(1.3, 6.3, srid=4326), ph=6.5, humidity_pct=50,
+            soil_type='limoneux', collected_at=date(2025, 8, 1), is_validated=True,
+            fertility_class='', fertility_score=0.55,
+        )
+        SoilPoint.objects.create(
+            location=Point(1.35, 6.3, srid=4326), ph=7.5, humidity_pct=50,
             soil_type='limoneux', collected_at=date(2025, 8, 1), is_validated=True,
             fertility_class='', fertility_score=0.8,
         )
@@ -452,6 +457,19 @@ class TestMlCoverage:
         df = build_training_dataframe()
         assert len(df) >= 3
         assert 'elevee' in set(df['fertility_class'])
+
+    def test_pipeline_xgboost_native(self):
+        import pandas as pd
+        pytest.importorskip('xgboost')
+        from ml_predict.pipeline import train_and_save
+        with patch('ml_predict.pipeline.build_training_dataframe') as m:
+            m.return_value = pd.DataFrame([{
+                'ph': 6, 'humidity_pct': 30, 'soil_type': 'limoneux', 'slope_pct': 3,
+                'ndvi_3m_avg': 0.4, 'smap_moisture_avg': 0.2, 'temperature': 28,
+                'elevation_m': 50, 'season': 'seche', 'fertility_class': 'moyenne',
+            }] * 40)
+            metrics = train_and_save(algorithm='XGBoost')
+        assert 'f1_macro' in metrics
 
     def test_pipeline_xgboost_import_fallback(self):
         import pandas as pd
@@ -546,14 +564,16 @@ class TestSoilsCoverage:
         assert r.status_code in (200, 400)
 
     def test_serializer_validation_error(self, sample_soil_point):
+        from rest_framework import serializers as drf_serializers
         from soils.serializers import SoilPointSerializer
         ser = SoilPointSerializer(
             instance=sample_soil_point,
             data={'ph': 2.0, 'humidity_pct': sample_soil_point.humidity_pct},
             partial=True,
         )
-        assert ser.is_valid() is False
-        assert 'ph' in ser.errors
+        with pytest.raises(drf_serializers.ValidationError) as exc:
+            ser.is_valid(raise_exception=True)
+        assert 'ph' in exc.value.detail
 
     def test_import_geojson(self, auth_client):
         import json
