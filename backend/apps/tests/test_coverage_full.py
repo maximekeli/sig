@@ -58,18 +58,36 @@ class TestEducationCoverage:
         }, format='json')
         assert r.status_code == 404
 
-    def test_quiz_finish_completed_session(self, auth_client, db):
-        from education.models import QuizQuestion, QuizSession
-        q = QuizQuestion.objects.create(
-            text='Q?', difficulty='difficile', choices=['A', 'B', 'C', 'D'],
-            correct_index=0, explanation='E', points=15,
-        )
+    def test_quiz_finish_completed_session(self, auth_client, agent_user):
+        from education.models import QuizSession
         s = QuizSession.objects.create(
-            user=auth_client.handler._force_user,
-            difficulty='difficile', score=40, questions_answered=3, completed=True,
+            user=agent_user, difficulty='difficile', score=40,
+            questions_answered=3, completed=True,
         )
         r = auth_client.post(f'/api/v1/education/quiz/{s.id}/finish/', {}, format='json')
         assert r.status_code == 400
+
+    def test_quiz_mixte_and_nasa_answer(self, auth_client, db):
+        from education.models import QuizQuestion
+        QuizQuestion.objects.create(
+            text='NASA?', difficulty='facile', choices=['A', 'B', 'C', 'D'],
+            correct_index=0, explanation='E', points=5, is_nasa_topic=True,
+        )
+        QuizQuestion.objects.create(
+            text='Sol?', difficulty='moyen', choices=['A', 'B', 'C', 'D'],
+            correct_index=1, explanation='E', points=10,
+        )
+        start = auth_client.post('/api/v1/education/quiz/start/', {
+            'difficulty': 'mixte', 'count': 2,
+        }, format='json')
+        sid = start.json()['session_id']
+        q = start.json()['questions'][0]
+        auth_client.post(f'/api/v1/education/quiz/{sid}/answer/', {
+            'question_id': q['id'], 'selected_index': 0,
+        }, format='json')
+        fin = auth_client.post(f'/api/v1/education/quiz/{sid}/finish/', {}, format='json')
+        assert fin.status_code == 200
+        auth_client.get('/api/v1/education/quiz/badges/')
 
 
 @pytest.mark.django_db
@@ -110,12 +128,11 @@ class TestNasaCoverage:
         )
         assert len(files) == 1
 
-    def test_stac_import_error(self):
-        with patch.dict('sys.modules', {'pystac_client': None}):
-            from nasa import stac_client
-            import importlib
-            importlib.reload(stac_client)
-            assert stac_client.search_granules('X', date.today(), date.today(), (0, 0, 1, 1)) == []
+    def test_stac_search_exception(self):
+        with patch('nasa.stac_client.Client') as mock_client:
+            mock_client.open.side_effect = Exception('STAC down')
+            from nasa.stac_client import search_granules
+            assert search_granules('MOD13Q1', date.today(), date.today(), (0.9, 6, 1.8, 6.8)) == []
 
     @patch('nasa.raster_utils.rasterio')
     def test_raster_extract(self, mock_rio, tmp_path):
@@ -183,6 +200,8 @@ class TestSoilsCoverage:
         assert sample_zone.code in str(sample_zone)
 
     def test_import_geojson(self, auth_client):
+        import json
+        from django.core.files.uploadedfile import SimpleUploadedFile
         geojson = {
             'features': [{
                 'type': 'Feature',
@@ -193,10 +212,25 @@ class TestSoilsCoverage:
                 },
             }],
         }
-        from django.core.files.uploadedfile import SimpleUploadedFile
-        f = SimpleUploadedFile('t.geojson', str(geojson).replace("'", '"').encode())
+        f = SimpleUploadedFile('t.geojson', json.dumps(geojson).encode(), content_type='application/json')
         r = auth_client.post('/api/v1/points/import_data/', {'file': f}, format='multipart')
-        assert r.status_code in (200, 400)
+        assert r.status_code == 200
+        assert r.json()['created'] == 1
+
+    def test_import_errors(self, auth_client):
+        r = auth_client.post('/api/v1/points/import_data/', {}, format='multipart')
+        assert r.status_code == 400
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        f = SimpleUploadedFile('t.csv', b'a,b', content_type='text/csv')
+        r2 = auth_client.post('/api/v1/points/import_data/', {'file': f}, format='multipart')
+        assert r2.status_code == 400
+
+    def test_agent_permission_denied(self, api_client):
+        from django.contrib.auth import get_user_model
+        u = get_user_model().objects.create_user('pub', password='x', role='public')
+        from rest_framework_simplejwt.tokens import RefreshToken
+        api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {RefreshToken.for_user(u).access_token}')
+        assert api_client.post('/api/v1/points/import_data/', {}, format='multipart').status_code == 403
 
     def test_seed_command(self):
         out = StringIO()
