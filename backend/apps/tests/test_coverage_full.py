@@ -466,6 +466,7 @@ class TestMlCoverage:
 
         class FakeXGBClassifier(RandomForestClassifier):
             def __init__(self, n_estimators=100, max_depth=6, verbosity=0):
+                self.verbosity = verbosity
                 super().__init__(
                     n_estimators=n_estimators, max_depth=max_depth, random_state=42,
                 )
