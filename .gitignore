@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+media/
+staticfiles/
+backend/staticfiles/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# NASA cache
+data/nasa_cache/
+*.tif
+*.nc
+
+# ML artifacts (keep trained model in repo for demo)
+# backend/apps/ml_predict/artifacts/*.pkl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (if added later)
+node_modules/

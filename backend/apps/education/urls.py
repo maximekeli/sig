@@ -1,0 +1,23 @@
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+
+from .views import (
+    LeaderboardView,
+    MyBadgesView,
+    PedagogicalSheetViewSet,
+    QuizFinishView,
+    QuizStartView,
+    QuizSubmitAnswerView,
+)
+
+router = DefaultRouter()
+router.register('sheets', PedagogicalSheetViewSet, basename='pedagogical-sheets')
+
+urlpatterns = [
+    path('', include(router.urls)),
+    path('quiz/start/', QuizStartView.as_view(), name='quiz-start'),
+    path('quiz/<int:session_id>/answer/', QuizSubmitAnswerView.as_view(), name='quiz-answer'),
+    path('quiz/<int:session_id>/finish/', QuizFinishView.as_view(), name='quiz-finish'),
+    path('quiz/leaderboard/', LeaderboardView.as_view(), name='quiz-leaderboard'),
+    path('quiz/badges/', MyBadgesView.as_view(), name='quiz-badges'),
+]

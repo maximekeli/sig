@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIG Sols Togo — DISIA / DUSOL</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <h1>SIG Sols Togo</h1>
+      <p class="subtitle">SIG-SOLS-TOGO-2026-01 · Région Maritime</p>
+    </motion>
+    <nav class="main-nav">
+      <button type="button" class="nav-btn active" data-view="map">Carte</button>
+      <button type="button" class="nav-btn" data-view="dashboard">Tableau de bord</button>
+      <button type="button" class="nav-btn" data-view="quiz">Quiz</button>
+      <button type="button" class="nav-btn" data-view="sheets">Fiches</button>
+    </nav>
+    <div class="auth-box" id="auth-box">
+      <input type="text" id="login-user" placeholder="Utilisateur" value="agent1" />
+      <input type="password" id="login-pass" placeholder="Mot de passe" value="agent123" />
+      <button type="button" id="btn-login">Connexion</button>
+    </motion>
+  </header>
+
+  <main>
+  <!-- MAP VIEW -->
+  <section id="view-map" class="view active">
+    <aside class="sidebar">
+      <h2>Filtres</h2>
+      <label>pH min <input type="number" id="filter-ph-min" step="0.1" min="3.5" max="9.5" /></label>
+      <label>pH max <input type="number" id="filter-ph-max" step="0.1" min="3.5" max="9.5" /></label>
+      <label>Type de sol
+        <select id="filter-soil-type">
+          <option value="">Tous</option>
+          <option value="argileux">Argileux</option>
+          <option value="sableux">Sableux</option>
+          <option value="limoneux">Limoneux</option>
+          <option value="tourbeux">Tourbeux</option>
+          <option value="calcaire">Calcaire</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="filter-validated" checked /> Validés uniquement</label>
+      <button type="button" id="btn-apply-filters">Appliquer</button>
+      <hr />
+      <h3>Couches NASA</h3>
+      <div id="nasa-layers-toggles"></motion>
+      <hr />
+      <h3>Export</h3>
+      <button type="button" id="btn-export-geojson">GeoJSON</button>
+      <button type="button" id="btn-export-csv">CSV</button>
+      <hr />
+      <h3>Prédiction IA</h3>
+      <label>pH <input type="number" id="pred-ph" value="6.2" step="0.1" /></label>
+      <label>Humidité % <input type="number" id="pred-humidity" value="35" /></label>
+      <label>Type
+        <select id="pred-soil-type">
+          <option value="argileux">Argileux</option>
+          <option value="sableux">Sableux</option>
+          <option value="limoneux" selected>Limoneux</option>
+          <option value="tourbeux">Tourbeux</option>
+          <option value="calcaire">Calcaire</option>
+        </select>
+      </label>
+      <button type="button" id="btn-predict">Prédire fertilité</button>
+      <pre id="pred-result" class="pred-result"></pre>
+    </aside>
+    <div id="map" class="map-container"></div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="view-dashboard" class="view">
+    <div class="dashboard-grid">
+      <article class="kpi-card"><h3>Points de sol</h3><p id="kpi-points">—</p></article>
+      <article class="kpi-card"><h3>pH moyen</h3><p id="kpi-ph">—</p></article>
+      <article class="kpi-card"><h3>NDVI moyen</h3><p id="kpi-ndvi">—</p></article>
+      <article class="kpi-card"><h3>Zones dégradées</h3><p id="kpi-degraded">—</p></article>
+      <article class="kpi-card wide"><h3>Précision IA (F1)</h3><p id="kpi-ml">—</p></article>
+      <article class="chart-card wide"><h3>Distribution types de sol</h3><ul id="chart-soil-types"></ul></article>
+      <article class="chart-card wide"><h3>Corrélation SMAP (R²)</h3><p id="smap-corr">—</p></article>
+    </motion>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="view-quiz" class="view">
+    <div class="quiz-panel">
+      <h2>Quiz pédagogique</h2>
+      <label>Niveau
+        <select id="quiz-difficulty">
+          <option value="facile">Facile</option>
+          <option value="moyen">Moyen</option>
+          <option value="difficile">Difficile</option>
+          <option value="mixte">Mixte</option>
+        </select>
+      </label>
+      <button type="button" id="btn-quiz-start">Démarrer (5 questions)</button>
+      <div id="quiz-area" class="hidden">
+        <p class="timer">Temps : <span id="quiz-timer">20</span>s</p>
+        <p id="quiz-question" class="quiz-q"></p>
+        <div id="quiz-choices"></div>
+        <p id="quiz-feedback"></p>
+        <p>Score session : <strong id="quiz-score">0</strong></p>
+        <button type="button" id="btn-quiz-finish" class="hidden">Terminer</button>
+      </div>
+      <h3>Classement hebdomadaire</h3>
+      <ol id="leaderboard"></ol>
+      <h3>Mes badges</h3>
+      <ul id="my-badges"></ul>
+    </motion>
+  </section>
+
+  <!-- SHEETS -->
+  <section id="view-sheets" class="view">
+    <div id="sheets-list" class="sheets-list"></motion>
+  </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Données NASA : domaine public — crédit NASA Earth Science · Licence MIT</p>
+    <p>DISIA – Ministère de l'Agriculture, Togo · DUSOL</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
