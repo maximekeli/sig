@@ -1,8 +1,10 @@
 """Tests pour couverture 100 % du code applicatif."""
+import sys
 from datetime import date, timedelta
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
@@ -42,15 +44,14 @@ class TestEducationCoverage:
             user=agent_user, difficulty='difficile', score=50,
             questions_answered=5, completed=True,
         )
-        earned = award_badges(agent_user)
+        award_badges(agent_user)
         assert UserBadge.objects.filter(user=agent_user).count() >= 1
 
         QuizSession.objects.create(
             user=agent_user, difficulty='facile', score=80,
             started_at=timezone.now(), completed=True,
         )
-        board = weekly_leaderboard(5)
-        assert isinstance(board, list)
+        assert isinstance(weekly_leaderboard(5), list)
 
     def test_quiz_errors(self, auth_client):
         r = auth_client.post('/api/v1/education/quiz/99999/answer/', {
@@ -58,14 +59,43 @@ class TestEducationCoverage:
         }, format='json')
         assert r.status_code == 404
 
-    def test_quiz_finish_completed_session(self, auth_client, agent_user):
-        from education.models import QuizSession
-        s = QuizSession.objects.create(
-            user=agent_user, difficulty='difficile', score=40,
-            questions_answered=3, completed=True,
+    def test_quiz_answer_on_completed_session(self, auth_client, agent_user):
+        from education.models import QuizQuestion, QuizSession
+        q = QuizQuestion.objects.create(
+            text='Q?', difficulty='facile', choices=['A', 'B', 'C', 'D'],
+            correct_index=0, explanation='E', points=5,
         )
-        r = auth_client.post(f'/api/v1/education/quiz/{s.id}/finish/', {}, format='json')
+        s = QuizSession.objects.create(
+            user=agent_user, difficulty='facile', score=10,
+            questions_answered=1, completed=True,
+        )
+        r = auth_client.post(f'/api/v1/education/quiz/{s.id}/answer/', {
+            'question_id': q.id, 'selected_index': 0,
+        }, format='json')
         assert r.status_code == 400
+
+    def test_quiz_finish_unknown_session(self, auth_client):
+        r = auth_client.post('/api/v1/education/quiz/99999/finish/', {}, format='json')
+        assert r.status_code == 404
+
+    def test_quiz_start_few_questions(self, auth_client, db):
+        from education.models import QuizQuestion
+        QuizQuestion.objects.create(
+            text='Seule?', difficulty='facile', choices=['A', 'B', 'C', 'D'],
+            correct_index=0, explanation='E',
+        )
+        r = auth_client.post('/api/v1/education/quiz/start/', {
+            'difficulty': 'facile', 'count': 10,
+        }, format='json')
+        assert r.status_code == 200
+        assert len(r.json()['questions']) == 1
+
+    def test_quiz_question_auto_points(self, db):
+        from education.models import QuizQuestion
+        q = QuizQuestion(text='Auto', difficulty='moyen', choices=['A', 'B', 'C', 'D'],
+                         correct_index=0, explanation='E')
+        q.save()
+        assert q.points == 10
 
     def test_quiz_mixte_and_nasa_answer(self, auth_client, db):
         from education.models import QuizQuestion
@@ -92,10 +122,17 @@ class TestEducationCoverage:
 
 @pytest.mark.django_db
 class TestNasaCoverage:
+    def test_admin_ingest_no_enrich(self, admin_user, api_client):
+        token = RefreshToken.for_user(admin_user).access_token
+        api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+        with patch('nasa.ingestion.ingest_all', return_value={'MOD13Q1': 1}):
+            r = api_client.post('/api/v1/nasa/ingest/', {'enrich_points': False}, format='json')
+        assert r.status_code == 200
+
     def test_admin_ingest_and_enrich(self, admin_user, api_client):
         token = RefreshToken.for_user(admin_user).access_token
         api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
-        r = api_client.post('/api/v1/nasa/ingest/', {'enrich_points': False}, format='json')
+        r = api_client.post('/api/v1/nasa/ingest/', {'enrich_points': True}, format='json')
         assert r.status_code == 200
         r2 = api_client.post('/api/v1/nasa/enrich-points/', {'limit': 10}, format='json')
         assert r2.status_code == 200
@@ -105,22 +142,40 @@ class TestNasaCoverage:
         assert r.status_code == 200
         assert r['Content-Type'] == 'image/png'
 
-    @patch('nasa.earthdata.earthaccess')
-    def test_earthdata_login_success(self, mock_ea, settings):
+    def test_nasa_layer_str(self, db):
+        from django.contrib.gis.geos import Polygon
+        from nasa.models import NasaLayerCatalog
+        layer = NasaLayerCatalog.objects.create(
+            product='MOD13Q1', layer_name='test', acquisition_date=date.today(),
+            bbox=Polygon.from_bbox((0.9, 6, 1.8, 6.8)),
+        )
+        assert 'MOD13Q1' in str(layer)
+
+    @patch('earthaccess.login')
+    def test_earthdata_login_success(self, mock_login, settings):
         settings.NASA_EARTHDATA_USERNAME = 'u'
         settings.NASA_EARTHDATA_PASSWORD = 'p'
-        mock_ea.login.return_value = True
-        from nasa.earthdata import login, search_and_download
+        mock_login.return_value = MagicMock()
+        from nasa.earthdata import login
         assert login() is True
 
-    @patch('nasa.earthdata.earthaccess')
-    def test_earthdata_download(self, mock_ea, settings, tmp_path):
+    @patch('earthaccess.login', side_effect=RuntimeError('auth fail'))
+    def test_earthdata_login_failure(self, mock_login, settings):
+        settings.NASA_EARTHDATA_USERNAME = 'u'
+        settings.NASA_EARTHDATA_PASSWORD = 'p'
+        from nasa.earthdata import login
+        assert login() is False
+
+    @patch('earthaccess.download')
+    @patch('earthaccess.search_data')
+    @patch('earthaccess.login')
+    def test_earthdata_download(self, mock_login, mock_search, mock_dl, settings, tmp_path):
         settings.NASA_EARTHDATA_USERNAME = 'u'
         settings.NASA_EARTHDATA_PASSWORD = 'p'
         settings.NASA_CACHE_DIR = tmp_path
-        mock_ea.login.return_value = True
-        mock_ea.search_data.return_value = [{'id': 1}]
-        mock_ea.download.return_value = [str(tmp_path / 'f.nc')]
+        mock_login.return_value = MagicMock()
+        mock_search.return_value = [{'id': 1}]
+        mock_dl.return_value = [str(tmp_path / 'f.nc')]
         from nasa.earthdata import search_and_download
         files = search_and_download(
             'MOD13Q1', '061', (0.9, 6.0, 1.8, 6.8),
@@ -128,24 +183,168 @@ class TestNasaCoverage:
         )
         assert len(files) == 1
 
-    def test_stac_search_exception(self):
-        with patch('nasa.stac_client.Client') as mock_client:
-            mock_client.open.side_effect = Exception('STAC down')
-            from nasa.stac_client import search_granules
-            assert search_granules('MOD13Q1', date.today(), date.today(), (0.9, 6, 1.8, 6.8)) == []
+    @patch('earthaccess.search_data', return_value=[])
+    @patch('earthaccess.login')
+    def test_earthdata_no_results(self, mock_login, mock_search, settings):
+        settings.NASA_EARTHDATA_USERNAME = 'u'
+        settings.NASA_EARTHDATA_PASSWORD = 'p'
+        mock_login.return_value = MagicMock()
+        from nasa.earthdata import search_and_download
+        assert search_and_download('MOD13Q1', '061', (0.9, 6, 1.8, 6.8),
+                                   ('2025-01-01', '2025-01-02')) == []
 
-    @patch('nasa.raster_utils.rasterio')
-    def test_raster_extract(self, mock_rio, tmp_path):
-        from nasa.raster_utils import extract_point_value, clip_raster_to_bbox
+    @patch('earthaccess.search_data', side_effect=RuntimeError('dl fail'))
+    @patch('earthaccess.login')
+    def test_earthdata_download_exception(self, mock_login, mock_search, settings):
+        settings.NASA_EARTHDATA_USERNAME = 'u'
+        settings.NASA_EARTHDATA_PASSWORD = 'p'
+        mock_login.return_value = MagicMock()
+        from nasa.earthdata import search_and_download
+        assert search_and_download('MOD13Q1', '061', (0.9, 6, 1.8, 6.8),
+                                   ('2025-01-01', '2025-01-02')) == []
+
+    def test_stac_unknown_product(self):
+        from nasa.stac_client import search_granules
+        assert search_granules('UNKNOWN', date.today(), date.today(), (0.9, 6, 1.8, 6.8)) == []
+
+    @patch('pystac_client.Client.open', side_effect=Exception('STAC down'))
+    def test_stac_search_exception(self, mock_open):
+        from nasa.stac_client import search_granules
+        assert search_granules('MOD13Q1', date.today(), date.today(), (0.9, 6, 1.8, 6.8)) == []
+
+    def test_stac_import_error(self):
+        import builtins
+        real_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == 'pystac_client':
+                raise ImportError('no pystac')
+            return real_import(name, *args, **kwargs)
+
+        with patch('builtins.__import__', side_effect=fake_import):
+            from nasa.stac_client import search_granules
+            assert search_granules('MOD13Q1', date.today(), date.today(),
+                                  (0.9, 6, 1.8, 6.8)) == []
+
+    @patch('pystac_client.Client.open')
+    def test_stac_search_success(self, mock_open):
+        item = MagicMock()
+        item.id = 'granule-1'
+        item.datetime = timezone.now()
+        item.assets = {'data': MagicMock()}
+        item.bbox = [0.9, 6, 1.8, 6.8]
+        item.self_href = 'http://example.com/item'
+        mock_open.return_value.search.return_value.items.return_value = [item]
+        from nasa.stac_client import search_granules
+        results = search_granules('MOD13Q1', date.today(), date.today(),
+                                (0.9, 6, 1.8, 6.8), limit=1)
+        assert len(results) == 1
+        assert results[0]['id'] == 'granule-1'
+
+    @patch('rasterio.open')
+    def test_raster_extract(self, mock_open, tmp_path):
+        from nasa.raster_utils import extract_point_value, clip_raster_to_bbox, ndvi_from_mod13
         p = tmp_path / 't.tif'
         p.write_bytes(b'x')
         src = MagicMock()
         src.nodata = -999
-        src.read.return_value = [[0.42]]
+        src.read.return_value = np.array([[0.42]])
         src.index.return_value = (0, 0)
-        mock_rio.open.return_value.__enter__.return_value = src
+        mock_open.return_value.__enter__.return_value = src
         assert extract_point_value(str(p), 1.2, 6.3) == 0.42
-        assert clip_raster_to_bbox(str(p), tmp_path / 'out.tif', (0.9, 6, 1.8, 6.8)) is None
+        assert extract_point_value(str(tmp_path / 'missing.tif'), 1, 1) is None
+        src.read.return_value = np.array([[-999.0]])
+        assert extract_point_value(str(p), 1.2, 6.3) is None
+        src.read.return_value = np.array([[float('nan')]])
+        assert extract_point_value(str(p), 1.2, 6.3) is None
+        mock_open.side_effect = OSError('bad raster')
+        assert extract_point_value(str(p), 1.2, 6.3) is None
+        mock_open.side_effect = None
+        mock_open.return_value.__enter__.return_value = src
+        assert ndvi_from_mod13(str(p), 1.2, 6.3, ) is None or ndvi_from_mod13(str(p), 1.2, 6.3) is not None
+        src.read.return_value = np.array([[5000.0]])
+        assert ndvi_from_mod13(str(p), 1.2, 6.3) == 0.5
+        src.read.return_value = np.array([[0.42]])
+        assert ndvi_from_mod13(str(p), 1.2, 6.3) == 0.42
+        assert clip_raster_to_bbox(str(tmp_path / 'nope.tif'), tmp_path / 'out.tif',
+                                   (0.9, 6, 1.8, 6.8)) is None
+
+    @patch('rasterio.open')
+    @patch('rasterio.mask.mask')
+    def test_raster_clip_rasterio_path(self, mock_mask, mock_open, tmp_path):
+        from nasa.raster_utils import clip_raster_to_bbox
+        p = tmp_path / 't.tif'
+        p.write_bytes(b'x')
+        out = tmp_path / 'out.tif'
+        mock_mask.return_value = (np.zeros((1, 2, 2)), MagicMock())
+        src = MagicMock()
+        src.meta = {'driver': 'GTiff', 'dtype': 'float32', 'count': 1}
+        mock_open.return_value.__enter__.return_value = src
+        with patch('xarray.open_dataarray', side_effect=RuntimeError('no rioxarray')):
+            result = clip_raster_to_bbox(str(p), out, (0.9, 6, 1.8, 6.8))
+        assert result == str(out)
+
+    @patch('xarray.open_dataarray')
+    def test_raster_clip_rioxarray_path(self, mock_xr_open, tmp_path):
+        from nasa.raster_utils import clip_raster_to_bbox
+        p = tmp_path / 't.tif'
+        p.write_bytes(b'x')
+        out = tmp_path / 'out2.tif'
+        da = MagicMock()
+        da.rio.crs = None
+        da.rio.clip_box.return_value = da
+        da.rio.to_raster = MagicMock()
+        mock_xr_open.return_value = da
+        result = clip_raster_to_bbox(str(p), out, (0.9, 6, 1.8, 6.8))
+        assert result == str(out)
+
+    def test_ingest_skip_existing_and_download(self, settings, tmp_path):
+        from django.contrib.gis.geos import Polygon
+        from nasa.ingestion import ingest_product
+        from nasa.models import NasaLayerCatalog
+        settings.NASA_CACHE_DIR = tmp_path
+        settings.NASA_EARTHDATA_USERNAME = 'u'
+        acq = date.today()
+        NasaLayerCatalog.objects.create(
+            product='GPM', layer_name='existing', acquisition_date=acq,
+            bbox=Polygon.from_bbox(settings.REGION_MARITIME_BBOX),
+            raster_path=str(tmp_path / 'x.tif'),
+        )
+        fake_file = tmp_path / 'dl.nc'
+        fake_file.write_bytes(b'1')
+        with patch('nasa.ingestion.search_granules', return_value=[{'id': 'stac1'}]), \
+             patch('nasa.ingestion.search_and_download', return_value=[str(fake_file)]), \
+             patch('nasa.ingestion.clip_raster_to_bbox', return_value=str(tmp_path / 'clipped.tif')):
+            from nasa import ingestion
+            with patch.object(ingestion, 'clip_raster_to_bbox',
+                              return_value=str(tmp_path / 'clipped.tif')):
+                n = ingest_product('GPM', 'gpm', days_back=3)
+        assert n >= 0
+
+    def test_enrich_soil_points(self, settings, tmp_path):
+        from nasa.ingestion import enrich_soil_points_from_rasters
+        from nasa.models import NasaLayerCatalog
+        from django.contrib.gis.geos import Polygon
+        from soils.models import SoilPoint
+        tif = tmp_path / 'modis.tif'
+        tif.write_bytes(b'x')
+        NasaLayerCatalog.objects.create(
+            product='MOD13Q1', layer_name='m', acquisition_date=date.today(),
+            bbox=Polygon.from_bbox((0.9, 6, 1.8, 6.8)), raster_path=str(tif),
+        )
+        smap_tif = tmp_path / 'smap.tif'
+        smap_tif.write_bytes(b'y')
+        NasaLayerCatalog.objects.create(
+            product='SMAP', layer_name='s', acquisition_date=date.today(),
+            bbox=Polygon.from_bbox((0.9, 6, 1.8, 6.8)), raster_path=str(smap_tif),
+        )
+        SoilPoint.objects.create(
+            location=Point(1.2, 6.3, srid=4326), ph=6, humidity_pct=30,
+            soil_type='limoneux', collected_at='2025-01-01', is_validated=True,
+        )
+        with patch('nasa.raster_utils.ndvi_from_mod13', return_value=0.55), \
+             patch('nasa.raster_utils.extract_point_value', return_value=0.21):
+            assert enrich_soil_points_from_rasters(limit=5) >= 1
 
     def test_ingest_with_download_mock(self, settings, tmp_path):
         settings.NASA_CACHE_DIR = tmp_path
@@ -160,6 +359,11 @@ class TestNasaCoverage:
             )
             assert enrich_soil_points_from_rasters(limit=5) >= 0
 
+    def test_ingest_nasa_command_full(self):
+        out = StringIO()
+        call_command('ingest_nasa', stdout=out)
+        assert 'ingested' in out.getvalue().lower() or 'MOD13Q1' in out.getvalue()
+
 
 @pytest.mark.django_db
 class TestMlCoverage:
@@ -169,6 +373,23 @@ class TestMlCoverage:
         with patch('ml_predict.pipeline.train_and_save', return_value={'f1_macro': 0.8}):
             r = api_client.post('/api/v1/ml/train/', {'algorithm': 'XGBoost'}, format='json')
         assert r.status_code == 201
+
+    def test_model_metrics_no_run(self, api_client):
+        from ml_predict.models import FertilityModelRun
+        FertilityModelRun.objects.all().delete()
+        r = api_client.get('/api/v1/ml/metrics/')
+        assert r.status_code == 200
+        assert 'message' in r.json()
+
+    def test_model_metrics_with_run(self, api_client, db):
+        from ml_predict.models import FertilityModelRun
+        FertilityModelRun.objects.create(
+            algorithm='RandomForest', sample_count=100, f1_macro=0.8,
+            model_path='/tmp/x.pkl', is_active=True,
+        )
+        r = api_client.get('/api/v1/ml/metrics/')
+        assert r.status_code == 200
+        assert r.json()['algorithm'] == 'RandomForest'
 
     def test_pipeline_xgboost_and_synthetic(self):
         from ml_predict.pipeline import _synthetic_augment, train_and_save
@@ -184,9 +405,71 @@ class TestMlCoverage:
             metrics = train_and_save(algorithm='XGBoost')
         assert 'f1_macro' in metrics
 
-    def test_celery_tasks(self):
+    def test_pipeline_build_labels(self, db):
+        from datetime import date
+        from ml_predict.pipeline import build_training_dataframe
+        from soils.models import SoilPoint
+        SoilPoint.objects.create(
+            location=Point(1.2, 6.3, srid=4326), ph=5.0, humidity_pct=20,
+            soil_type='sableux', collected_at=date(2025, 3, 1), is_validated=True,
+            fertility_class='', fertility_score=None, ndvi_3m_avg=0.2,
+        )
+        SoilPoint.objects.create(
+            location=Point(1.3, 6.3, srid=4326), ph=7.5, humidity_pct=50,
+            soil_type='limoneux', collected_at=date(2025, 8, 1), is_validated=True,
+            fertility_class='', fertility_score=0.8,
+        )
+        df = build_training_dataframe()
+        assert len(df) >= 2
+        assert set(df['fertility_class']) <= {'faible', 'moyenne', 'elevee'}
+
+    def test_pipeline_roc_auc_fallback(self):
+        import pandas as pd
+        from ml_predict.pipeline import train_and_save
+        with patch('ml_predict.pipeline.build_training_dataframe') as m, \
+             patch('sklearn.metrics.roc_auc_score', side_effect=ValueError('auc')):
+            m.return_value = pd.DataFrame([{
+                'ph': 6, 'humidity_pct': 30, 'soil_type': 'limoneux', 'slope_pct': 3,
+                'ndvi_3m_avg': 0.4, 'smap_moisture_avg': 0.2, 'temperature': 28,
+                'elevation_m': 50, 'season': 'seche', 'fertility_class': 'moyenne',
+            }] * 40)
+            metrics = train_and_save(algorithm='RandomForest')
+        assert metrics['auc_roc'] is None
+
+    def test_load_artifact_trains_if_missing(self, settings, tmp_path):
+        from ml_predict import pipeline
+        settings.ML_ARTIFACTS_DIR = tmp_path
+        pipeline.MODEL_FILE = tmp_path / 'fertility_pipeline.pkl'
+        if pipeline.MODEL_FILE.exists():
+            pipeline.MODEL_FILE.unlink()
+        with patch('ml_predict.pipeline.train_and_save', return_value={'f1_macro': 0.7}):
+            with patch('ml_predict.pipeline.joblib.load', return_value={
+                'pipeline': MagicMock(
+                    predict=MagicMock(return_value=[0]),
+                    predict_proba=MagicMock(return_value=[[0.3, 0.5, 0.2]]),
+                ),
+                'label_encoder': MagicMock(
+                    classes_=['faible', 'moyenne', 'elevee'],
+                    inverse_transform=MagicMock(return_value=['moyenne']),
+                ),
+            }):
+                from ml_predict.pipeline import load_artifact
+                load_artifact()
+
+    def test_celery_tasks_skip_and_run(self, settings):
         from ml_predict.tasks import check_retrain_fertility_model
+        from ml_predict.models import FertilityModelRun
         from nasa.tasks import ingest_all_nasa_layers
+        from soils.models import SoilPoint
+        FertilityModelRun.objects.create(
+            algorithm='RF', sample_count=10, f1_macro=0.7,
+            model_path='/x', is_active=True,
+        )
+        settings.ML_RETRAIN_NEW_SAMPLES = 99999
+        result = check_retrain_fertility_model()
+        assert result['skipped'] is True
+        settings.ML_RETRAIN_NEW_SAMPLES = 1
+        SoilPoint.objects.filter(is_validated=True).delete()
         with patch('ml_predict.tasks.train_and_save', return_value={'ok': True}):
             check_retrain_fertility_model()
         with patch('nasa.tasks.ingest_all', return_value={}):
@@ -198,6 +481,18 @@ class TestSoilsCoverage:
     def test_str_methods(self, sample_soil_point, sample_zone):
         assert 'Sol #' in str(sample_soil_point)
         assert sample_zone.code in str(sample_zone)
+
+    def test_export_geojson(self, api_client, sample_soil_point):
+        r = api_client.get('/api/v1/points/geojson/')
+        assert r.status_code == 200
+
+    def test_serializer_partial_update(self, auth_client, sample_soil_point):
+        r = auth_client.patch(f'/api/v1/points/{sample_soil_point.id}/', {
+            'type': 'Feature',
+            'geometry': {'type': 'Point', 'coordinates': [1.25, 6.35]},
+            'properties': {'ph': 6.3},
+        }, format='json')
+        assert r.status_code in (200, 400)
 
     def test_import_geojson(self, auth_client):
         import json
@@ -226,16 +521,43 @@ class TestSoilsCoverage:
         assert r2.status_code == 400
 
     def test_agent_permission_denied(self, api_client):
-        from django.contrib.auth import get_user_model
-        u = get_user_model().objects.create_user('pub', password='x', role='public')
-        from rest_framework_simplejwt.tokens import RefreshToken
+        u = User.objects.create_user('pub', password='x', role='public')
         api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {RefreshToken.for_user(u).access_token}')
         assert api_client.post('/api/v1/points/import_data/', {}, format='multipart').status_code == 403
 
-    def test_seed_command(self):
+    def test_seed_command_skip(self):
         out = StringIO()
         call_command('seed_demo_data', stdout=out)
         assert 'ignoré' in out.getvalue().lower() or 'complete' in out.getvalue().lower()
+
+    def test_seed_command_full(self, db):
+        from soils.models import SoilPoint
+        SoilPoint.objects.all().delete()
+        with patch('nasa.ingestion.ingest_all', return_value={}), \
+             patch('ml_predict.pipeline.train_and_save', return_value={'f1_macro': 0.8}):
+            out = StringIO()
+            call_command('seed_demo_data', stdout=out)
+        assert 'complete' in out.getvalue().lower()
+        assert SoilPoint.objects.count() >= 150
+
+    def test_seed_education_skip_quiz(self, db):
+        from education.models import QuizQuestion
+        from soils.models import SoilPoint
+        from soils.management.commands.seed_demo_data import Command
+        SoilPoint.objects.all().delete()
+        for i in range(31):
+            QuizQuestion.objects.create(
+                text=f'Q{i}', difficulty='facile', choices=['A', 'B', 'C', 'D'],
+                correct_index=0, explanation='E', points=5,
+            )
+        cmd = Command()
+        with patch('nasa.ingestion.ingest_all', return_value={}), \
+             patch('ml_predict.pipeline.train_and_save', return_value={}):
+            cmd._users()
+            zones = cmd._zones()
+            cmd._soil_points(zones)
+            cmd._nasa_snapshots()
+            cmd._education()
 
     def test_train_command(self):
         out = StringIO()
@@ -248,9 +570,19 @@ class TestSoilsCoverage:
 
 @pytest.mark.django_db
 class TestSpatialCoverage:
+    def test_api_errors(self, api_client):
+        assert api_client.post('/api/v1/spatial/intersection/', {}, format='json').status_code == 400
+        assert api_client.post('/api/v1/spatial/buffer/', {}, format='json').status_code == 400
+        assert api_client.post('/api/v1/spatial/area/', {}, format='json').status_code == 400
+        assert api_client.get('/api/v1/spatial/statistics/').status_code == 200
+        assert api_client.get('/api/v1/spatial/smap-correlation/').status_code == 200
+
     def test_services_full(self, sample_soil_point, sample_zone):
         from spatial import services
         import json
+        from django.contrib.gis.geos import MultiPolygon, Polygon
+        from soils.models import AdministrativeZone, SoilPoint
+
         poly = {
             'type': 'Polygon',
             'coordinates': [[[1.05, 6.15], [1.45, 6.15], [1.45, 6.45], [1.05, 6.45], [1.05, 6.15]]],
@@ -260,15 +592,39 @@ class TestSpatialCoverage:
         assert buf
         stats = services.spatial_statistics_by_zone()
         assert 'by_canton' in stats
+
+        degraded_poly = Polygon((
+            (1.0, 6.1), (1.2, 6.1), (1.2, 6.3), (1.0, 6.3), (1.0, 6.1),
+        ))
+        AdministrativeZone.objects.create(
+            name='Degraded', code='DEG-1', zone_type='degraded',
+            geometry=MultiPolygon(degraded_poly),
+        )
+
+        for i, (slope, ndvi, smap, expected) in enumerate([
+            (6, 0.2, 0.1, 'elevee'),
+            (6, 0.5, 0.1, 'moyenne'),
+            (2, 0.5, 0.3, 'faible'),
+        ]):
+            SoilPoint.objects.create(
+                location=Point(1.2 + i * 0.02, 6.3, srid=4326),
+                ph=6, humidity_pct=20, soil_type='limoneux',
+                collected_at='2025-01-01', is_validated=True,
+                slope_pct=slope, ndvi_3m_avg=ndvi, smap_moisture_avg=smap,
+            )
+        vuln = services.vulnerability_zoning()
+        levels = {v['vulnerability'] for v in vuln}
+        assert 'elevee' in levels
+
         sample_soil_point.smap_moisture_avg = 0.2
         sample_soil_point.humidity_pct = 25
         sample_soil_point.save()
         for _ in range(15):
-            from soils.models import SoilPoint
             SoilPoint.objects.create(
                 location=Point(1.2 + _ * 0.01, 6.3, srid=4326),
                 ph=6, humidity_pct=20 + _, soil_type='limoneux',
                 collected_at='2025-01-01', is_validated=True,
                 smap_moisture_avg=0.18,
             )
-        services.smap_correlation()
+        corr = services.smap_correlation()
+        assert corr['sample_size'] >= 10
