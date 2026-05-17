@@ -1,4 +1,12 @@
-const MARITIME_CENTER = [6.4, 1.35];
+import { phColorHex } from './core/phColor.js';
+import {
+  MARITIME_CENTER,
+  buildSoilFiltersQuery,
+  markerStyleForPoint,
+  nasaTileUrl,
+  parseSoilPointsList,
+} from './core/mapUtils.js';
+
 let map, markersLayer, nasaOverlays = {};
 
 const basemaps = {
@@ -15,7 +23,7 @@ const basemaps = {
 };
 
 function phColor(c) {
-  return { red: '#c1121f', yellow: '#e9c46a', green: '#40916c' }[c] || '#666';
+  return phColorHex(c);
 }
 
 function initMap() {
@@ -30,26 +38,17 @@ function initMap() {
 }
 
 async function loadSoilPoints() {
-  const params = new URLSearchParams({ light: '1' });
-  const phMin = document.getElementById('filter-ph-min')?.value;
-  const phMax = document.getElementById('filter-ph-max')?.value;
-  const soilType = document.getElementById('filter-soil-type')?.value;
-  if (phMin) params.set('ph_min', phMin);
-  if (phMax) params.set('ph_max', phMax);
-  if (soilType) params.set('soil_type', soilType);
-  const data = await SigSolsAPI.api('/points/?' + params);
+  const query = buildSoilFiltersQuery({
+    phMin: document.getElementById('filter-ph-min')?.value,
+    phMax: document.getElementById('filter-ph-max')?.value,
+    soilType: document.getElementById('filter-soil-type')?.value,
+  });
+  const data = await SigSolsAPI.api('/points/?' + query);
   markersLayer.clearLayers();
-  const list = data.results || (Array.isArray(data) ? data : data.features || []);
-  list.forEach((props) => {
+  parseSoilPointsList(data).forEach((props) => {
     const coords = [props.lon, props.lat];
-    const color = phColor(props.ph_color);
-    const marker = L.circleMarker([coords[1], coords[0]], {
-      radius: 7,
-      fillColor: color,
-      color: '#333',
-      weight: 1,
-      fillOpacity: 0.85,
-    });
+    const style = markerStyleForPoint(props);
+    const marker = L.circleMarker([coords[1], coords[0]], style);
     marker.bindPopup(`
       <strong>Point #${props.id}</strong><br/>
       pH: ${props.ph} · Humidité: ${props.humidity_pct}%<br/>
@@ -77,7 +76,7 @@ function toggleNasaLayer(product, on) {
   if (on && !nasaOverlays[product]) {
     const today = new Date().toISOString().slice(0, 10);
     nasaOverlays[product] = L.tileLayer(
-      `${window.location.origin}/api/v1/nasa/tiles/${product}/${today}/{z}/{x}/{y}.png`,
+      nasaTileUrl(window.location.origin, product, today),
       { opacity: 0.35 },
     ).addTo(map);
   } else if (!on && nasaOverlays[product]) {
