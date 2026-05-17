@@ -46,4 +46,19 @@ jobs:
           DEBUG: '1'
         run: |
           python manage.py migrate --noinput
-          pytest --cov=apps --cov-fail-under=50
+          pytest apps/ --cov=apps --cov-fail-under=70
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Unit tests frontend
+        run: |
+          npm install
+          npm test
