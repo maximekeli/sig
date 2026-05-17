@@ -16,7 +16,7 @@ seed:
 	docker compose exec web python manage.py seed_demo_data
 
 test:
-	docker compose exec web pytest -v --cov=apps --cov-report=term-missing
+	docker compose exec web pytest apps/ -v --cov=apps --cov-report=term-missing --cov-fail-under=70
 
 lint:
 	docker compose exec web flake8 apps config --max-line-length=120

@@ -28,20 +28,20 @@ def test_proximity_missing_params(api_client):
 
 
 @pytest.mark.django_db
-def test_intersection_api(api_client, sample_zone):
+def test_intersection_api(auth_client, sample_zone):
     geom = {
         'type': 'Polygon',
         'coordinates': [[[1.1, 6.2], [1.4, 6.2], [1.4, 6.4], [1.1, 6.4], [1.1, 6.2]]],
     }
-    r = api_client.post('/api/v1/spatial/intersection/', {'geometry': geom}, format='json')
+    r = auth_client.post('/api/v1/spatial/intersection/', {'geometry': geom}, format='json')
     assert r.status_code == 200
     assert r.json()['count'] >= 1
 
 
 @pytest.mark.django_db
-def test_buffer_api(api_client):
+def test_buffer_api(auth_client):
     geom = {'type': 'Point', 'coordinates': [1.25, 6.35]}
-    r = api_client.post('/api/v1/spatial/buffer/', {
+    r = auth_client.post('/api/v1/spatial/buffer/', {
         'geometry': geom, 'distance_m': 500,
     }, format='json')
     assert r.status_code == 200
@@ -49,12 +49,12 @@ def test_buffer_api(api_client):
 
 
 @pytest.mark.django_db
-def test_area_api(api_client):
+def test_area_api(auth_client):
     geom = {
         'type': 'Polygon',
         'coordinates': [[[1.0, 6.0], [1.01, 6.0], [1.01, 6.01], [1.0, 6.01], [1.0, 6.0]]],
     }
-    r = api_client.post('/api/v1/spatial/area/', {'geometry': geom}, format='json')
+    r = auth_client.post('/api/v1/spatial/area/', {'geometry': geom}, format='json')
     assert r.status_code == 200
     assert r.json()['area_m2'] > 0
 
