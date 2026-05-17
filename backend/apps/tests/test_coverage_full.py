@@ -459,22 +459,10 @@ class TestMlCoverage:
         assert 'elevee' in set(df['fertility_class'])
 
     def test_pipeline_xgboost_native(self):
+        pytest.importorskip('xgboost')
         import pandas as pd
-        import types
-        from sklearn.ensemble import RandomForestClassifier
         from ml_predict.pipeline import train_and_save
-
-        class FakeXGBClassifier(RandomForestClassifier):
-            def __init__(self, n_estimators=100, max_depth=6, verbosity=0):
-                self.verbosity = verbosity
-                super().__init__(
-                    n_estimators=n_estimators, max_depth=max_depth, random_state=42,
-                )
-
-        fake_xgb = types.ModuleType('xgboost')
-        fake_xgb.XGBClassifier = FakeXGBClassifier
-        with patch.dict(sys.modules, {'xgboost': fake_xgb}), \
-             patch('ml_predict.pipeline.build_training_dataframe') as m:
+        with patch('ml_predict.pipeline.build_training_dataframe') as m:
             m.return_value = pd.DataFrame([{
                 'ph': 6, 'humidity_pct': 30, 'soil_type': 'limoneux', 'slope_pct': 3,
                 'ndvi_3m_avg': 0.4, 'smap_moisture_avg': 0.2, 'temperature': 28,
