@@ -460,14 +460,15 @@ class TestMlCoverage:
 
     def test_pipeline_xgboost_native(self):
         import pandas as pd
+        import types
         from sklearn.ensemble import RandomForestClassifier
         from ml_predict.pipeline import train_and_save
-        import types
 
         class FakeXGBClassifier(RandomForestClassifier):
-            def __init__(self, *args, **kwargs):
-                kwargs.pop('verbosity', None)
-                super().__init__(*args, **kwargs)
+            def __init__(self, n_estimators=100, max_depth=6, verbosity=0):
+                super().__init__(
+                    n_estimators=n_estimators, max_depth=max_depth, random_state=42,
+                )
 
         fake_xgb = types.ModuleType('xgboost')
         fake_xgb.XGBClassifier = FakeXGBClassifier
@@ -576,13 +577,14 @@ class TestSoilsCoverage:
     def test_serializer_validation_error(self, sample_soil_point):
         from rest_framework import serializers as drf_serializers
         from soils.serializers import SoilPointSerializer
-        ser = SoilPointSerializer(
-            instance=sample_soil_point,
-            data={'ph': 2.0, 'humidity_pct': sample_soil_point.humidity_pct},
-            partial=True,
-        )
+        ser = SoilPointSerializer(instance=sample_soil_point)
         with pytest.raises(drf_serializers.ValidationError) as exc:
-            ser.is_valid(raise_exception=True)
+            ser.validate({
+                'ph': 2.0,
+                'humidity_pct': sample_soil_point.humidity_pct,
+                'soil_type': sample_soil_point.soil_type,
+                'location': sample_soil_point.location,
+            })
         assert 'ph' in exc.value.detail
 
     def test_import_geojson(self, auth_client):
