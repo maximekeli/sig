@@ -1,9 +1,9 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / 'apps'))
-
 import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / 'apps'))
 
 
 @pytest.fixture
@@ -13,6 +13,68 @@ def api_client():
 
 
 @pytest.fixture
-def django_db_setup(django_db_setup, django_db_blocker):
-    """Allow DB access in tests."""
-    pass
+def agent_user(db):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    user = User.objects.create_user(
+        username='test_agent',
+        password='testpass123',
+        role=User.Role.AGENT,
+        is_staff=True,
+    )
+    return user
+
+
+@pytest.fixture
+def admin_user(db):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    return User.objects.create_superuser(
+        username='test_admin',
+        password='testpass123',
+        role=User.Role.ADMIN,
+    )
+
+
+@pytest.fixture
+def auth_client(api_client, agent_user):
+    from rest_framework_simplejwt.tokens import RefreshToken
+    token = RefreshToken.for_user(agent_user)
+    api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {token.access_token}')
+    return api_client
+
+
+@pytest.fixture
+def sample_soil_point(db):
+    from datetime import date
+    from django.contrib.gis.geos import Point
+    from soils.models import SoilPoint
+    return SoilPoint.objects.create(
+        location=Point(1.25, 6.35, srid=4326),
+        ph=6.2,
+        humidity_pct=35.0,
+        soil_type='limoneux',
+        fertility_class='moyenne',
+        fertility_score=0.55,
+        ndvi_3m_avg=0.45,
+        smap_moisture_avg=0.22,
+        slope_pct=3.0,
+        collected_at=date(2025, 6, 1),
+        is_validated=True,
+        source='test',
+    )
+
+
+@pytest.fixture
+def sample_zone(db):
+    from django.contrib.gis.geos import MultiPolygon, Polygon
+    from soils.models import AdministrativeZone
+    poly = Polygon((
+        (1.0, 6.1), (1.5, 6.1), (1.5, 6.5), (1.0, 6.5), (1.0, 6.1),
+    ))
+    return AdministrativeZone.objects.create(
+        name='Canton Test',
+        code='TEST-01',
+        zone_type='canton',
+        geometry=MultiPolygon(poly),
+    )
