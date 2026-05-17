@@ -18,6 +18,11 @@ seed:
 test:
 	docker compose exec web pytest apps/ -v --cov=apps --cov-report=term-missing --cov-fail-under=70
 
+test-frontend:
+	cd frontend && npm install && npm test
+
+test-all: test test-frontend
+
 lint:
 	docker compose exec web flake8 apps config --max-line-length=120
 
