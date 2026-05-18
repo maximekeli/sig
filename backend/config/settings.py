@@ -139,10 +139,6 @@ if _replica_host:
     }
     DATABASE_ROUTERS = ['config.db_router.ReadReplicaRouter']
 
-REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-REDIS_CACHE_URL = os.environ.get('REDIS_CACHE_URL', REDIS_URL.replace('/0', '/1'))
-REDIS_CHANNELS_URL = os.environ.get('REDIS_CHANNELS_URL', REDIS_URL.replace('/0', '/2'))
-
 if os.environ.get('DJANGO_TEST', '0') == '1':
     CACHES = {
         'default': {
