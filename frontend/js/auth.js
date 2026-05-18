@@ -28,6 +28,7 @@ function renderAuthUI() {
   const user = SigSolsAPI.getUser();
   const authed = SigSolsAPI.isAuthenticated();
 
+  const adminNav = document.querySelector('.nav-btn[data-view="admin"]');
   if (authed && user) {
     guest?.classList.add('hidden');
     logged?.classList.remove('hidden');
@@ -35,9 +36,36 @@ function renderAuthUI() {
     if (label) {
       label.textContent = `${user.username} · ${ROLE_LABELS[user.role] || user.role}`;
     }
+    adminNav?.classList.toggle('hidden', user.role !== 'admin');
+    window.SigSolsFeatures?.applyPublicMode();
+    window.SigSolsFeatures?.connectWebSocket();
+    window.SigSolsFeatures?.loadAlerts();
+    window.SigSolsFeatures?.loadNotifications();
   } else {
     guest?.classList.remove('hidden');
     logged?.classList.add('hidden');
+    adminNav?.classList.add('hidden');
+  }
+}
+
+async function handleForgotPassword() {
+  const email = prompt('Email du compte :');
+  if (!email) return;
+  const msg = $('auth-message');
+  try {
+    await SigSolsAPI.api('/platform/password/reset/', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+    if (msg) {
+      msg.textContent = 'Si un compte existe, un email a été envoyé (voir logs serveur en dev).';
+      msg.className = 'auth-message success';
+    }
+  } catch (e) {
+    if (msg) {
+      msg.textContent = e.message;
+      msg.className = 'auth-message error';
+    }
   }
 }
 
@@ -160,6 +188,7 @@ async function initAuth() {
     btn.addEventListener('click', () => showAuthTab(btn.dataset.authTab));
   });
   $('btn-login')?.addEventListener('click', handleLogin);
+  $('btn-forgot-pass')?.addEventListener('click', handleForgotPassword);
   $('btn-register')?.addEventListener('click', handleRegister);
   $('btn-logout')?.addEventListener('click', handleLogout);
   $('btn-profile')?.addEventListener('click', openProfileModal);

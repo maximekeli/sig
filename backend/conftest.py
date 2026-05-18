@@ -40,6 +40,14 @@ def admin_user(db):
 
 
 @pytest.fixture
+def admin_client(api_client, admin_user):
+    from rest_framework_simplejwt.tokens import RefreshToken
+    token = RefreshToken.for_user(admin_user)
+    api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {token.access_token}')
+    return api_client
+
+
+@pytest.fixture
 def auth_client(api_client, agent_user):
     from rest_framework_simplejwt.tokens import RefreshToken
     token = RefreshToken.for_user(agent_user)

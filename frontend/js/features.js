@@ -107,10 +107,40 @@ export async function loadAlerts() {
 export async function loadNotifications() {
   const el = document.getElementById('notifications-list');
   if (!el || !SigSolsAPI.isAuthenticated()) return;
-  const data = await SigSolsAPI.api('/platform/notifications/');
-  el.innerHTML = (data.results || data).map?.((n) => n.title
-    ? `<li class="${n.is_read ? '' : 'unread'}"><strong>${n.title}</strong> — ${n.message}</li>`
-    : '').join('') || (Array.isArray(data) ? data.map((n) => `<li>${n.title}</li>`).join('') : '');
+  try {
+    const data = await SigSolsAPI.api('/platform/notifications/');
+    const items = data.results || (Array.isArray(data) ? data : []);
+    el.innerHTML = items.length
+      ? items.map((n) => `<li class="${n.is_read ? '' : 'unread'}"><strong>${n.title}</strong> — ${n.message}</li>`).join('')
+      : '<li>Aucune notification.</li>';
+  } catch {
+    el.innerHTML = '<li>Notifications indisponibles.</li>';
+  }
+}
+
+export async function loadPendingValidation() {
+  const el = document.getElementById('adm-pending-list');
+  if (!el) return;
+  try {
+    const data = await SigSolsAPI.api('/validation/pending/');
+    el.innerHTML = (data.results || []).map(
+      (p) => `<li>#${p.id} pH ${p.ph} — ${p.soil_type}
+        <button type="button" onclick="SigSolsFeatures.validatePoint(${p.id}, 'validate')">Valider</button>
+        <button type="button" onclick="SigSolsFeatures.validatePoint(${p.id}, 'reject')">Rejeter</button></li>`,
+    ).join('') || '<li>Aucun point en attente.</li>';
+  } catch {
+    el.innerHTML = '<li>Accès réservé aux administrateurs.</li>';
+  }
+}
+
+export async function validatePoint(id, action) {
+  await SigSolsAPI.api(`/points/${id}/validate_point/`, {
+    method: 'POST',
+    body: JSON.stringify({ action }),
+  });
+  loadPendingValidation();
+  loadAdminDashboard();
+  SigSolsMap.loadSoilPoints();
 }
 
 export async function loadAdminDashboard() {
@@ -197,6 +227,8 @@ window.SigSolsFeatures = {
   loadAlerts,
   loadNotifications,
   loadAdminDashboard,
+  loadPendingValidation,
+  validatePoint,
   showTrajectory,
   connectWebSocket,
   queueOfflinePoint,

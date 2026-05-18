@@ -247,6 +247,21 @@ main { flex: 1; position: relative; }
 .soil-marker-yellow { background: var(--yellow); }
 .soil-marker-green { background: var(--green-light); }
 
+.compact-list { list-style: none; padding: 0; margin: 0.5rem 0; font-size: 0.85rem; max-height: 120px; overflow-y: auto; }
+.compact-list li { padding: 0.35rem 0; border-bottom: 1px solid #eee; }
+.compact-list li.unread { font-weight: 600; color: var(--green); }
+.alert-elevee { color: var(--red); }
+.alert-moyenne { color: #e76f51; }
+.btn-link { background: none; border: none; color: #90e0ef; cursor: pointer; text-decoration: underline; font-size: 0.85rem; padding: 0.25rem 0; }
+.admin-panel { max-width: 960px; margin: 2rem auto; padding: 2rem; background: var(--card); border-radius: 12px; }
+.audit-list { max-height: 240px; }
+body.public-mode .sidebar label:not(:has(#filter-validated)),
+body.public-mode #pred-result,
+body.public-mode #btn-predict { opacity: 0.5; pointer-events: none; }
+.auth-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); }
+.auth-card { background: var(--card); padding: 2rem; border-radius: 12px; max-width: 400px; width: 90%; }
+.auth-card input, .auth-card button { display: block; width: 100%; margin: 0.5rem 0; padding: 0.6rem; }
+
 @media (max-width: 768px) {
   #view-map { flex-direction: column; }
   .sidebar { width: 100%; max-height: 200px; }
