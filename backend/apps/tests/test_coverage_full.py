@@ -28,22 +28,26 @@ class TestAccountsCoverage:
         assert auth_client.post('/api/v1/auth/logout/').status_code == 200
 
     def test_auth_full_flow(self, api_client, auth_client, admin_client, agent_user, admin_user):
+        import uuid
         from accounts.models import UserLocation
         from accounts.services import list_live_locations, upsert_user_location
 
+        suffix = uuid.uuid4().hex[:8]
         assert api_client.post('/api/v1/auth/register/', {
-            'username': 'newuser1', 'email': 'n@t.local',
+            'username': f'u1_{suffix}', 'email': f'n1_{suffix}@t.local',
             'password': 'pass12345', 'password_confirm': 'pass12345',
             'role': 'agent',
         }, format='json').status_code == 201
         assert api_client.post('/api/v1/auth/register/', {
-            'username': 'newuser2', 'password': 'a', 'password_confirm': 'b',
+            'username': f'u2_{suffix}', 'password': 'a', 'password_confirm': 'b',
         }, format='json').status_code == 400
-        assert api_client.post('/api/v1/auth/register/', {
-            'username': 'newuser3', 'email': 'a@b.c',
+        r_admin = api_client.post('/api/v1/auth/register/', {
+            'username': f'u3_{suffix}', 'email': f'a_{suffix}@b.c',
             'password': 'pass12345', 'password_confirm': 'pass12345',
             'role': 'admin',
-        }, format='json').status_code == 201
+        }, format='json')
+        assert r_admin.status_code == 201
+        assert r_admin.json()['user']['role'] == 'public'
 
         tok = api_client.post('/api/v1/auth/token/', {
             'username': 'test_agent', 'password': 'testpass123',
@@ -224,10 +228,11 @@ class TestNasaCoverage:
         assert r['Content-Type'] == 'image/png'
 
     def test_catalog_summary(self, api_client, db):
+        from django.contrib.gis.geos import Polygon
         from nasa.models import NasaLayerCatalog
         NasaLayerCatalog.objects.create(
             product='MOD13Q1', layer_name='ndvi', acquisition_date=date.today(),
-            bbox=[0, 0, 1, 1], resolution_m=250,
+            bbox=Polygon.from_bbox((0.9, 6, 1.8, 6.8)),
         )
         r = api_client.get('/api/v1/nasa/catalog/summary/')
         assert r.status_code == 200
@@ -492,10 +497,10 @@ class TestMlCoverage:
         assert r.status_code == 200
         assert r.json()['algorithm'] == 'RandomForest'
 
-    def test_predict_and_batch_errors(self, api_client):
+    def test_predict_and_batch_errors(self, api_client, auth_client):
         assert api_client.post('/api/v1/ml/predict/', {}, format='json').status_code == 400
-        assert api_client.post('/api/v1/ml/predict/batch/', {}, format='json').status_code == 400
-        assert api_client.post('/api/v1/ml/predict/batch/export/', {}, format='json').status_code == 400
+        assert auth_client.post('/api/v1/ml/predict/batch/', {}, format='json').status_code == 400
+        assert auth_client.post('/api/v1/ml/predict/batch/export/', {}, format='json').status_code == 400
 
     def test_pipeline_xgboost_and_synthetic(self):
         from ml_predict.pipeline import _synthetic_augment, train_and_save
