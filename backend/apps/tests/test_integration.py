@@ -1,9 +1,6 @@
 """Tests d'intégration API — parcours complets."""
 import pytest
-from django.contrib.gis.geos import Point
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from soils.models import SoilPoint
 
 
 @pytest.mark.django_db
