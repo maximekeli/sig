@@ -18,7 +18,6 @@ class Command(BaseCommand):
         parser.add_argument('--noinput', action='store_true')
 
     def handle(self, *args, **options):
-        from education.models import PedagogicalSheet, QuizQuestion
         from nasa.ingestion import ingest_all
 
         if SoilPoint.objects.count() >= 150:

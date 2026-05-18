@@ -1,9 +1,5 @@
-import json
-
 import pytest
-from django.contrib.gis.geos import Point, Polygon
 
-from soils.models import AdministrativeZone, SoilPoint
 from spatial import services
 
 

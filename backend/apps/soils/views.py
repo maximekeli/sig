@@ -4,7 +4,7 @@ import json
 from django.contrib.gis.geos import GEOSGeometry
 from django.db.models import Avg, Count
 from django.http import HttpResponse
-from rest_framework import generics, status, viewsets
+from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly

@@ -1,6 +1,5 @@
 """Tests pour couverture 100 % du code applicatif."""
-import sys
-from datetime import date, timedelta
+from datetime import date
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
@@ -8,7 +7,7 @@ import numpy as np
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from django.contrib.gis.geos import Point, Polygon
+from django.contrib.gis.geos import Point
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -240,8 +239,9 @@ class TestNasaCoverage:
 
         with patch('builtins.__import__', side_effect=fake_import):
             from nasa.stac_client import search_granules
-            assert search_granules('MOD13Q1', date.today(), date.today(),
-                                  (0.9, 6, 1.8, 6.8)) == []
+            assert search_granules(
+                'MOD13Q1', date.today(), date.today(), (0.9, 6, 1.8, 6.8),
+            ) == []
 
     @patch('pystac_client.Client.open')
     def test_stac_search_success(self, mock_open):
@@ -253,8 +253,9 @@ class TestNasaCoverage:
         item.self_href = 'http://example.com/item'
         mock_open.return_value.search.return_value.items.return_value = [item]
         from nasa.stac_client import search_granules
-        results = search_granules('MOD13Q1', date.today(), date.today(),
-                                (0.9, 6, 1.8, 6.8), limit=1)
+        results = search_granules(
+            'MOD13Q1', date.today(), date.today(), (0.9, 6, 1.8, 6.8), limit=1,
+        )
         assert len(results) == 1
         assert results[0]['id'] == 'granule-1'
 
@@ -528,7 +529,6 @@ class TestMlCoverage:
         from ml_predict.tasks import check_retrain_fertility_model
         from ml_predict.models import FertilityModelRun
         from nasa.tasks import ingest_all_nasa_layers
-        from soils.models import SoilPoint
         FertilityModelRun.objects.create(
             algorithm='RF', sample_count=10, f1_macro=0.7,
             model_path='/x', is_active=True,

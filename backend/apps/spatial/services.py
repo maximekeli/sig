@@ -2,7 +2,7 @@
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import GEOSGeometry, Point
 from django.contrib.gis.measure import D
-from django.db.models import Avg, Count, Sum
+from django.db.models import Avg
 
 from soils.models import AdministrativeZone, SoilPoint
 
