@@ -139,17 +139,25 @@ REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 REDIS_CACHE_URL = os.environ.get('REDIS_CACHE_URL', REDIS_URL.replace('/0', '/1'))
 REDIS_CHANNELS_URL = os.environ.get('REDIS_CHANNELS_URL', REDIS_URL.replace('/0', '/2'))
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': REDIS_CACHE_URL,
-        'KEY_PREFIX': os.environ.get('CACHE_KEY_PREFIX', 'sigsols'),
-        'TIMEOUT': int(os.environ.get('CACHE_DEFAULT_TIMEOUT', '300')),
-        'OPTIONS': {
-            'max_connections': int(os.environ.get('REDIS_MAX_CONNECTIONS', '100')),
+if os.environ.get('DJANGO_TEST', '0') == '1':
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'sigsols-test',
         },
-    },
-}
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_CACHE_URL,
+            'KEY_PREFIX': os.environ.get('CACHE_KEY_PREFIX', 'sigsols'),
+            'TIMEOUT': int(os.environ.get('CACHE_DEFAULT_TIMEOUT', '300')),
+            'OPTIONS': {
+                'max_connections': int(os.environ.get('REDIS_MAX_CONNECTIONS', '100')),
+            },
+        },
+    }
 
 AUTH_USER_MODEL = 'accounts.User'
 

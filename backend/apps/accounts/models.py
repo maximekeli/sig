@@ -28,6 +28,10 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Utilisateur'
         verbose_name_plural = 'Utilisateurs'
+        indexes = [
+            models.Index(fields=['role', 'is_active']),
+            models.Index(fields=['date_joined']),
+        ]
 
     @property
     def is_administrator(self):
@@ -79,4 +83,7 @@ class UserLocationHistory(models.Model):
 
     class Meta:
         ordering = ['-recorded_at']
-        indexes = [models.Index(fields=['user', 'recorded_at'])]
+        indexes = [
+            models.Index(fields=['user', 'recorded_at']),
+            models.Index(fields=['recorded_at']),
+        ]

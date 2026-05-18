@@ -38,15 +38,24 @@ def award_badges(user):
 
 
 def weekly_leaderboard(limit=10):
+    """Agrégation SQL — adapté à des millions de sessions quiz."""
+    from django.db.models import Sum
+
     week_start = timezone.now() - timedelta(days=7)
-    scores = {}
-    for session in QuizSession.objects.filter(started_at__gte=week_start, completed=True):
-        uid = session.user.pk
-        scores[uid] = scores.get(uid, 0) + session.score
-    ranked = sorted(scores.items(), key=lambda x: -x[1])[:limit]
+    ranked = (
+        QuizSession.objects.filter(started_at__gte=week_start, completed=True)
+        .values('user_id')
+        .annotate(total=Sum('score'))
+        .order_by('-total')[:limit]
+    )
+    user_ids = [row['user_id'] for row in ranked]
+    users = User.objects.filter(pk__in=user_ids).only('id', 'username', 'pseudonym')
+    users_by_id = {u.pk: u for u in users}
     result = []
-    for uid, score in ranked:
-        user = User.objects.get(pk=uid)
+    for row in ranked:
+        user = users_by_id.get(row['user_id'])
+        if not user:
+            continue
         name = user.pseudonym or user.username[:3] + '***'
-        result.append({'pseudonym': name, 'score': score})
+        result.append({'pseudonym': name, 'score': row['total']})
     return result

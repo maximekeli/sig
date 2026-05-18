@@ -58,6 +58,12 @@ class QuizSession(models.Model):
     started_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'completed', 'started_at']),
+            models.Index(fields=['completed', 'started_at']),
+        ]
+
 
 class UserBadge(models.Model):
     class BadgeType(models.TextChoices):

@@ -1,8 +1,12 @@
 """Pytest fixtures — PYTHONPATH: backend/apps (see pytest.ini)."""
+import os
 import sys
 from pathlib import Path
 
 import pytest
+
+os.environ.setdefault('DJANGO_TEST', '1')
+os.environ.setdefault('CELERY_TASK_ALWAYS_EAGER', '1')
 
 _APPS = Path(__file__).resolve().parent / 'apps'
 if str(_APPS) not in sys.path:

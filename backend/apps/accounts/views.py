@@ -161,9 +161,4 @@ class LiveLocationsView(APIView):
     def get(self, request):
         include_self = request.query_params.get('include_self', '0') == '1'
         exclude = None if include_self else request.user
-        locations = list_live_locations(exclude_user=exclude)
-        return Response({
-            'count': locations.count(),
-            'stale_minutes': settings.LOCATION_STALE_MINUTES,
-            'users': UserLocationSerializer(locations, many=True).data,
-        })
+        return Response(get_cached_live_locations(exclude_user=exclude))

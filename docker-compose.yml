@@ -16,6 +16,11 @@ services:
 
   redis:
     image: redis:7-alpine
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -37,7 +42,11 @@ services:
     environment:
       POSTGRES_HOST: db
       REDIS_URL: redis://redis:6379/0
+      REDIS_CACHE_URL: redis://redis:6379/1
+      REDIS_CHANNELS_URL: redis://redis:6379/2
       CELERY_BROKER_URL: redis://redis:6379/0
+      DB_CONN_MAX_AGE: "60"
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-4}
       CSRF_TRUSTED_ORIGINS: http://localhost:8081,http://127.0.0.1:8081,http://localhost,http://127.0.0.1
       NASA_EARTHDATA_USERNAME: ${NASA_EARTHDATA_USERNAME:-}
       NASA_EARTHDATA_PASSWORD: ${NASA_EARTHDATA_PASSWORD:-}
@@ -51,7 +60,7 @@ services:
   celery:
     image: dusol_projet-web
     entrypoint: []
-    command: celery -A config worker -l info
+    command: celery -A config worker -l info --concurrency=${CELERY_CONCURRENCY:-8}
     volumes:
       - ./backend:/app
       - ./data/nasa_cache:/app/data/nasa_cache

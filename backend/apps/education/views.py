@@ -19,7 +19,11 @@ from .serializers import (
     QuizQuestionPublicSerializer,
     UserBadgeSerializer,
 )
+from config.throttling import QuizUserThrottle
+
+from .quiz_cache import get_cached_leaderboard, get_cached_quiz_stats, invalidate_quiz_stats
 from .services import award_badges, weekly_leaderboard
+from .tasks import refresh_leaderboard_cache
 
 
 class PedagogicalSheetViewSet(viewsets.ReadOnlyModelViewSet):
@@ -33,22 +37,12 @@ class QuizStatsView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        levels = ('facile', 'moyen', 'difficile')
-        by_level = {
-            d: QuizQuestion.objects.filter(is_active=True, difficulty=d).count()
-            for d in levels
-        }
-        total = QuizQuestion.objects.filter(is_active=True).count()
-        return Response({
-            'by_level': by_level,
-            'total': total,
-            'per_level_target': 100,
-            'session_options': [5, 10, 15, 20, 30, 50, 100],
-        })
+        return Response(get_cached_quiz_stats())
 
 
 class QuizStartView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [QuizUserThrottle]
 
     def post(self, request):
         difficulty = request.data.get('difficulty', 'facile')
@@ -75,6 +69,7 @@ class QuizStartView(APIView):
 
 class QuizSubmitAnswerView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [QuizUserThrottle]
 
     def post(self, request, session_id):
         serializer = QuizAnswerSerializer(data=request.data)
@@ -125,6 +120,8 @@ class QuizFinishView(APIView):
             profile.difficult_sessions_passed += 1
             profile.save()
         new_badges = award_badges(request.user)
+        refresh_leaderboard_cache.delay()
+        invalidate_quiz_stats()
         return Response({
             'final_score': session.score,
             'badges_earned': new_badges,
@@ -138,7 +135,7 @@ class LeaderboardView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        return Response({'top_10': weekly_leaderboard(10)})
+        return Response(get_cached_leaderboard())
 
 
 class QuizShareView(APIView):
