@@ -28,7 +28,6 @@ else:
     ]
 
 INSTALLED_APPS = [
-    'daphne',
     'channels',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -48,7 +47,7 @@ INSTALLED_APPS = [
     'nasa',
     'ml_predict',
     'education',
-    'platform',
+    'sig_platform',
 ]
 
 MIDDLEWARE = [
@@ -204,7 +203,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'sig-sols@disia.tg')
 
 CELERY_BEAT_SCHEDULE = {
     'check-drought-alerts': {
-        'task': 'platform.tasks.check_drought_alerts',
+        'task': 'sig_platform.tasks.check_drought_alerts',
         'schedule': 3600.0,
     },
 }

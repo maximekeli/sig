@@ -735,7 +735,7 @@ class TestPlatformExtensions:
         assert 'users_total' in r.data
 
     def test_notifications_and_alerts(self, auth_client, agent_user):
-        from platform.models import DroughtAlert, Notification
+        from sig_platform.models import DroughtAlert, Notification
         Notification.objects.create(
             user=agent_user, title='Test', message='Hello', level='info',
         )
@@ -748,7 +748,7 @@ class TestPlatformExtensions:
         agent_user.save()
         r = api_client.post('/api/v1/platform/password/reset/', {'email': agent_user.email}, format='json')
         assert r.status_code == 200
-        from platform.models import PasswordResetToken
+        from sig_platform.models import PasswordResetToken
         prt = PasswordResetToken.objects.filter(user=agent_user).first()
         assert prt
         r2 = api_client.post('/api/v1/platform/password/reset/confirm/', {
@@ -786,7 +786,7 @@ class TestPlatformExtensions:
         assert r.status_code == 200
 
     def test_batch_predict_and_zone_report(self, auth_client, admin_client, sample_soil_point, sample_zone):
-        from platform.tasks import check_drought_alerts
+        from sig_platform.tasks import check_drought_alerts
 
         sample_soil_point.ndvi_3m_avg = 0.2
         sample_soil_point.smap_moisture_avg = 0.1
@@ -804,3 +804,41 @@ class TestPlatformExtensions:
         assert r2.status_code == 200
         assert admin_client.get(f'/api/v1/platform/reports/zone/{sample_zone.code}/').status_code == 200
         assert admin_client.get('/api/v1/platform/audit/').status_code == 200
+
+    def test_notification_mark_read(self, auth_client, agent_user):
+        from sig_platform.models import Notification
+        n = Notification.objects.create(
+            user=agent_user, title='Lire', message='M', level='info',
+        )
+        assert auth_client.post(f'/api/v1/platform/notifications/{n.id}/read/').status_code == 200
+        assert auth_client.post('/api/v1/platform/notifications/99999/read/').status_code == 404
+
+    def test_soil_point_actions(self, auth_client, admin_client, sample_soil_point):
+        r = auth_client.post('/api/v1/points/', {
+            'type': 'Feature',
+            'geometry': {'type': 'Point', 'coordinates': [1.26, 6.36]},
+            'properties': {
+                'ph': 6.0, 'humidity_pct': 30, 'soil_type': 'limoneux',
+                'collected_at': '2025-06-01', 'parent_point': sample_soil_point.id,
+            },
+        }, format='json')
+        assert r.status_code in (201, 400)
+        assert auth_client.get(
+            f'/api/v1/points/{sample_soil_point.id}/predict_fertility/',
+        ).status_code == 200
+        admin_client.post(
+            f'/api/v1/points/{sample_soil_point.id}/validate_point/',
+            {'action': 'reject'}, format='json',
+        )
+
+    def test_proximity_and_drought_serializer(self, api_client, sample_soil_point):
+        from sig_platform.serializers import DroughtAlertSerializer
+        from sig_platform.models import DroughtAlert
+
+        assert api_client.get(
+            '/api/v1/spatial/proximity/?lon=1.25&lat=6.35&radius_m=1000',
+        ).status_code == 200
+        alert = DroughtAlert.objects.create(message='x', severity='moyenne', soil_point=sample_soil_point)
+        data = DroughtAlertSerializer(alert).data
+        assert data['lat'] is not None
+        assert api_client.get('/api/v1/spatial/proximity/').status_code == 400

@@ -10,7 +10,7 @@ User = get_user_model()
 @shared_task
 def check_drought_alerts():
     """Détecte points à NDVI bas ou SMAP bas et crée alertes + notifications."""
-    from platform.models import DroughtAlert, Notification
+    from sig_platform.models import DroughtAlert, Notification
 
     created = 0
     agents = User.objects.filter(role__in=['agent', 'admin'], is_active=True)

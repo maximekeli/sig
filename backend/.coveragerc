@@ -2,6 +2,8 @@
 source = apps
 omit =
     */migrations/*
+    */tests/*
+    apps/tests/test_integration.py
 
 [report]
 precision = 2

@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.permissions import IsAdministrator, IsAgentOrAdmin
-from platform.audit import log_action
+from sig_platform.audit import log_action
 
 from .models import SoilPoint, SoilPointNote
 from .serializers_notes import SoilPointNoteSerializer

@@ -14,6 +14,11 @@ python manage.py collectstatic --noinput
 echo "==> Données démo (si base vide)..."
 python manage.py seed_demo_data 2>/dev/null || true
 
+if [ "$#" -gt 0 ]; then
+  echo "==> Commande personnalisée: $*"
+  exec "$@"
+fi
+
 echo "==> Démarrage Gunicorn..."
 exec gunicorn config.wsgi:application \
   --bind 0.0.0.0:8000 \
