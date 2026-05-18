@@ -10,6 +10,10 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
       SigSolsQuiz.loadBadges();
     }
     if (btn.dataset.view === 'sheets') SigSolsQuiz.loadSheets();
+    if (btn.dataset.view === 'admin') {
+      SigSolsFeatures.loadAdminDashboard();
+      SigSolsFeatures.loadPendingValidation?.();
+    }
   });
 });
 
@@ -26,11 +30,39 @@ document.getElementById('share-location')?.addEventListener('change', (e) => {
   if (e.target.checked && SigSolsAPI.isAuthenticated()) SigSolsMap.startLiveLocation();
   else if (!e.target.checked) SigSolsMap.stopLiveLocation();
 });
+document.getElementById('btn-heatmap')?.addEventListener('click', () => {
+  const m = SigSolsMap.getMap?.();
+  if (m) SigSolsFeatures.toggleHeatmap(m, 'ph');
+});
+document.getElementById('btn-near-me')?.addEventListener('click', () => {
+  const m = SigSolsMap.getMap?.();
+  if (m) SigSolsFeatures.nearMe(m);
+});
+document.getElementById('btn-trajectory')?.addEventListener('click', () => {
+  const m = SigSolsMap.getMap?.();
+  if (m) SigSolsFeatures.showTrajectory(m);
+});
+document.getElementById('btn-zone-report')?.addEventListener('click', () => {
+  const code = document.getElementById('adm-zone-code')?.value?.trim();
+  if (code) window.open(`/api/v1/platform/reports/zone/${encodeURIComponent(code)}/`, '_blank');
+});
 document.getElementById('btn-quiz-start')?.addEventListener('click', () => SigSolsQuiz.startQuiz());
 document.getElementById('btn-quiz-finish')?.addEventListener('click', () => SigSolsQuiz.finishQuiz());
+
+window.addEventListener('online', () => SigSolsFeatures.syncOfflineQueue());
 
 document.addEventListener('DOMContentLoaded', async () => {
   SigSolsMap.initMap();
   await SigSolsAuth.initAuth();
-  if (SigSolsAPI.isAuthenticated()) SigSolsMap.loadSoilPoints();
+  SigSolsFeatures.applyPublicMode();
+  if (SigSolsAPI.isAuthenticated()) {
+    SigSolsMap.loadSoilPoints();
+    SigSolsFeatures.loadAlerts();
+    SigSolsFeatures.loadNotifications();
+    SigSolsFeatures.connectWebSocket();
+    SigSolsFeatures.syncOfflineQueue();
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/frontend/sw.js').catch(() => {});
+  }
 });

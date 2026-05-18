@@ -163,7 +163,7 @@ async function loadSoilPoints() {
       NDVI: ${props.ndvi_3m_avg ?? '—'} · SMAP: ${props.smap_moisture_avg ?? '—'}<br/>
       <button onclick="predictAtPoint(${props.ph}, ${props.humidity_pct}, '${props.soil_type}')">Prédire fertilité</button>
       <button onclick="SigSolsFeatures.loadNdviChart(${props.id}, 'ndvi-${props.id}')">Série NDVI</button>
-      <motion id="ndvi-${props.id}"></div>
+      <motion id="ndvi-${props.id}"></motion>
     `);
     markersLayer.addLayer(marker);
     window.SigSolsFeatures?.addMarkerToCluster(marker);
