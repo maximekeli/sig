@@ -10,9 +10,11 @@ def test_register_and_token(api_client):
         'username': 'newuser',
         'email': 'n@test.tg',
         'password': 'securepass123',
+        'password_confirm': 'securepass123',
         'role': 'public',
     })
     assert r.status_code == 201
+    assert r.json()['user']['username'] == 'newuser'
     r2 = api_client.post('/api/v1/auth/token/', {
         'username': 'newuser',
         'password': 'securepass123',
@@ -26,6 +28,7 @@ def test_register_cannot_self_assign_admin(api_client):
     r = api_client.post('/api/v1/auth/register/', {
         'username': 'hacker',
         'password': 'securepass123',
+        'password_confirm': 'securepass123',
         'role': 'admin',
     })
     assert r.status_code == 201
