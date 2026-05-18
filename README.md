@@ -105,4 +105,3 @@ Sans identifiants : catalogue STAC + démo. Avec identifiants : téléchargement
 ## Licence
 
 MIT — voir [LICENSE](LICENSE). Données terrain : propriété DISIA. Données NASA : domaine public (crédit requis).
-# SIG

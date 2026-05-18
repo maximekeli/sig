@@ -26,6 +26,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     image: dusol_projet-web
+    container_name: dusol_web
     command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
     volumes:
       - ./backend:/app
@@ -37,6 +38,7 @@ services:
       POSTGRES_HOST: db
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/0
+      CSRF_TRUSTED_ORIGINS: http://localhost:8081,http://127.0.0.1:8081,http://localhost,http://127.0.0.1
       NASA_EARTHDATA_USERNAME: ${NASA_EARTHDATA_USERNAME:-}
       NASA_EARTHDATA_PASSWORD: ${NASA_EARTHDATA_PASSWORD:-}
       NASA_EARTHDATA_TOKEN: ${NASA_EARTHDATA_TOKEN:-}

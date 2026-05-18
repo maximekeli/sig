@@ -15,6 +15,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-change-in-production')
 DEBUG = os.environ.get('DEBUG', '1') == '1'
 
+_DEFAULT_CSRF_ORIGINS = (
+    'http://localhost:8081',
+    'http://127.0.0.1:8081',
+    'http://localhost',
+    'http://127.0.0.1',
+)
+_env_csrf = os.environ.get('CSRF_TRUSTED_ORIGINS', '').strip()
+CSRF_TRUSTED_ORIGINS = list(_DEFAULT_CSRF_ORIGINS)
+if _env_csrf:
+    CSRF_TRUSTED_ORIGINS.extend(o.strip() for o in _env_csrf.split(',') if o.strip())
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(CSRF_TRUSTED_ORIGINS))
+
 if DEBUG:
     ALLOWED_HOSTS = ['*']
 else:
