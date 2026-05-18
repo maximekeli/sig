@@ -3,6 +3,7 @@ import json
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from soils.models import AdministrativeZone
 from soils.serializers import AdministrativeZoneSerializer
 
 from . import services
@@ -84,3 +85,45 @@ class SmapCorrelationView(APIView):
 
     def get(self, request):
         return Response(services.smap_correlation())
+
+
+class ParcelAnalyzeView(APIView):
+    """
+    Analyse automatique d'une parcelle (polygone GeoJSON ou zone administrative).
+    NASA (NDVI, SMAP) + IA fertilité + vulnérabilité.
+    """
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def post(self, request):
+        from .parcel_analysis import analyze_parcel
+
+        use_ml = request.data.get('use_ml', True)
+        try:
+            result = analyze_parcel(
+                geometry=request.data.get('geometry'),
+                zone_code=request.data.get('zone_code'),
+                zone_id=request.data.get('zone_id'),
+                use_ml=bool(use_ml),
+            )
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=400)
+        return Response(result)
+
+
+class ParcelZonesListView(APIView):
+    """Liste des zones sélectionnables (cantons, parcelles dégradées)."""
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        zone_type = request.query_params.get('zone_type', 'canton')
+        qs = AdministrativeZone.objects.filter(zone_type=zone_type).order_by('name')
+        data = [
+            {
+                'id': z.id,
+                'code': z.code,
+                'name': z.name,
+                'zone_type': z.zone_type,
+            }
+            for z in qs[:200]
+        ]
+        return Response({'zones': data, 'count': len(data)})

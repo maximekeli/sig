@@ -5,6 +5,8 @@ from .views import (
     BufferView,
     IntersectionView,
     NdviTimeseriesView,
+    ParcelAnalyzeView,
+    ParcelZonesListView,
     ProximityView,
     SmapCorrelationView,
     SpatialStatisticsView,
@@ -20,4 +22,6 @@ urlpatterns = [
     path('ndvi-timeseries/<int:point_id>/', NdviTimeseriesView.as_view(), name='spatial-ndvi-ts'),
     path('statistics/', SpatialStatisticsView.as_view(), name='spatial-statistics'),
     path('smap-correlation/', SmapCorrelationView.as_view(), name='spatial-smap-corr'),
+    path('parcel/analyze/', ParcelAnalyzeView.as_view(), name='spatial-parcel-analyze'),
+    path('parcel/zones/', ParcelZonesListView.as_view(), name='spatial-parcel-zones'),
 ]
