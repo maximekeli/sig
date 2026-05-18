@@ -8,6 +8,7 @@ from .views import (
     QuizFinishView,
     QuizShareView,
     QuizStartView,
+    QuizStatsView,
     QuizSubmitAnswerView,
 )
 
@@ -16,6 +17,7 @@ router.register('sheets', PedagogicalSheetViewSet, basename='pedagogical-sheets'
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('quiz/stats/', QuizStatsView.as_view(), name='quiz-stats'),
     path('quiz/start/', QuizStartView.as_view(), name='quiz-start'),
     path('quiz/<int:session_id>/answer/', QuizSubmitAnswerView.as_view(), name='quiz-answer'),
     path('quiz/<int:session_id>/finish/', QuizFinishView.as_view(), name='quiz-finish'),

@@ -258,17 +258,16 @@ def _difficile_static():
 def _difficile_generated():
     qs = []
     scenarios = [
-        ('pente forte + faible couvert', 'risque érosion élevé'),
+        ('pente forte + faible couvert', 'risque érosion élevé', False),
         ('NDVI bas + SMAP bas', 'stress hydrique probable', True),
-        ('pH acide + faible MO', 'besoin chaulage et compost'),
-        ('texture sableuse + forte pluie', 'lessivage des nutriments'),
-        ('zone humide + drainage insuffisant', 'asphyxie racinaire'),
+        ('pH acide + faible MO', 'besoin chaulage et compost', False),
+        ('texture sableuse + forte pluie', 'lessivage des nutriments', False),
+        ('zone humide + drainage insuffisant', 'asphyxie racinaire', False),
         ('données NASA + points sol', 'calibration et validation', True),
-        ('heatmap pH + clusters', 'identification zones homogènes'),
-        ('modèle ML + nouvelles mesures', 'réentraînement périodique'),
+        ('heatmap pH + clusters', 'identification zones homogènes', False),
+        ('modèle ML + nouvelles mesures', 'réentraînement périodique', False),
     ]
-    for i, (cond, interp) in enumerate(scenarios):
-        nasa = len(cond) > 20 and 'NASA' in cond or 'NDVI' in cond or 'SMAP' in cond
+    for i, (cond, interp, nasa) in enumerate(scenarios):
         for j in range(8):
             n = i * 8 + j + 1
             qs.append(_q(
@@ -276,19 +275,19 @@ def _difficile_generated():
                 [interp, 'aucune analyse possible', 'supprimer la couche', 'ignorer les métadonnées'],
                 0,
                 f'{cond} → {interp}.',
-                nasa or 'NDVI' in cond or 'SMAP' in cond,
+                nasa,
             ))
     advanced = [
-        ('variogramme', 'modéliser la dépendance spatiale'),
-        ('IDW', 'interpoler par distance inverse'),
-        ('confusion matrix', 'analyser faux positifs/négatifs'),
-        ('feature importance', 'identifier variables clés du modèle'),
+        ('variogramme', 'modéliser la dépendance spatiale', False),
+        ('IDW', 'interpoler par distance inverse', False),
+        ('confusion matrix', 'analyser faux positifs/négatifs', False),
+        ('feature importance', 'identifier variables clés du modèle', False),
         ('temporal composite', 'moyenner images sur une période', True),
         ('cloud mask', 'exclure pixels nuageux', True),
         ('atmospheric correction', 'corriger l\'atmosphère en télédétection', True),
-        ('uncertainty map', 'cartographier l\'incertitude'),
+        ('uncertainty map', 'cartographier l\'incertitude', False),
     ]
-    for i, (term, role) in enumerate(advanced):
+    for i, (term, role, nasa) in enumerate(advanced):
         for j in range(5):
             n = 64 + i * 5 + j + 1
             if n > 100:
@@ -298,7 +297,7 @@ def _difficile_generated():
                 [role, 'supprime la base PostGIS', 'désactive le quiz', 'mesure uniquement le vent'],
                 0,
                 f'{term} : {role}.',
-                'NASA' in term or 'cloud' in term or 'atmospheric' in term or 'temporal' in term,
+                nasa,
             ))
     return qs
 

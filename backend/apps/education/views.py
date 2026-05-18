@@ -28,24 +28,48 @@ class PedagogicalSheetViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
+class QuizStatsView(APIView):
+    """Nombre de questions disponibles par niveau."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        levels = ('facile', 'moyen', 'difficile')
+        by_level = {
+            d: QuizQuestion.objects.filter(is_active=True, difficulty=d).count()
+            for d in levels
+        }
+        total = QuizQuestion.objects.filter(is_active=True).count()
+        return Response({
+            'by_level': by_level,
+            'total': total,
+            'per_level_target': 100,
+            'session_options': [5, 10, 15, 20, 30, 50, 100],
+        })
+
+
 class QuizStartView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         difficulty = request.data.get('difficulty', 'facile')
-        count = int(request.data.get('count', 5))
+        count = min(int(request.data.get('count', 10)), 100)
+        count = max(count, 1)
         qs = QuizQuestion.objects.filter(is_active=True, difficulty=difficulty)
         if difficulty == 'mixte':
             qs = QuizQuestion.objects.filter(is_active=True)
         questions = list(qs)
-        if len(questions) < count:
-            count = len(questions)
+        available = len(questions)
+        if available < count:
+            count = available
         selected = random.sample(questions, count) if questions else []
         session = QuizSession.objects.create(user=request.user, difficulty=difficulty)
         return Response({
             'session_id': session.id,
             'timer_seconds': 20,
             'questions': QuizQuestionPublicSerializer(selected, many=True).data,
+            'question_count': len(selected),
+            'available_in_pool': available,
+            'difficulty': difficulty,
         })
 
 

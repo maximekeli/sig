@@ -165,28 +165,7 @@ class Command(BaseCommand):
                 defaults={'theme': theme, 'content_fr': content, 'order': len(sheets)},
             )
 
-        if QuizQuestion.objects.count() >= 30:
+        if QuizQuestion.objects.filter(difficulty='facile').count() >= 100:
             return
-        templates = [
-            ('Quel indice NASA mesure la végétation ?', 'facile', ['NDVI', 'pH', 'SRTM', 'GPM'], 0, True),
-            ('pH < 5,5 indique un sol :', 'facile', ['Acide', 'Basique', 'Neutre', 'Salé'], 0, False),
-            ('SMAP mesure :', 'moyen', ['Humidité sol', 'Précipitations', 'Altitude', 'Température'], 0, True),
-            ('PostGIS stocke :', 'moyen', ['Données spatiales', 'Emails', 'Vidéos', 'PDF'], 0, False),
-            ('Zonage vulnérabilité combine :', 'difficile', ['Pente+NDVI+SMAP', 'pH seul', 'Email', 'RSS'], 0, False),
-        ]
-        qid = 0
-        for difficulty, count, pts in [('facile', 12, 5), ('moyen', 12, 10), ('difficile', 12, 15)]:
-            for j in range(count):
-                t = templates[qid % len(templates)]
-                QuizQuestion.objects.get_or_create(
-                    text=f'{t[0]} (#{difficulty}-{j})',
-                    difficulty=difficulty,
-                    defaults={
-                        'choices': t[2],
-                        'correct_index': t[3],
-                        'explanation': 'Voir fiches pédagogiques SIG Sols.',
-                        'is_nasa_topic': t[4],
-                        'points': pts,
-                    },
-                )
-                qid += 1
+        from django.core.management import call_command
+        call_command('seed_quiz_questions')
