@@ -14,6 +14,7 @@ import {
 } from './core/mapUtils.js';
 
 let map, markersLayer, usersLayer, nasaOverlays = {};
+let mapReady = false;
 let locationTracker = null;
 let selfMarker = null;
 let accuracyCircle = null;
@@ -44,6 +45,8 @@ function initMap() {
   ).addTo(map);
   markersLayer = L.layerGroup().addTo(map);
   usersLayer = L.layerGroup().addTo(map);
+  mapReady = true;
+  window.SigSolsFeatures?.initMapAdvanced(map, markersLayer);
   loadSoilPoints();
   loadNasaToggles();
 }
