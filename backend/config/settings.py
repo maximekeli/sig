@@ -77,6 +77,10 @@ ROOT_URLCONF = 'config.urls'
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+REDIS_CACHE_URL = os.environ.get('REDIS_CACHE_URL', REDIS_URL.replace('/0', '/1'))
+REDIS_CHANNELS_URL = os.environ.get('REDIS_CHANNELS_URL', REDIS_URL.replace('/0', '/2'))
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
