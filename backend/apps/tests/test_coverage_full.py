@@ -760,7 +760,7 @@ class TestSoilsCoverage:
         from soils.models import SoilPoint
         from soils.management.commands.seed_demo_data import Command
         SoilPoint.objects.all().delete()
-        for i in range(31):
+        for i in range(101):
             QuizQuestion.objects.create(
                 text=f'Q{i}', difficulty='facile', choices=['A', 'B', 'C', 'D'],
                 correct_index=0, explanation='E', points=5,

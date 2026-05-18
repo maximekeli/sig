@@ -6,7 +6,9 @@ import {
   formatAnswerFeedback,
   formatFinishMessage,
   formatLeaderboardRow,
+  formatPoolInfo,
   isQuizComplete,
+  updateProgress,
 } from '../js/core/quizUtils.js';
 
 describe('quizUtils', () => {
@@ -36,5 +38,20 @@ describe('quizUtils', () => {
   it('isQuizComplete', () => {
     assert.equal(isQuizComplete(5, 5), true);
     assert.equal(isQuizComplete(2, 5), false);
+  });
+
+  it('formatPoolInfo', () => {
+    const s = formatPoolInfo({ by_level: { facile: 100, moyen: 100, difficile: 100 } });
+    assert.ok(s.includes('100'));
+    assert.ok(s.includes('Facile'));
+  });
+
+  it('updateProgress', () => {
+    const bar = document.createElement('div');
+    bar.id = 'quiz-progress-fill';
+    document.body.appendChild(bar);
+    updateProgress(5, 10);
+    assert.equal(bar.style.width, '50%');
+    bar.remove();
   });
 });

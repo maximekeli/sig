@@ -5,9 +5,9 @@ from education.models import QuizQuestion
 from education.quiz_bank import QUESTIONS_PER_LEVEL, build_all_questions
 
 POINTS = {
-    QuizQuestion.Difficulty.EASY: 5,
-    QuizQuestion.Difficulty.MEDIUM: 10,
-    QuizQuestion.Difficulty.HARD: 15,
+    'facile': 5,
+    'moyen': 10,
+    'difficile': 15,
 }
 
 
@@ -28,50 +28,50 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        banks = build_all_questions()
+
         if options['force']:
             deleted, _ = QuizQuestion.objects.all().delete()
             self.stdout.write(f'Supprimé {deleted} question(s).')
 
-        banks = build_all_questions()
         created = 0
-        updated = 0
-
         for difficulty, questions in banks.items():
-            if len(questions) < QUESTIONS_PER_LEVEL:
-                self.stderr.write(
-                    self.style.WARNING(
-                        f'{difficulty}: seulement {len(questions)} questions générées '
-                        f'(attendu {QUESTIONS_PER_LEVEL})',
-                    ),
-                )
+            existing = QuizQuestion.objects.filter(difficulty=difficulty).count()
+            if existing >= QUESTIONS_PER_LEVEL and not options['force']:
+                self.stdout.write(f'{difficulty}: déjà {existing} questions — ignoré.')
+                continue
+
+            if options['force']:
+                QuizQuestion.objects.filter(difficulty=difficulty).delete()
+
+            batch = []
             for idx, q in enumerate(questions[:QUESTIONS_PER_LEVEL]):
                 text = _clean_text(q['text'])
-                obj, was_created = QuizQuestion.objects.update_or_create(
+                # Garantir l'unicité si le libellé est répété dans la banque
+                if QuizQuestion.objects.filter(text=text, difficulty=difficulty).exists():
+                    text = f'{text} (Q{idx + 1})'
+                batch.append(QuizQuestion(
                     text=text,
                     difficulty=difficulty,
-                    defaults={
-                        'choices': q['choices'],
-                        'correct_index': q['correct_index'],
-                        'explanation': q['explanation'],
-                        'is_nasa_topic': q.get('is_nasa_topic', False),
-                        'points': POINTS.get(difficulty, 5),
-                        'is_active': True,
-                    },
-                )
-                if was_created:
-                    created += 1
-                else:
-                    updated += 1
+                    choices=q['choices'],
+                    correct_index=q['correct_index'],
+                    explanation=q['explanation'],
+                    is_nasa_topic=q.get('is_nasa_topic', False),
+                    points=POINTS.get(difficulty, 5),
+                    is_active=True,
+                ))
+            QuizQuestion.objects.bulk_create(batch, ignore_conflicts=False)
+            created += len(batch)
 
-        total = QuizQuestion.objects.count()
         by_level = {
             d: QuizQuestion.objects.filter(difficulty=d, is_active=True).count()
             for d in ('facile', 'moyen', 'difficile')
         }
+        total = QuizQuestion.objects.count()
         self.stdout.write(
             self.style.SUCCESS(
-                f'Quiz : {created} créées, {updated} mises à jour — '
-                f'total {total} (facile={by_level["facile"]}, '
-                f'moyen={by_level["moyen"]}, difficile={by_level["difficile"]})',
+                f'Quiz : {created} insérées — total {total} '
+                f'(facile={by_level["facile"]}, moyen={by_level["moyen"]}, '
+                f'difficile={by_level["difficile"]})',
             ),
         )

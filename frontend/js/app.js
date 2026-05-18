@@ -61,6 +61,7 @@ window.addEventListener('online', () => SigSolsFeatures.syncOfflineQueue());
 
 document.addEventListener('DOMContentLoaded', async () => {
   SigSolsMap.initMap();
+  SigSolsQuiz.loadQuizStats?.();
   await SigSolsAuth.initAuth();
   SigSolsFeatures.applyPublicMode();
   if (SigSolsAPI.isAuthenticated()) {

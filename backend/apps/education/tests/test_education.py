@@ -58,6 +58,17 @@ def test_pedagogical_sheets_api(api_client, db):
 
 
 @pytest.mark.django_db
+def test_quiz_stats_api(api_client, db):
+    from education.management.commands.seed_quiz_questions import Command
+    Command().handle()
+    r = api_client.get('/api/v1/education/quiz/stats/')
+    assert r.status_code == 200
+    data = r.json()
+    assert data['by_level']['facile'] >= 100
+    assert data['per_level_target'] == 100
+
+
+@pytest.mark.django_db
 def test_leaderboard_api(api_client):
     r = api_client.get('/api/v1/education/quiz/leaderboard/')
     assert r.status_code == 200
