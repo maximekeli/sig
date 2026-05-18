@@ -35,7 +35,7 @@
           <input type="password" id="login-pass" placeholder="Mot de passe" value="agent123" autocomplete="current-password" />
           <button type="button" id="btn-login" class="btn-auth-primary">Se connecter</button>
           <button type="button" id="btn-forgot-pass" class="btn-link">Mot de passe oublié ?</button>
-        </motion>
+        </div>
         <div id="auth-register-form" class="auth-form hidden">
           <input type="text" id="reg-user" placeholder="Utilisateur" autocomplete="username" />
           <input type="email" id="reg-email" placeholder="Email" />
@@ -77,6 +77,16 @@
       </label>
       <label><input type="checkbox" id="filter-validated" checked /> Validés uniquement</label>
       <button type="button" id="btn-apply-filters">Appliquer</button>
+      <hr />
+      <h3>Outils carte</h3>
+      <label><input type="checkbox" id="mode-add-point" /> Ajouter un point (clic carte)</label>
+      <button type="button" id="btn-heatmap">Carte de chaleur pH</button>
+      <button type="button" id="btn-near-me">Près de moi</button>
+      <button type="button" id="btn-trajectory">Ma trajectoire (24 h)</button>
+      <hr />
+      <h3>Alertes & notifications</h3>
+      <ul id="alerts-list" class="compact-list"></ul>
+      <ul id="notifications-list" class="compact-list"></ul>
       <hr />
       <h3>Localisation temps réel</h3>
       <label class="location-share">
@@ -165,6 +175,8 @@
   </footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <div id="auth-profile-modal" class="auth-modal hidden" role="dialog" aria-labelledby="profile-title">
     <div class="auth-modal-backdrop" id="btn-profile-close"></div>
@@ -190,6 +202,7 @@
 
   <script type="module" src="js/api.js"></script>
   <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/features.js"></script>
   <script type="module" src="js/map.js"></script>
   <script type="module" src="js/dashboard.js"></script>
   <script type="module" src="js/quiz.js"></script>
