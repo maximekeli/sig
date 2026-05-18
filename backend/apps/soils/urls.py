@@ -12,7 +12,7 @@ from .views import AdministrativeZoneViewSet, DashboardStatsView, SoilPointViewS
 router = DefaultRouter()
 router.register('points', SoilPointViewSet, basename='soil-points')
 router.register('zones', AdministrativeZoneViewSet, basename='admin-zones')
-router.register('points/notes', SoilPointNoteViewSet, basename='soil-notes')
+router.register('notes', SoilPointNoteViewSet, basename='soil-notes')
 
 urlpatterns = [
     path('', include(router.urls)),
