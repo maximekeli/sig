@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SIG Sols Togo — DISIA / DUSOL</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2d6a4f" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -18,6 +22,7 @@
       <button type="button" class="nav-btn" data-view="dashboard">Tableau de bord</button>
       <button type="button" class="nav-btn" data-view="quiz">Quiz</button>
       <button type="button" class="nav-btn" data-view="sheets">Fiches</button>
+      <button type="button" class="nav-btn admin-only hidden" data-view="admin">Admin</button>
     </nav>
     <div class="auth-box" id="auth-box">
       <div id="auth-guest" class="auth-guest">
@@ -29,7 +34,8 @@
           <input type="text" id="login-user" placeholder="Utilisateur" value="agent1" autocomplete="username" />
           <input type="password" id="login-pass" placeholder="Mot de passe" value="agent123" autocomplete="current-password" />
           <button type="button" id="btn-login" class="btn-auth-primary">Se connecter</button>
-        </div>
+          <button type="button" id="btn-forgot-pass" class="btn-link">Mot de passe oublié ?</button>
+        </motion>
         <div id="auth-register-form" class="auth-form hidden">
           <input type="text" id="reg-user" placeholder="Utilisateur" autocomplete="username" />
           <input type="email" id="reg-email" placeholder="Email" />

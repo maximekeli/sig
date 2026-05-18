@@ -36,7 +36,11 @@ class SoilPointViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user if self.request.user.is_authenticated else None
-        parent_id = self.request.data.get('parent_point')
+        data = self.request.data
+        parent_id = data.get('parent_point')
+        props = data.get('properties') if isinstance(data.get('properties'), dict) else {}
+        if not parent_id and props:
+            parent_id = props.get('parent_point')
         extra = {}
         if parent_id:
             extra['parent_point_id'] = parent_id

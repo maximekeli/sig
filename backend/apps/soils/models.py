@@ -145,7 +145,7 @@ class SoilPointNote(models.Model):
     """Messagerie / notes collaboratives sur un point."""
 
     soil_point = models.ForeignKey(
-        SoilPoint, on_delete=models.CASCADE, related_name='notes',
+        SoilPoint, on_delete=models.CASCADE, related_name='point_notes',
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='soil_notes',
