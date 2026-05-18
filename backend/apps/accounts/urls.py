@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     ChangePasswordView,
     LiveLocationsView,
+    UserTrajectoryView,
     LogoutView,
     MyLocationView,
     ProfileView,

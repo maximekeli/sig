@@ -36,30 +36,37 @@ class TrainModelView(APIView):
         return Response(metrics, status=status.HTTP_201_CREATED)
 
 
-class BatchPredictView(APIView):
-  permission_classes = [IsAuthenticatedOrReadOnly]
+def _batch_predict(request):
+    ids = request.data.get('point_ids', [])
+    if not ids:
+        return None, Response({'error': 'point_ids requis'}, status=400)
+    from soils.models import SoilPoint
+    results = []
+    for point in SoilPoint.objects.filter(pk__in=ids, is_validated=True)[:200]:
+        result = predict_fertility({
+            'ph': point.ph,
+            'humidity_pct': point.humidity_pct,
+            'soil_type': point.soil_type,
+            'ndvi_3m_avg': point.ndvi_3m_avg,
+            'smap_moisture_avg': point.smap_moisture_avg,
+        })
+        results.append({
+            'point_id': point.id,
+            'lon': point.location.x,
+            'lat': point.location.y,
+            **result,
+        })
+    return results, Response({'count': len(results), 'predictions': results})
 
-  def post(self, request):
-      ids = request.data.get('point_ids', [])
-      if not ids:
-          return Response({'error': 'point_ids requis'}, status=400)
-      from soils.models import SoilPoint
-      results = []
-      for point in SoilPoint.objects.filter(pk__in=ids, is_validated=True)[:200]:
-          result = predict_fertility({
-              'ph': point.ph,
-              'humidity_pct': point.humidity_pct,
-              'soil_type': point.soil_type,
-              'ndvi_3m_avg': point.ndvi_3m_avg,
-              'smap_moisture_avg': point.smap_moisture_avg,
-          })
-          results.append({
-              'point_id': point.id,
-              'lon': point.location.x,
-              'lat': point.location.y,
-              **result,
-          })
-      return Response({'count': len(results), 'predictions': results})
+
+class BatchPredictView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def post(self, request):
+        results, resp = _batch_predict(request)
+        if results is None:
+            return resp
+        return resp
 
 
 class BatchPredictExportView(APIView):
@@ -68,14 +75,14 @@ class BatchPredictExportView(APIView):
     def post(self, request):
         import csv
         from django.http import HttpResponse
-        view = BatchPredictView()
-        view.request = request
-        data = view.post(request).data
+        results, resp = _batch_predict(request)
+        if results is None:
+            return resp
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="predictions.csv"'
         writer = csv.writer(response)
         writer.writerow(['point_id', 'lat', 'lon', 'predicted_class', 'confidence'])
-        for row in data.get('predictions', []):
+        for row in results:
             writer.writerow([
                 row['point_id'], row['lat'], row['lon'],
                 row['predicted_class'], row['confidence'],

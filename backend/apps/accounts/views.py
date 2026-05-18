@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -111,6 +112,34 @@ class MyLocationView(APIView):
     def delete(self, request):
         UserLocation.objects.filter(user=request.user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserTrajectoryView(APIView):
+    """Historique GPS d'un utilisateur (trajectoire journée)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id=None):
+        from .models import UserLocationHistory
+        uid = user_id or request.user.pk
+        if uid != request.user.pk and not request.user.is_administrator:
+            return Response({'error': 'Non autorisé'}, status=403)
+        hours = int(request.query_params.get('hours', 24))
+        since = timezone.now() - timezone.timedelta(hours=hours)
+        trail = UserLocationHistory.objects.filter(
+            user_id=uid, recorded_at__gte=since,
+        ).order_by('recorded_at')[:500]
+        return Response({
+            'user_id': uid,
+            'points': [
+                {
+                    'lat': h.location.y,
+                    'lon': h.location.x,
+                    'recorded_at': h.recorded_at.isoformat(),
+                }
+                for h in trail
+            ],
+        })
 
 
 class LiveLocationsView(APIView):
