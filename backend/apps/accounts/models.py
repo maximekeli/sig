@@ -65,3 +65,19 @@ class UserLocation(models.Model):
 
     def __str__(self):
         return f'{self.user.username} @ {self.updated_at:%H:%M:%S}'
+
+
+class UserLocationHistory(models.Model):
+    """Trajectoire GPS (historique des positions)."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='location_history',
+    )
+    location = gis_models.PointField(srid=4326)
+    accuracy_m = models.FloatField(null=True, blank=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-recorded_at']
+        indexes = [models.Index(fields=['user', 'recorded_at'])]
+
