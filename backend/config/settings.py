@@ -181,6 +181,11 @@ ML_RETRAIN_NEW_SAMPLES = 50
 # Maritime region bbox (WGS84) — Togo Région Maritime approx.
 REGION_MARITIME_BBOX = (0.9, 6.0, 1.8, 6.8)  # min_lon, min_lat, max_lon, max_lat
 
+# Géolocalisation utilisateurs (temps réel)
+LOCATION_STALE_MINUTES = int(os.environ.get('LOCATION_STALE_MINUTES', '5'))
+LOCATION_UPDATE_INTERVAL_MS = int(os.environ.get('LOCATION_UPDATE_INTERVAL_MS', '10000'))
+LOCATION_POLL_INTERVAL_MS = int(os.environ.get('LOCATION_POLL_INTERVAL_MS', '8000'))
+
 # Security (production overrides via env)
 if not DEBUG:
     SECURE_SSL_REDIRECT = True

@@ -47,5 +47,26 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
     accessToken = token;
   }
 
-  return { api, login, logout, getToken, setToken };
+  async function updateLocation(payload) {
+    return api('/auth/location/', { method: 'POST', body: JSON.stringify(payload) });
+  }
+
+  async function getLiveLocations() {
+    return api('/auth/locations/live/');
+  }
+
+  async function clearLocation() {
+    return api('/auth/location/', { method: 'DELETE' });
+  }
+
+  return {
+    api,
+    login,
+    logout,
+    getToken,
+    setToken,
+    updateLocation,
+    getLiveLocations,
+    clearLocation,
+  };
 }

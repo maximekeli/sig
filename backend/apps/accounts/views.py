@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -6,7 +7,14 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .permissions import IsAdministrator
-from .serializers import UserRegistrationSerializer, UserSerializer
+from .serializers import (
+    UserLocationSerializer,
+    UserLocationUpdateSerializer,
+    UserRegistrationSerializer,
+    UserSerializer,
+)
+from .models import UserLocation
+from .services import list_live_locations, upsert_user_location
 
 User = get_user_model()
 
@@ -42,3 +50,52 @@ class LogoutView(APIView):
 
     def post(self, request):
         return Response({'detail': 'Déconnexion réussie.'}, status=status.HTTP_200_OK)
+
+
+class MyLocationView(APIView):
+    """Publier / mettre à jour sa position GPS (temps réel)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        loc = getattr(request.user, 'live_location', None)
+        if not loc:
+            return Response({'detail': 'Aucune position enregistrée.'}, status=404)
+        return Response(UserLocationSerializer(loc).data)
+
+    def post(self, request):
+        ser = UserLocationUpdateSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        data = ser.validated_data
+        try:
+            loc = upsert_user_location(
+                request.user,
+                data['lon'],
+                data['lat'],
+                accuracy_m=data.get('accuracy_m'),
+                heading=data.get('heading'),
+                is_sharing=data.get('is_sharing', True),
+            )
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=400)
+        return Response(UserLocationSerializer(loc).data, status=status.HTTP_200_OK)
+
+    def delete(self, request):
+        UserLocation.objects.filter(user=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LiveLocationsView(APIView):
+    """Positions partagées des utilisateurs actifs (agents sur le terrain)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        include_self = request.query_params.get('include_self', '0') == '1'
+        exclude = None if include_self else request.user
+        locations = list_live_locations(exclude_user=exclude)
+        return Response({
+            'count': locations.count(),
+            'stale_minutes': settings.LOCATION_STALE_MINUTES,
+            'users': UserLocationSerializer(locations, many=True).data,
+        })
