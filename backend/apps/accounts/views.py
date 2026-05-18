@@ -8,11 +8,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .permissions import IsAdministrator
 from .serializers import (
+    ChangePasswordSerializer,
     UserLocationSerializer,
     UserLocationUpdateSerializer,
     UserRegistrationSerializer,
     UserSerializer,
 )
+from .tokens import CustomTokenObtainPairSerializer
 from .models import UserLocation
 from .services import list_live_locations, upsert_user_location
 
@@ -23,6 +25,15 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response({
+            'user': UserSerializer(user).data,
+            'detail': 'Compte créé. Connectez-vous avec vos identifiants.',
+        }, status=status.HTTP_201_CREATED)
 
 
 class ProfileView(generics.RetrieveUpdateAPIView):
@@ -41,6 +52,23 @@ class UserListView(generics.ListAPIView):
 
 class TokenObtainView(TokenObtainPairView):
     permission_classes = [AllowAny]
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        ser = ChangePasswordSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        if not request.user.check_password(ser.validated_data['old_password']):
+            return Response(
+                {'old_password': ['Mot de passe actuel incorrect.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        request.user.set_password(ser.validated_data['new_password'])
+        request.user.save()
+        return Response({'detail': 'Mot de passe mis à jour.'})
 
 
 class LogoutView(APIView):

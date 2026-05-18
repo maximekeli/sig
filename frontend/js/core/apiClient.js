@@ -1,5 +1,5 @@
 /**
- * Client API REST — testable sans DOM.
+ * Client API REST + authentification JWT.
  * @param {{ baseUrl: string, storage?: Storage, fetchFn?: typeof fetch }} config
  */
 export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
@@ -8,16 +8,84 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
     setItem: () => {},
     removeItem: () => {},
   };
-  let accessToken = store.getItem('sig_sols_token') || '';
 
-  async function api(path, options = {}) {
+  const TOKEN_KEY = 'sig_sols_token';
+  const REFRESH_KEY = 'sig_sols_refresh';
+  const USER_KEY = 'sig_sols_user';
+
+  let accessToken = store.getItem(TOKEN_KEY) || '';
+  let refreshToken = store.getItem(REFRESH_KEY) || '';
+
+  function persistSession(data) {
+    accessToken = data.access || '';
+    refreshToken = data.refresh || refreshToken;
+    store.setItem(TOKEN_KEY, accessToken);
+    if (refreshToken) store.setItem(REFRESH_KEY, refreshToken);
+    if (data.user) store.setItem(USER_KEY, JSON.stringify(data.user));
+  }
+
+  function clearSession() {
+    accessToken = '';
+    refreshToken = '';
+    store.removeItem(TOKEN_KEY);
+    store.removeItem(REFRESH_KEY);
+    store.removeItem(USER_KEY);
+  }
+
+  function getUser() {
+    try {
+      const raw = store.getItem(USER_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function setUser(user) {
+    if (user) store.setItem(USER_KEY, JSON.stringify(user));
+    else store.removeItem(USER_KEY);
+  }
+
+  async function parseError(res) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    if (typeof err === 'object' && err !== null) {
+      if (err.detail) return String(err.detail);
+      const parts = Object.entries(err).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`);
+      if (parts.length) return parts.join(' · ');
+    }
+    return JSON.stringify(err);
+  }
+
+  async function refreshAccessToken() {
+    if (!refreshToken) throw new Error('Session expirée — reconnectez-vous.');
+    const res = await fetchFn(`${baseUrl}/auth/token/refresh/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+    if (!res.ok) {
+      clearSession();
+      throw new Error('Session expirée — reconnectez-vous.');
+    }
+    const data = await res.json();
+    accessToken = data.access;
+    store.setItem(TOKEN_KEY, accessToken);
+    if (data.refresh) {
+      refreshToken = data.refresh;
+      store.setItem(REFRESH_KEY, refreshToken);
+    }
+    return data;
+  }
+
+  async function api(path, options = {}, retried = false) {
     const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     const res = await fetchFn(`${baseUrl}${path}`, { ...options, headers });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(err.detail || JSON.stringify(err));
+    if (res.status === 401 && refreshToken && !retried && !path.includes('/auth/token/')) {
+      await refreshAccessToken();
+      return api(path, options, true);
     }
+    if (!res.ok) throw new Error(await parseError(res));
     if (res.status === 204) return null;
     const ct = res.headers.get('content-type') || '';
     if (ct.includes('application/json')) return res.json();
@@ -29,14 +97,54 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     });
-    accessToken = data.access;
-    store.setItem('sig_sols_token', accessToken);
+    persistSession(data);
     return data;
   }
 
-  function logout() {
-    accessToken = '';
-    store.removeItem('sig_sols_token');
+  async function register(payload) {
+    const data = await api('/auth/register/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (data.user) setUser(data.user);
+    return data;
+  }
+
+  async function logout() {
+    try {
+      if (accessToken) {
+        await api('/auth/logout/', { method: 'POST' });
+      }
+    } catch {
+      /* déconnexion locale même si le serveur échoue */
+    }
+    clearSession();
+  }
+
+  async function fetchProfile() {
+    const user = await api('/auth/profile/');
+    setUser(user);
+    return user;
+  }
+
+  async function updateProfile(payload) {
+    const user = await api('/auth/profile/', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    setUser(user);
+    return user;
+  }
+
+  async function changePassword(oldPassword, newPassword, newPasswordConfirm) {
+    return api('/auth/password/change/', {
+      method: 'POST',
+      body: JSON.stringify({
+        old_password: oldPassword,
+        new_password: newPassword,
+        new_password_confirm: newPasswordConfirm,
+      }),
+    });
   }
 
   function getToken() {
@@ -45,6 +153,11 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
 
   function setToken(token) {
     accessToken = token;
+    store.setItem(TOKEN_KEY, token);
+  }
+
+  function isAuthenticated() {
+    return Boolean(accessToken);
   }
 
   async function updateLocation(payload) {
@@ -62,9 +175,18 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
   return {
     api,
     login,
+    register,
     logout,
+    fetchProfile,
+    updateProfile,
+    changePassword,
+    refreshAccessToken,
     getToken,
     setToken,
+    getUser,
+    setUser,
+    isAuthenticated,
+    clearSession,
     updateLocation,
     getLiveLocations,
     clearLocation,

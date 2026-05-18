@@ -19,20 +19,45 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
+    password_confirm = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'role', 'organization', 'pseudonym')
+        fields = (
+            'username', 'email', 'password', 'password_confirm',
+            'role', 'organization', 'pseudonym',
+        )
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError({
+                'password_confirm': 'Les mots de passe ne correspondent pas.',
+            })
+        role = attrs.get('role', User.Role.PUBLIC)
+        if role == User.Role.ADMIN:
+            attrs['role'] = User.Role.PUBLIC
+        return attrs
 
     def create(self, validated_data):
+        validated_data.pop('password_confirm')
         password = validated_data.pop('password')
-        role = validated_data.get('role', User.Role.PUBLIC)
-        if role == User.Role.ADMIN:
-            validated_data['role'] = User.Role.PUBLIC
         user = User(**validated_data)
         user.set_password(password)
         user.save()
         return user
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    new_password_confirm = serializers.CharField(write_only=True, min_length=8)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['new_password_confirm']:
+            raise serializers.ValidationError({
+                'new_password_confirm': 'Les mots de passe ne correspondent pas.',
+            })
+        return attrs
 
 
 class UserLocationUpdateSerializer(serializers.Serializer):
