@@ -36,7 +36,45 @@ class SoilPointViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user if self.request.user.is_authenticated else None
-        serializer.save(created_by=user)
+        parent_id = self.request.data.get('parent_point')
+        extra = {}
+        if parent_id:
+            extra['parent_point_id'] = parent_id
+        point = serializer.save(created_by=user, **extra)
+        if user:
+            log_action(user, 'create', 'SoilPoint', point.pk)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdministrator])
+    def validate_point(self, request, pk=None):
+        point = self.get_object()
+        action = request.data.get('action', 'validate')
+        if action == 'reject':
+            point.validation_status = SoilPoint.ValidationStatus.REJECTED
+            point.is_validated = False
+        else:
+            point.validation_status = SoilPoint.ValidationStatus.VALIDATED
+            point.is_validated = True
+        from django.utils import timezone
+        point.validated_by = request.user
+        point.validated_at = timezone.now()
+        point.save()
+        log_action(request.user, 'validate', 'SoilPoint', point.pk, {'action': action})
+        return Response({'validation_status': point.validation_status})
+
+    @action(detail=True, methods=['get'])
+    def predict_fertility(self, request, pk=None):
+        from ml_predict.pipeline import predict_fertility
+        point = self.get_object()
+        result = predict_fertility({
+            'ph': point.ph,
+            'humidity_pct': point.humidity_pct,
+            'soil_type': point.soil_type,
+            'ndvi_3m_avg': point.ndvi_3m_avg,
+            'smap_moisture_avg': point.smap_moisture_avg,
+            'slope_pct': point.slope_pct,
+            'elevation_m': point.elevation_m,
+        })
+        return Response(result)
 
     @action(detail=False, methods=['get'], url_path='geojson')
     def export_geojson(self, request):
