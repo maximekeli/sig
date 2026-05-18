@@ -21,8 +21,6 @@ def check_drought_alerts():
     for point in at_risk:
         ndvi = point.ndvi_3m_avg or 0.5
         smap = point.smap_moisture_avg or 0.25
-        if ndvi >= 0.3 and smap >= 0.15:
-            continue
         if DroughtAlert.objects.filter(soil_point=point, is_active=True).exists():
             continue
         alert = DroughtAlert.objects.create(

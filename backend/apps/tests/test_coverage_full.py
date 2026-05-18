@@ -880,3 +880,37 @@ class TestPlatformExtensions:
         assert 'ph' in validate_soil_point_quality({'ph': 2.0})
         assert 'humidity_pct' in validate_soil_point_quality({'humidity_pct': 150})
         assert 'location' in validate_soil_point_quality({'location': Point(0, 0, srid=4326)})
+
+    def test_remaining_gaps(self, auth_client, api_client, sample_soil_point, admin_user):
+        from sig_platform.models import PasswordResetToken
+
+        assert api_client.get('/api/v1/dashboard/stats/').status_code == 200
+        auth_client.post('/api/v1/points/', {
+            'type': 'Feature',
+            'geometry': {'type': 'Point', 'coordinates': [1.26, 6.36]},
+            'properties': {
+                'ph': 6.1, 'humidity_pct': 32, 'soil_type': 'limoneux',
+                'collected_at': '2025-06-01', 'parent_point': sample_soil_point.id,
+            },
+        }, format='json')
+        poly = {
+            'type': 'Polygon',
+            'coordinates': [[[1.1, 6.2], [1.3, 6.2], [1.3, 6.4], [1.1, 6.4], [1.1, 6.2]]],
+        }
+        assert auth_client.post('/api/v1/spatial/intersection/', {'geometry': poly}, format='json').status_code == 200
+        assert auth_client.post('/api/v1/spatial/buffer/', {
+            'geometry': {'type': 'Point', 'coordinates': [1.25, 6.35]},
+            'distance_m': 300,
+        }, format='json').status_code == 200
+        assert auth_client.post('/api/v1/spatial/area/', {'geometry': poly}, format='json').status_code == 200
+        assert api_client.get('/api/v1/spatial/vulnerability/').status_code == 200
+        assert api_client.get(f'/api/v1/spatial/ndvi-timeseries/{sample_soil_point.id}/').status_code == 200
+        prt = PasswordResetToken.create_for_user(admin_user)
+        prt.used = True
+        prt.save()
+        assert not prt.is_valid()
+        assert api_client.post('/api/v1/platform/password/reset/confirm/', {
+            'token': prt.token,
+            'new_password': 'newpass123',
+            'new_password_confirm': 'newpass123',
+        }, format='json').status_code == 400
