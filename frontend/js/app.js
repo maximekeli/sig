@@ -1,9 +1,16 @@
 document.querySelectorAll('.nav-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
-    document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
+    const views = document.querySelectorAll('.view');
+    views.forEach((v) => {
+      v.classList.remove('active');
+      v.style.animation = 'none';
+    });
     btn.classList.add('active');
-    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    const target = document.getElementById('view-' + btn.dataset.view);
+    target.classList.add('active');
+    void target.offsetWidth;
+    target.style.animation = '';
     if (btn.dataset.view === 'dashboard') SigSolsDashboard.loadDashboard();
     if (btn.dataset.view === 'quiz') {
       SigSolsQuiz.loadLeaderboard();
