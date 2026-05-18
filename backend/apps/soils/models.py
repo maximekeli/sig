@@ -47,6 +47,11 @@ class SoilPoint(models.Model):
         MEDIUM = 'moyenne', 'Moyenne'
         HIGH = 'elevee', 'Élevée'
 
+    class ValidationStatus(models.TextChoices):
+        PENDING = 'pending', 'En attente'
+        VALIDATED = 'validated', 'Validé'
+        REJECTED = 'rejected', 'Rejeté'
+
     location = models.PointField(srid=4326)
     ph = models.FloatField(
         validators=[MinValueValidator(3.5), MaxValueValidator(9.5)],
@@ -84,6 +89,19 @@ class SoilPoint(models.Model):
         on_delete=models.SET_NULL, related_name='soil_points',
     )
     is_validated = models.BooleanField(default=False)
+    validation_status = models.CharField(
+        max_length=20, choices=ValidationStatus.choices,
+        default=ValidationStatus.PENDING,
+    )
+    validated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='validated_points',
+    )
+    validated_at = models.DateTimeField(null=True, blank=True)
+    parent_point = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='follow_up_points',
+    )
     quality_flags = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -121,3 +139,19 @@ class SoilPointNasaSnapshot(models.Model):
     class Meta:
         unique_together = ('soil_point', 'product', 'observed_at')
         ordering = ['-observed_at']
+
+
+class SoilPointNote(models.Model):
+    """Messagerie / notes collaboratives sur un point."""
+
+    soil_point = models.ForeignKey(
+        SoilPoint, on_delete=models.CASCADE, related_name='notes',
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='soil_notes',
+    )
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
