@@ -8,10 +8,12 @@ from .models import User, UserLocation
 class UserAdmin(BaseUserAdmin):
     list_display = ('username', 'email', 'role', 'organization', 'is_active')
     list_filter = ('role', 'is_staff', 'is_active')
-    fieldsets = BaseUserAdmin.fieldsets + (
+    fieldsets = (
+        *tuple(BaseUserAdmin.fieldsets or ()),
         ('SIG Sols', {'fields': ('role', 'organization', 'phone', 'pseudonym')}),
     )
-    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+    add_fieldsets = (
+        *tuple(BaseUserAdmin.add_fieldsets or ()),
         ('SIG Sols', {'fields': ('role', 'organization')}),
     )
 

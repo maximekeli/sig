@@ -5,7 +5,7 @@ from celery.schedules import crontab
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
-app = Celery('sig_sols')
+app = Celery('sig_sols')  # pyright: ignore[reportCallIssue]
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 

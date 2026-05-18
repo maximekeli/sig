@@ -124,8 +124,10 @@ class UserTrajectoryView(APIView):
         uid = user_id or request.user.pk
         if uid != request.user.pk and not request.user.is_administrator:
             return Response({'error': 'Non autorisé'}, status=403)
+        from datetime import timedelta
+
         hours = int(request.query_params.get('hours', 24))
-        since = timezone.now() - timezone.timedelta(hours=hours)
+        since = timezone.now() - timedelta(hours=hours)
         trail = UserLocationHistory.objects.filter(
             user_id=uid, recorded_at__gte=since,
         ).order_by('recorded_at')[:500]

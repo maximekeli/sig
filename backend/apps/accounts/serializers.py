@@ -1,10 +1,7 @@
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
-from .models import UserLocation
-
-User = get_user_model()
+from .models import User, UserLocation
 
 
 class UserSerializer(serializers.ModelSerializer):

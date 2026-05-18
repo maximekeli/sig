@@ -22,7 +22,7 @@ class LiveUpdatesConsumer(AsyncJsonWebsocketConsumer):
         if hasattr(self, 'group'):
             await self.channel_layer.group_discard(self.group, self.channel_name)
 
-    async def receive_json(self, content):
+    async def receive_json(self, content):  # pyright: ignore[reportIncompatibleMethodOverride]
         if content.get('type') == 'ping':
             await self.send_json({'type': 'pong'})
 

@@ -17,8 +17,7 @@ def api_client():
 
 @pytest.fixture
 def agent_user(db):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
+    from accounts.models import User
     user = User.objects.create_user(
         username='test_agent',
         password='testpass123',
@@ -30,8 +29,7 @@ def agent_user(db):
 
 @pytest.fixture
 def admin_user(db):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
+    from accounts.models import User
     return User.objects.create_superuser(
         username='test_admin',
         password='testpass123',

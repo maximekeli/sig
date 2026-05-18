@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.utils import timezone
 
+from accounts.models import User
 from .models import QuizSession, UserBadge, UserQuizProfile
 
 
@@ -35,12 +38,10 @@ def award_badges(user):
 
 
 def weekly_leaderboard(limit=10):
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-    week_start = timezone.now() - timezone.timedelta(days=7)
+    week_start = timezone.now() - timedelta(days=7)
     scores = {}
     for session in QuizSession.objects.filter(started_at__gte=week_start, completed=True):
-        uid = session.user_id
+        uid = session.user.pk
         scores[uid] = scores.get(uid, 0) + session.score
     ranked = sorted(scores.items(), key=lambda x: -x[1])[:limit]
     result = []

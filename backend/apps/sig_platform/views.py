@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
@@ -41,7 +43,7 @@ class AdminDashboardView(APIView):
                 validation_status=SoilPoint.ValidationStatus.PENDING,
             ).count(),
             'live_agents': UserLocation.objects.filter(
-                updated_at__gte=timezone.now() - timezone.timedelta(minutes=5),
+                updated_at__gte=timezone.now() - timedelta(minutes=5),
                 is_sharing=True,
             ).count(),
             'nasa_layers': NasaLayerCatalog.objects.count(),

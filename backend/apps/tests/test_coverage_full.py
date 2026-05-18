@@ -275,6 +275,18 @@ class TestNasaCoverage:
         from nasa.earthdata import login
         assert login() is True
 
+    @patch('earthaccess.login')
+    def test_earthdata_login_token_only(self, mock_login, settings):
+        import os
+        settings.NASA_EARTHDATA_USERNAME = ''
+        settings.NASA_EARTHDATA_PASSWORD = ''
+        settings.NASA_EARTHDATA_TOKEN = 'jwt-token-test'
+        os.environ.pop('EARTHDATA_TOKEN', None)
+        mock_login.return_value = MagicMock()
+        from nasa.earthdata import login
+        assert login() is True
+        assert os.environ['EARTHDATA_TOKEN'] == 'jwt-token-test'
+
     @patch('earthaccess.login', side_effect=RuntimeError('auth fail'))
     def test_earthdata_login_failure(self, mock_login, settings):
         settings.NASA_EARTHDATA_USERNAME = 'u'

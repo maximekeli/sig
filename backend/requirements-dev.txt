@@ -1,0 +1,5 @@
+-r requirements.txt
+django-stubs[compatible-mypy]>=4.2
+djangorestframework-stubs>=3.14
+types-redis>=4.6
+pyright>=1.1

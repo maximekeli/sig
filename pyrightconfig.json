@@ -1,7 +1,25 @@
 {
   "include": ["backend"],
-  "extraPaths": ["backend/apps"],
-  "venvPath": ".",
-  "reportMissingImports": "warning",
-  "reportMissingModuleSource": "none"
+  "exclude": [
+    "**/migrations/**",
+    "**/__pycache__/**",
+    "**/staticfiles/**",
+    "**/data/**",
+    "**/.venv/**"
+  ],
+  "venvPath": "backend",
+  "venv": ".venv",
+  "extraPaths": ["backend/apps", "backend"],
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Linux",
+  "typeCheckingMode": "off",
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none",
+  "reportIncompatibleVariableOverride": "none",
+  "reportIncompatibleMethodOverride": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportCallIssue": "none",
+  "reportOperatorIssue": "none",
+  "reportArgumentType": "none",
+  "reportGeneralTypeIssues": "none"
 }

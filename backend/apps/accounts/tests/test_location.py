@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from django.utils import timezone
 
@@ -71,7 +73,7 @@ def test_stale_locations_excluded(agent_user, admin_user):
     upsert_user_location(agent_user, 1.25, 6.35)
     loc = UserLocation.objects.get(user=agent_user)
     UserLocation.objects.filter(pk=loc.pk).update(
-        updated_at=timezone.now() - timezone.timedelta(hours=2),
+        updated_at=timezone.now() - timedelta(hours=2),
     )
     upsert_user_location(admin_user, 1.30, 6.40)
     assert list_live_locations().count() == 1
