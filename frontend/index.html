@@ -12,7 +12,7 @@
     <div class="brand">
       <h1>SIG Sols Togo</h1>
       <p class="subtitle">SIG-SOLS-TOGO-2026-01 · Région Maritime</p>
-    </div>
+    </motion>
     <nav class="main-nav">
       <button type="button" class="nav-btn active" data-view="map">Carte</button>
       <button type="button" class="nav-btn" data-view="dashboard">Tableau de bord</button>
@@ -23,7 +23,7 @@
       <input type="text" id="login-user" placeholder="Utilisateur" value="agent1" />
       <input type="password" id="login-pass" placeholder="Mot de passe" value="agent123" />
       <button type="button" id="btn-login">Connexion</button>
-    </div>
+    </motion>
   </header>
 
   <main>
@@ -46,8 +46,17 @@
       <label><input type="checkbox" id="filter-validated" checked /> Validés uniquement</label>
       <button type="button" id="btn-apply-filters">Appliquer</button>
       <hr />
+      <h3>Localisation temps réel</h3>
+      <label class="location-share">
+        <input type="checkbox" id="share-location" />
+        Partager ma position (agents connectés)
+      </label>
+      <button type="button" id="btn-location-toggle" class="btn-location">Activer GPS</button>
+      <p id="location-status" class="location-status">Localisation désactivée</p>
+      <p class="location-legend"><span class="dot dot-self"></span> Moi · <span class="dot dot-agent"></span> Agent · <span class="dot dot-admin"></span> Admin</p>
+      <hr />
       <h3>Couches NASA</h3>
-      <div id="nasa-layers-toggles"></div>
+      <div id="nasa-layers-toggles"></motion>
       <hr />
       <h3>Export</h3>
       <button type="button" id="btn-export-geojson">GeoJSON</button>
@@ -81,7 +90,7 @@
       <article class="kpi-card wide"><h3>Précision IA (F1)</h3><p id="kpi-ml">—</p></article>
       <article class="chart-card wide"><h3>Distribution types de sol</h3><ul id="chart-soil-types"></ul></article>
       <article class="chart-card wide"><h3>Corrélation SMAP (R²)</h3><p id="smap-corr">—</p></article>
-    </div>
+    </motion>
   </section>
 
   <!-- QUIZ -->
@@ -109,12 +118,12 @@
       <ol id="leaderboard"></ol>
       <h3>Mes badges</h3>
       <ul id="my-badges"></ul>
-    </div>
+    </motion>
   </section>
 
   <!-- SHEETS -->
   <section id="view-sheets" class="view">
-    <div id="sheets-list" class="sheets-list"></div>
+    <div id="sheets-list" class="sheets-list"></motion>
   </section>
   </main>
 

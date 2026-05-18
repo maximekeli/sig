@@ -16,6 +16,7 @@ import {
 let map, markersLayer, usersLayer, nasaOverlays = {};
 let locationTracker = null;
 let selfMarker = null;
+let accuracyCircle = null;
 const peerMarkers = new Map();
 
 const basemaps = {
@@ -56,9 +57,17 @@ function updateSelfMarker(lat, lon, accuracy_m) {
   } else {
     selfMarker.setLatLng(latlng);
   }
+  if (accuracyCircle) {
+    usersLayer.removeLayer(accuracyCircle);
+    accuracyCircle = null;
+  }
   if (accuracy_m && accuracy_m < 500) {
-    L.circle(latlng, { radius: accuracy_m, color: '#3b82f6', fillOpacity: 0.08, weight: 1 })
-      .addTo(usersLayer);
+    accuracyCircle = L.circle(latlng, {
+      radius: accuracy_m,
+      color: '#3b82f6',
+      fillOpacity: 0.08,
+      weight: 1,
+    }).addTo(usersLayer);
   }
 }
 
@@ -119,6 +128,7 @@ async function stopLiveLocation() {
   usersLayer?.clearLayers();
   peerMarkers.clear();
   selfMarker = null;
+  accuracyCircle = null;
   const el = document.getElementById('location-status');
   if (el) el.textContent = 'Localisation désactivée';
   document.getElementById('btn-location-toggle')?.classList.remove('active');
