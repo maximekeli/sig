@@ -117,6 +117,26 @@ class LeaderboardView(APIView):
         return Response({'top_10': weekly_leaderboard(10)})
 
 
+class QuizShareView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, session_id):
+        try:
+            session = QuizSession.objects.get(pk=session_id, user=request.user, completed=True)
+        except QuizSession.DoesNotExist:
+            return Response({'error': 'Session introuvable'}, status=404)
+        profile, _ = UserQuizProfile.objects.get_or_create(user=request.user)
+        return Response({
+            'share_text': (
+                f'J\'ai obtenu {session.score} pts au quiz SIG Sols '
+                f'({session.difficulty}) — {profile.total_score} pts au total !'
+            ),
+            'score': session.score,
+            'difficulty': session.difficulty,
+            'total_score': profile.total_score,
+        })
+
+
 class MyBadgesView(APIView):
     permission_classes = [IsAuthenticated]
 

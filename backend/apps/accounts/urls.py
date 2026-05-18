@@ -23,4 +23,6 @@ urlpatterns = [
     path('users/', UserListView.as_view(), name='auth-users'),
     path('location/', MyLocationView.as_view(), name='auth-location'),
     path('locations/live/', LiveLocationsView.as_view(), name='auth-locations-live'),
+    path('trajectory/', UserTrajectoryView.as_view(), name='auth-trajectory-self'),
+    path('trajectory/<int:user_id>/', UserTrajectoryView.as_view(), name='auth-trajectory'),
 ]
