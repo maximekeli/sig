@@ -31,25 +31,59 @@ describe('createApiClient', () => {
     assert.equal(capturedHeaders.Authorization, 'Bearer abc123');
   });
 
-  it('login stocke le token', async () => {
+  it('login stocke le token et refresh', async () => {
     const storage = mockStorage();
     const fetchFn = async () => ({
       ok: true,
       status: 200,
       headers: { get: () => 'application/json' },
-      json: async () => ({ access: 'token_xyz' }),
+      json: async () => ({
+        access: 'token_xyz',
+        refresh: 'refresh_xyz',
+        user: { username: 'agent1', role: 'agent' },
+      }),
     });
     const client = createApiClient({ baseUrl: 'http://test/api/v1', storage, fetchFn });
     await client.login('agent1', 'pass');
     assert.equal(storage._data.sig_sols_token, 'token_xyz');
+    assert.equal(storage._data.sig_sols_refresh, 'refresh_xyz');
+    assert.ok(client.isAuthenticated());
   });
 
-  it('logout efface le token', () => {
+  it('logout efface la session', async () => {
     const storage = mockStorage();
     storage.setItem('sig_sols_token', 'x');
-    const client = createApiClient({ baseUrl: 'http://test/api/v1', storage, fetchFn: async () => ({}) });
-    client.logout();
+    storage.setItem('sig_sols_refresh', 'r');
+    const fetchFn = async () => ({
+      ok: true,
+      status: 200,
+      headers: { get: () => 'application/json' },
+      json: async () => ({}),
+    });
+    const client = createApiClient({ baseUrl: 'http://test/api/v1', storage, fetchFn });
+    await client.logout();
     assert.equal(client.getToken(), '');
+    assert.equal(client.isAuthenticated(), false);
+  });
+
+  it('register appelle l’API', async () => {
+    const fetchFn = async (url, opts) => {
+      assert.ok(url.includes('/auth/register/'));
+      assert.equal(opts.method, 'POST');
+      return {
+        ok: true,
+        status: 201,
+        headers: { get: () => 'application/json' },
+        json: async () => ({ user: { username: 'new' } }),
+      };
+    };
+    const client = createApiClient({ baseUrl: 'http://test/api/v1', fetchFn });
+    const data = await client.register({
+      username: 'new',
+      password: 'pass12345',
+      password_confirm: 'pass12345',
+    });
+    assert.equal(data.user.username, 'new');
   });
 
   it('réponse 204', async () => {

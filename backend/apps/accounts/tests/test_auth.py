@@ -75,6 +75,27 @@ def test_register_password_mismatch(api_client):
 
 
 @pytest.mark.django_db
+def test_change_password_mismatch(auth_client):
+    r = auth_client.post('/api/v1/auth/password/change/', {
+        'old_password': 'testpass123',
+        'new_password': 'newpass12345',
+        'new_password_confirm': 'different',
+    }, format='json')
+    assert r.status_code == 400
+
+
+@pytest.mark.django_db
+def test_change_password_wrong_old(auth_client):
+    r = auth_client.post('/api/v1/auth/password/change/', {
+        'old_password': 'wrong',
+        'new_password': 'newpass12345',
+        'new_password_confirm': 'newpass12345',
+    }, format='json')
+    assert r.status_code == 400
+    assert 'old_password' in r.json()
+
+
+@pytest.mark.django_db
 def test_change_password(auth_client, agent_user):
     r = auth_client.post('/api/v1/auth/password/change/', {
         'old_password': 'testpass123',
