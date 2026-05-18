@@ -28,6 +28,8 @@ else:
     ]
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     'nasa',
     'ml_predict',
     'education',
+    'platform',
 ]
 
 MIDDLEWARE = [
@@ -61,6 +64,14 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {'hosts': [os.environ.get('CELERY_BROKER_URL', 'redis://redis:6379/0')]},
+    },
+}
 
 TEMPLATES = [
     {
@@ -185,6 +196,18 @@ REGION_MARITIME_BBOX = (0.9, 6.0, 1.8, 6.8)  # min_lon, min_lat, max_lon, max_la
 LOCATION_STALE_MINUTES = int(os.environ.get('LOCATION_STALE_MINUTES', '5'))
 LOCATION_UPDATE_INTERVAL_MS = int(os.environ.get('LOCATION_UPDATE_INTERVAL_MS', '10000'))
 LOCATION_POLL_INTERVAL_MS = int(os.environ.get('LOCATION_POLL_INTERVAL_MS', '8000'))
+
+EMAIL_BACKEND = os.environ.get(
+    'EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend',
+)
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'sig-sols@disia.tg')
+
+CELERY_BEAT_SCHEDULE = {
+    'check-drought-alerts': {
+        'task': 'platform.tasks.check_drought_alerts',
+        'schedule': 3600.0,
+    },
+}
 
 # Security (production overrides via env)
 if not DEBUG:

@@ -18,7 +18,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class DroughtAlertSerializer(serializers.ModelSerializer):
-    soil_point_id = serializers.IntegerField(source='soil_point_id', read_only=True, allow_null=True)
+    soil_point_id = serializers.IntegerField(source='soil_point.id', read_only=True, allow_null=True)
     lat = serializers.SerializerMethodField()
     lon = serializers.SerializerMethodField()
 

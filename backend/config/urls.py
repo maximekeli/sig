@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/v1/nasa/', include('nasa.urls')),
     path('api/v1/ml/', include('ml_predict.urls')),
     path('api/v1/education/', include('education.urls')),
+    path('api/v1/platform/', include('platform.urls')),
 ]
 
 if settings.DEBUG:
