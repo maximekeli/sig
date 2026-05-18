@@ -174,7 +174,7 @@ function renderAnalysisResult(data) {
         </ul>
       ` : ''}
     </motion.div>
-  `.replace(/<\/?motion\.div>/g, (m) => (m.includes('/') ? '</motion.div>' : '<motion.div>').replace('motion.', ''));
+  `;
 
   highlightParcel(data.geometry_geojson, vuln.level);
 }
