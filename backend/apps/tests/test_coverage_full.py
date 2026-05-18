@@ -19,12 +19,67 @@ class TestAccountsCoverage:
     def test_is_agent_property(self, agent_user):
         assert agent_user.is_agent is True
         assert agent_user.is_administrator is False
+        assert agent_user.display_name == agent_user.username
 
     def test_is_administrator(self, admin_user):
         assert admin_user.is_administrator is True
 
     def test_logout_view(self, auth_client):
         assert auth_client.post('/api/v1/auth/logout/').status_code == 200
+
+    def test_auth_full_flow(self, api_client, auth_client, admin_client, agent_user, admin_user):
+        from accounts.models import UserLocation
+        from accounts.services import list_live_locations, upsert_user_location
+
+        assert api_client.post('/api/v1/auth/register/', {
+            'username': 'newuser1', 'email': 'n@t.local',
+            'password': 'pass12345', 'password_confirm': 'pass12345',
+            'role': 'agent',
+        }, format='json').status_code == 201
+        assert api_client.post('/api/v1/auth/register/', {
+            'username': 'newuser2', 'password': 'a', 'password_confirm': 'b',
+        }, format='json').status_code == 400
+        assert api_client.post('/api/v1/auth/register/', {
+            'username': 'newuser3', 'email': 'a@b.c',
+            'password': 'pass12345', 'password_confirm': 'pass12345',
+            'role': 'admin',
+        }, format='json').status_code == 201
+
+        tok = api_client.post('/api/v1/auth/token/', {
+            'username': 'test_agent', 'password': 'testpass123',
+        }, format='json')
+        assert 'user' in tok.json()
+
+        assert auth_client.get('/api/v1/auth/profile/').status_code == 200
+        auth_client.patch('/api/v1/auth/profile/', {'first_name': 'Agent'}, format='json')
+        assert auth_client.post('/api/v1/auth/password/change/', {
+            'old_password': 'wrong', 'new_password': 'x', 'new_password_confirm': 'x',
+        }, format='json').status_code == 400
+        assert auth_client.post('/api/v1/auth/password/change/', {
+            'old_password': 'testpass123', 'new_password': 'newpass123',
+            'new_password_confirm': 'other',
+        }, format='json').status_code == 400
+        assert auth_client.get('/api/v1/auth/location/').status_code == 404
+        assert auth_client.post('/api/v1/auth/location/', {
+            'lat': 6.35, 'lon': 1.25, 'accuracy_m': 12,
+        }, format='json').status_code == 200
+        assert auth_client.get('/api/v1/auth/location/').status_code == 200
+        assert auth_client.post('/api/v1/auth/location/', {
+            'lat': 0, 'lon': 0,
+        }, format='json').status_code == 400
+        assert auth_client.delete('/api/v1/auth/location/').status_code == 204
+
+        upsert_user_location(agent_user, 1.25, 6.35)
+        list_live_locations(exclude_user=agent_user)
+        assert admin_client.get('/api/v1/auth/users/').status_code == 200
+        assert admin_client.get('/api/v1/auth/locations/live/').status_code == 200
+        assert admin_client.get('/api/v1/auth/locations/live/?include_self=1').status_code == 200
+
+        loc = UserLocation.objects.create(
+            user=agent_user, location=Point(1.25, 6.35, srid=4326),
+        )
+        assert str(loc)
+        assert auth_client.get(f'/api/v1/auth/trajectory/{admin_user.id}/').status_code == 403
 
 
 @pytest.mark.django_db
@@ -167,6 +222,16 @@ class TestNasaCoverage:
         r = api_client.get('/api/v1/nasa/tiles/MOD13Q1/2026-01-01/0/0/0.png')
         assert r.status_code == 200
         assert r['Content-Type'] == 'image/png'
+
+    def test_catalog_summary(self, api_client, db):
+        from nasa.models import NasaLayerCatalog
+        NasaLayerCatalog.objects.create(
+            product='MOD13Q1', layer_name='ndvi', acquisition_date=date.today(),
+            bbox=[0, 0, 1, 1], resolution_m=250,
+        )
+        r = api_client.get('/api/v1/nasa/catalog/summary/')
+        assert r.status_code == 200
+        assert r.json()['total_layers'] >= 1
 
     def test_nasa_layer_str(self, db):
         from django.contrib.gis.geos import Polygon
@@ -426,6 +491,11 @@ class TestMlCoverage:
         r = api_client.get('/api/v1/ml/metrics/')
         assert r.status_code == 200
         assert r.json()['algorithm'] == 'RandomForest'
+
+    def test_predict_and_batch_errors(self, api_client):
+        assert api_client.post('/api/v1/ml/predict/', {}, format='json').status_code == 400
+        assert api_client.post('/api/v1/ml/predict/batch/', {}, format='json').status_code == 400
+        assert api_client.post('/api/v1/ml/predict/batch/export/', {}, format='json').status_code == 400
 
     def test_pipeline_xgboost_and_synthetic(self):
         from ml_predict.pipeline import _synthetic_augment, train_and_save
