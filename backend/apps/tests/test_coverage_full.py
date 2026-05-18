@@ -725,3 +725,82 @@ class TestSpatialCoverage:
             )
         corr = services.smap_correlation()
         assert corr['sample_size'] >= 10
+
+
+@pytest.mark.django_db
+class TestPlatformExtensions:
+    def test_admin_dashboard(self, admin_client):
+        r = admin_client.get('/api/v1/platform/admin/dashboard/')
+        assert r.status_code == 200
+        assert 'users_total' in r.data
+
+    def test_notifications_and_alerts(self, auth_client, agent_user):
+        from platform.models import DroughtAlert, Notification
+        Notification.objects.create(
+            user=agent_user, title='Test', message='Hello', level='info',
+        )
+        DroughtAlert.objects.create(message='Sécheresse test', severity='moyenne')
+        assert auth_client.get('/api/v1/platform/notifications/').status_code == 200
+        assert auth_client.get('/api/v1/platform/alerts/drought/').status_code == 200
+
+    def test_password_reset(self, api_client, agent_user):
+        agent_user.email = 'agent@test.local'
+        agent_user.save()
+        r = api_client.post('/api/v1/platform/password/reset/', {'email': agent_user.email}, format='json')
+        assert r.status_code == 200
+        from platform.models import PasswordResetToken
+        prt = PasswordResetToken.objects.filter(user=agent_user).first()
+        assert prt
+        r2 = api_client.post('/api/v1/platform/password/reset/confirm/', {
+            'token': prt.token,
+            'new_password': 'newpass123',
+            'new_password_confirm': 'newpass123',
+        }, format='json')
+        assert r2.status_code == 200
+
+    def test_heatmap_notes_trajectory(self, auth_client, admin_client, sample_soil_point, agent_user):
+        from accounts.models import UserLocation, UserLocationHistory
+        from django.contrib.gis.geos import Point
+
+        assert auth_client.get('/api/v1/heatmap/?field=ph').status_code == 200
+        r = auth_client.post('/api/v1/notes/', {
+            'soil_point': sample_soil_point.id,
+            'text': 'Note test',
+        }, format='json')
+        assert r.status_code == 201
+        assert auth_client.get(f'/api/v1/points/{sample_soil_point.id}/compare/').status_code == 200
+        loc = UserLocation.objects.create(
+            user=agent_user,
+            location=Point(1.25, 6.35, srid=4326),
+            is_sharing=True,
+        )
+        UserLocationHistory.objects.create(
+            user=agent_user, location=loc.location, accuracy_m=10,
+        )
+        assert auth_client.get('/api/v1/auth/trajectory/').status_code == 200
+        assert admin_client.get('/api/v1/validation/pending/').status_code == 200
+        r = admin_client.post(
+            f'/api/v1/points/{sample_soil_point.id}/validate_point/',
+            {'action': 'validate'}, format='json',
+        )
+        assert r.status_code == 200
+
+    def test_batch_predict_and_zone_report(self, auth_client, admin_client, sample_soil_point, sample_zone):
+        from platform.tasks import check_drought_alerts
+
+        sample_soil_point.ndvi_3m_avg = 0.2
+        sample_soil_point.smap_moisture_avg = 0.1
+        sample_soil_point.is_validated = True
+        sample_soil_point.save()
+        result = check_drought_alerts()
+        assert 'alerts_created' in result
+        r = auth_client.post('/api/v1/ml/predict/batch/', {
+            'point_ids': [sample_soil_point.id],
+        }, format='json')
+        assert r.status_code == 200
+        r2 = auth_client.post('/api/v1/ml/predict/batch/export/', {
+            'point_ids': [sample_soil_point.id],
+        }, format='json')
+        assert r2.status_code == 200
+        assert admin_client.get(f'/api/v1/platform/reports/zone/{sample_zone.code}/').status_code == 200
+        assert admin_client.get('/api/v1/platform/audit/').status_code == 200
