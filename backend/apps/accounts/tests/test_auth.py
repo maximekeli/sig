@@ -53,6 +53,45 @@ def test_user_list_requires_admin(api_client, agent_user, admin_user):
 
 
 @pytest.mark.django_db
+def test_token_returns_user(api_client, agent_user):
+    r = api_client.post('/api/v1/auth/token/', {
+        'username': 'test_agent',
+        'password': 'testpass123',
+    })
+    assert r.status_code == 200
+    body = r.json()
+    assert 'access' in body
+    assert body['user']['role'] == 'agent'
+
+
+@pytest.mark.django_db
+def test_register_password_mismatch(api_client):
+    r = api_client.post('/api/v1/auth/register/', {
+        'username': 'x',
+        'password': 'securepass123',
+        'password_confirm': 'different',
+    })
+    assert r.status_code == 400
+
+
+@pytest.mark.django_db
+def test_change_password(auth_client, agent_user):
+    r = auth_client.post('/api/v1/auth/password/change/', {
+        'old_password': 'testpass123',
+        'new_password': 'newpass12345',
+        'new_password_confirm': 'newpass12345',
+    }, format='json')
+    assert r.status_code == 200
+    agent_user.refresh_from_db()
+    assert agent_user.check_password('newpass12345')
+
+
+@pytest.mark.django_db
+def test_logout(auth_client):
+    assert auth_client.post('/api/v1/auth/logout/').status_code == 200
+
+
+@pytest.mark.django_db
 def test_health():
     from django.test import Client
     c = Client()
