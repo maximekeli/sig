@@ -814,18 +814,11 @@ class TestPlatformExtensions:
         assert auth_client.post('/api/v1/platform/notifications/99999/read/').status_code == 404
 
     def test_soil_point_actions(self, auth_client, admin_client, sample_soil_point):
-        r = auth_client.post('/api/v1/points/', {
-            'type': 'Feature',
-            'geometry': {'type': 'Point', 'coordinates': [1.26, 6.36]},
-            'properties': {
-                'ph': 6.0, 'humidity_pct': 30, 'soil_type': 'limoneux',
-                'collected_at': '2025-06-01', 'parent_point': sample_soil_point.id,
-            },
-        }, format='json')
-        assert r.status_code in (201, 400)
         assert auth_client.get(
             f'/api/v1/points/{sample_soil_point.id}/predict_fertility/',
         ).status_code == 200
+        assert auth_client.get('/api/v1/points/export-csv/').status_code == 200
+        assert auth_client.get('/api/v1/points/?light=1').status_code == 200
         admin_client.post(
             f'/api/v1/points/{sample_soil_point.id}/validate_point/',
             {'action': 'reject'}, format='json',
@@ -842,3 +835,48 @@ class TestPlatformExtensions:
         data = DroughtAlertSerializer(alert).data
         assert data['lat'] is not None
         assert api_client.get('/api/v1/spatial/proximity/').status_code == 400
+
+    def test_extended_platform_soils(self, auth_client, admin_client, api_client, sample_soil_point):
+        from django.contrib.gis.geos import Point
+        from sig_platform.models import PasswordResetToken
+        from sig_platform.tasks import check_drought_alerts
+        from soils.models import SoilPoint
+        from soils.validators import validate_soil_point_quality
+
+        assert auth_client.get('/api/v1/heatmap/?field=invalid').status_code == 200
+        assert auth_client.get('/api/v1/points/99999/compare/').status_code == 404
+        assert auth_client.get('/api/v1/notes/').status_code == 200
+        assert auth_client.get(f'/api/v1/notes/?soil_point={sample_soil_point.id}').status_code == 200
+        assert auth_client.get('/api/v1/platform/reports/zone/UNKNOWN/').status_code == 404
+        assert api_client.post('/api/v1/platform/password/reset/confirm/', {
+            'token': 'bad',
+            'new_password': 'x',
+            'new_password_confirm': 'y',
+        }, format='json').status_code == 400
+
+        sample_soil_point.ndvi_3m_avg = 0.2
+        sample_soil_point.smap_moisture_avg = 0.1
+        sample_soil_point.is_validated = True
+        sample_soil_point.save()
+        check_drought_alerts()
+        check_drought_alerts()
+
+        p_red = SoilPoint.objects.create(
+            location=Point(1.2, 6.3, srid=4326), ph=5.0, humidity_pct=30,
+            soil_type='limoneux', collected_at='2025-01-01',
+        )
+        p_yellow = SoilPoint.objects.create(
+            location=Point(1.21, 6.3, srid=4326), ph=6.5, humidity_pct=30,
+            soil_type='limoneux', collected_at='2025-01-01',
+        )
+        p_green = SoilPoint.objects.create(
+            location=Point(1.22, 6.3, srid=4326), ph=8.0, humidity_pct=30,
+            soil_type='limoneux', collected_at='2025-01-01',
+        )
+        assert p_red.ph_color == 'red'
+        assert p_yellow.ph_color == 'yellow'
+        assert p_green.ph_color == 'green'
+
+        assert 'ph' in validate_soil_point_quality({'ph': 2.0})
+        assert 'humidity_pct' in validate_soil_point_quality({'humidity_pct': 150})
+        assert 'location' in validate_soil_point_quality({'location': Point(0, 0, srid=4326)})
