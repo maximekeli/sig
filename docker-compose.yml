@@ -26,6 +26,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     image: dusol_projet-web
+    command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
     volumes:
       - ./backend:/app
       - media_data:/app/media
