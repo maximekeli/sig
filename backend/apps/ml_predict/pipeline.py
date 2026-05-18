@@ -171,7 +171,6 @@ def _synthetic_augment(df: pd.DataFrame, target: int = 200) -> pd.DataFrame:
     rng = np.random.default_rng(42)
     rows = df.to_dict('records') if len(df) else []
     soil_types = ['argileux', 'sableux', 'limoneux', 'tourbeux', 'calcaire']
-    classes = ['faible', 'moyenne', 'elevee']
     while len(rows) < target:
         ph = rng.uniform(4.5, 8.5)
         ndvi = rng.uniform(0.15, 0.85)

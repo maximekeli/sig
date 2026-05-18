@@ -24,7 +24,7 @@ def clip_raster_to_bbox(
         return None
 
     try:
-        import rioxarray
+        import rioxarray  # noqa: F401 — registers .rio accessor on xarray
         import xarray as xr
 
         da = xr.open_dataarray(input_path, engine='rasterio', mask_and_scale=True)

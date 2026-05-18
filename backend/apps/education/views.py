@@ -1,7 +1,7 @@
 import random
 
 from django.utils import timezone
-from rest_framework import generics, status, viewsets
+from rest_framework import viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,7 +17,6 @@ from .serializers import (
     PedagogicalSheetSerializer,
     QuizAnswerSerializer,
     QuizQuestionPublicSerializer,
-    QuizSessionSerializer,
     UserBadgeSerializer,
 )
 from .services import award_badges, weekly_leaderboard

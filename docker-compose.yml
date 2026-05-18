@@ -43,6 +43,9 @@ services:
         condition: service_healthy
 
   celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     image: dusol_projet-web
     entrypoint: []
     command: celery -A config worker -l info
@@ -60,6 +63,9 @@ services:
       - web
 
   celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     image: dusol_projet-web
     entrypoint: []
     command: celery -A config beat -l info

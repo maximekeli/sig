@@ -1,9 +1,12 @@
+"""Pytest fixtures — PYTHONPATH: backend/apps (see pytest.ini)."""
 import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / 'apps'))
+_APPS = Path(__file__).resolve().parent / 'apps'
+if str(_APPS) not in sys.path:
+    sys.path.insert(0, str(_APPS))
 
 
 @pytest.fixture

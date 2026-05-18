@@ -1,6 +1,6 @@
 from django.utils import timezone
 
-from .models import QuizQuestion, QuizSession, UserBadge, UserQuizProfile
+from .models import QuizSession, UserBadge, UserQuizProfile
 
 
 def award_badges(user):

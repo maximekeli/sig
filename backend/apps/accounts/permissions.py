@@ -1,7 +1,5 @@
 from rest_framework.permissions import BasePermission
 
-from .models import User
-
 
 class IsAdministrator(BasePermission):
     def has_permission(self, request, view):

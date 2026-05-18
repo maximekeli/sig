@@ -1,0 +1,7 @@
+{
+  "include": ["backend"],
+  "extraPaths": ["backend/apps"],
+  "venvPath": ".",
+  "reportMissingImports": "warning",
+  "reportMissingModuleSource": "none"
+}

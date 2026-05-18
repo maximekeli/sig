@@ -46,7 +46,7 @@ jobs:
           DEBUG: '1'
         run: |
           python manage.py migrate --noinput
-          pytest apps/ --cov=apps --cov-fail-under=70
+          pytest apps/ --cov=apps --cov-config=.coveragerc --cov-fail-under=70
 
   frontend:
     runs-on: ubuntu-latest

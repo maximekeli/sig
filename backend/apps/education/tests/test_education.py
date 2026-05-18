@@ -1,6 +1,6 @@
 import pytest
 
-from education.models import QuizQuestion, UserBadge, UserQuizProfile
+from education.models import QuizQuestion, UserBadge
 from education.services import award_badges, weekly_leaderboard
 
 

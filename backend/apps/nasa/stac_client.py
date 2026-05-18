@@ -3,10 +3,8 @@ STAC catalog search via pystac-client — MODIS, SMAP, GPM, etc.
 https://github.com/stac-utils/pystac-client
 """
 import logging
-from datetime import date, timedelta
+from datetime import date
 from typing import Any
-
-from django.conf import settings
 
 logger = logging.getLogger(__name__)
 

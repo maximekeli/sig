@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import MultiPolygon, Point, Polygon
 from django.core.management.base import BaseCommand
 
-from soils.models import AdministrativeZone, SoilPoint, SoilPointNasaSnapshot
+from soils.models import AdministrativeZone, SoilPoint
 
 User = get_user_model()
 
