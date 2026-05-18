@@ -150,19 +150,36 @@ async function loadSoilPoints() {
   });
   const data = await SigSolsAPI.api('/points/?' + query);
   markersLayer.clearLayers();
+  window.SigSolsFeatures?.clearClusters();
   parseSoilPointsList(data).forEach((props) => {
     const coords = [props.lon, props.lat];
     const style = markerStyleForPoint(props);
     const marker = L.circleMarker([coords[1], coords[0]], style);
+    const status = props.validation_status || (props.is_validated ? 'validated' : 'pending');
     marker.bindPopup(`
-      <strong>Point #${props.id}</strong><br/>
+      <strong>Point #${props.id}</strong> (${status})<br/>
       pH: ${props.ph} · Humidité: ${props.humidity_pct}%<br/>
       Type: ${props.soil_type}<br/>
       NDVI: ${props.ndvi_3m_avg ?? '—'} · SMAP: ${props.smap_moisture_avg ?? '—'}<br/>
       <button onclick="predictAtPoint(${props.ph}, ${props.humidity_pct}, '${props.soil_type}')">Prédire fertilité</button>
+      <button onclick="SigSolsFeatures.loadNdviChart(${props.id}, 'ndvi-${props.id}')">Série NDVI</button>
+      <motion id="ndvi-${props.id}"></div>
     `);
     markersLayer.addLayer(marker);
+    window.SigSolsFeatures?.addMarkerToCluster(marker);
   });
+}
+
+function getMap() {
+  return map;
+}
+
+function onWsLocation(msg) {
+  if (msg.user_id && msg.lat != null) {
+    renderPeerMarkers({
+      users: [{ id: msg.user_id, lat: msg.lat, lon: msg.lon, role: msg.role || 'agent', displayName: msg.username || 'Agent' }],
+    });
+  }
 }
 
 async function loadNasaToggles() {
@@ -209,9 +226,11 @@ async function runPrediction() {
 
 window.SigSolsMap = {
   initMap,
+  getMap,
   loadSoilPoints,
   runPrediction,
   startLiveLocation,
   stopLiveLocation,
   toggleLiveLocation,
+  onWsLocation,
 };
