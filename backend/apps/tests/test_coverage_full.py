@@ -135,6 +135,16 @@ class TestEducationCoverage:
         assert fin.status_code == 200
         auth_client.get('/api/v1/education/quiz/badges/')
 
+    def test_quiz_share(self, auth_client, agent_user):
+        from education.models import QuizSession
+        s = QuizSession.objects.create(
+            user=agent_user, difficulty='facile', score=42, completed=True,
+        )
+        r = auth_client.get(f'/api/v1/education/quiz/{s.id}/share/')
+        assert r.status_code == 200
+        assert 'share_text' in r.json()
+        assert auth_client.get('/api/v1/education/quiz/99999/share/').status_code == 404
+
 
 @pytest.mark.django_db
 class TestNasaCoverage:
@@ -914,3 +924,8 @@ class TestPlatformExtensions:
             'new_password': 'newpass123',
             'new_password_confirm': 'newpass123',
         }, format='json').status_code == 400
+        from sig_platform.serializers import PasswordResetConfirmSerializer
+        ser = PasswordResetConfirmSerializer(data={
+            'token': 'x', 'new_password': 'a', 'new_password_confirm': 'b',
+        })
+        assert not ser.is_valid()
