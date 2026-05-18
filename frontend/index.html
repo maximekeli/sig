@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -79,6 +80,19 @@
       </label>
       <label><input type="checkbox" id="filter-validated" checked /> Validés uniquement</label>
       <button type="button" id="btn-apply-filters">Appliquer</button>
+      <hr />
+      <h3>Parcelles — analyse auto</h3>
+      <label>Zone administrative
+        <select id="parcel-zone-select">
+          <option value="">— Dessiner sur la carte —</option>
+        </select>
+      </label>
+      <p id="parcel-status" class="parcel-status">Dessinez un polygone (outil carte) ou choisissez une zone.</p>
+      <label class="parcel-check"><input type="checkbox" id="parcel-use-nasa" checked /> Données NASA (NDVI, SMAP)</label>
+      <label class="parcel-check"><input type="checkbox" id="parcel-use-ml" checked /> Prédiction IA fertilité</label>
+      <button type="button" id="btn-parcel-analyze" class="btn-parcel-analyze">Analyser la parcelle</button>
+      <button type="button" id="btn-parcel-clear" class="btn-parcel-clear">Effacer sélection</button>
+      <div id="parcel-analysis-result" class="parcel-analysis-result hidden"></div>
       <hr />
       <h3>Outils carte</h3>
       <label><input type="checkbox" id="mode-add-point" /> Ajouter un point (clic carte)</label>
@@ -227,6 +241,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <div id="auth-profile-modal" class="auth-modal hidden" role="dialog" aria-labelledby="profile-title">
     <div class="auth-modal-backdrop" id="btn-profile-close"></div>
@@ -254,6 +269,7 @@
   <script type="module" src="js/auth.js"></script>
   <script type="module" src="js/features.js"></script>
   <script type="module" src="js/map.js"></script>
+  <script type="module" src="js/parcel.js"></script>
   <script type="module" src="js/dashboard.js"></script>
   <script type="module" src="js/quiz.js"></script>
   <script src="js/app.js"></script>

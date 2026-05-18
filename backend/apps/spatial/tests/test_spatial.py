@@ -75,6 +75,40 @@ def test_smap_correlation_insufficient_data():
 
 
 @pytest.mark.django_db
+def test_parcel_analyze_polygon(auth_client, sample_soil_point, sample_zone):
+    geom = {
+        'type': 'Polygon',
+        'coordinates': [[[1.1, 6.2], [1.4, 6.2], [1.4, 6.4], [1.1, 6.4], [1.1, 6.2]]],
+    }
+    r = auth_client.post('/api/v1/spatial/parcel/analyze/', {
+        'geometry': geom,
+        'use_ml': True,
+    }, format='json')
+    assert r.status_code == 200
+    data = r.json()
+    assert 'area' in data
+    assert 'vulnerability' in data
+    assert 'nasa' in data
+    assert data['soil_points']['count'] >= 0
+
+
+@pytest.mark.django_db
+def test_parcel_analyze_by_zone_code(auth_client, sample_zone):
+    r = auth_client.post('/api/v1/spatial/parcel/analyze/', {
+        'zone_code': sample_zone.code,
+    }, format='json')
+    assert r.status_code == 200
+    assert r.json()['zone_code'] == sample_zone.code
+
+
+@pytest.mark.django_db
+def test_parcel_zones_list(api_client, sample_zone):
+    r = api_client.get('/api/v1/spatial/parcel/zones/')
+    assert r.status_code == 200
+    assert r.json()['count'] >= 1
+
+
+@pytest.mark.django_db
 def test_ndvi_timeseries_empty(api_client, sample_soil_point):
     r = api_client.get(f'/api/v1/spatial/ndvi-timeseries/{sample_soil_point.id}/')
     assert r.status_code == 200

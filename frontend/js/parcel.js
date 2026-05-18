@@ -173,7 +173,7 @@ function renderAnalysisResult(data) {
           ${data.recommendations.map((r) => `<li>${r}</li>`).join('')}
         </ul>
       ` : ''}
-    </motion.div>
+    </div>
   `;
 
   highlightParcel(data.geometry_geojson, vuln.level);

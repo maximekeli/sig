@@ -47,6 +47,7 @@ function initMap() {
   usersLayer = L.layerGroup().addTo(map);
   mapReady = true;
   window.SigSolsFeatures?.initMapAdvanced(map, markersLayer);
+  window.SigSolsParcel?.initParcelTools?.();
   loadSoilPoints();
   loadNasaToggles();
 }

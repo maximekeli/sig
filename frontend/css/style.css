@@ -929,6 +929,101 @@ main {
   .quiz-config { grid-template-columns: 1fr; }
 }
 
+/* Parcelles — sélection & analyse */
+.parcel-status {
+  font-size: 0.8rem;
+  color: var(--slate-500);
+  margin: 0.35rem 0 0.5rem;
+  line-height: 1.4;
+}
+
+.parcel-check {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  margin-bottom: 0.35rem;
+}
+
+#parcel-zone-select {
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.45rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--sand);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+}
+
+.btn-parcel-analyze {
+  background: linear-gradient(135deg, var(--emerald-600), var(--emerald-800)) !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.btn-parcel-clear {
+  background: transparent !important;
+  color: var(--emerald-800) !important;
+  border: 1px solid var(--emerald-600) !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.parcel-analysis-result {
+  max-height: 280px;
+  overflow-y: auto;
+  margin-bottom: 0.75rem;
+  animation: fadeIn 0.4s var(--ease-out);
+}
+
+.parcel-report {
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--emerald-600);
+  background: var(--cream-2);
+  font-size: 0.82rem;
+}
+
+.parcel-report--elevee { border-left-color: #dc2626; background: rgba(220, 38, 38, 0.06); }
+.parcel-report--moyenne { border-left-color: #e9a319; }
+.parcel-report--faible { border-left-color: var(--emerald-600); }
+
+.parcel-report h4 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--emerald-800);
+}
+
+.parcel-meta { margin: 0 0 0.5rem; color: var(--slate-500); }
+
+.parcel-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.parcel-metrics span {
+  padding: 0.25rem 0.5rem;
+  background: #fff;
+  border-radius: 4px;
+  font-size: 0.78rem;
+}
+
+.parcel-nasa, .parcel-ml { margin: 0.35rem 0; color: var(--emerald-700); }
+
+.parcel-recs {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  line-height: 1.45;
+}
+
+.parcel-loading { font-style: italic; color: var(--slate-500); }
+.parcel-error { color: #dc2626; }
+
+.leaflet-draw-toolbar a {
+  background-color: #fff !important;
+}
+
 .quiz-panel h2, .admin-panel h2 {
   margin: 0 0 1.25rem;
   font-family: var(--font-display);
