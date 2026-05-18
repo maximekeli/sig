@@ -12,11 +12,16 @@ logger = logging.getLogger(__name__)
 
 
 def login() -> bool:
-    """Authenticate with NASA Earthdata (environment or .netrc)."""
-    if not settings.NASA_EARTHDATA_USERNAME:
+    """Authenticate with NASA Earthdata (token JWT, username/password, or .netrc)."""
+    has_token = bool(getattr(settings, 'NASA_EARTHDATA_TOKEN', ''))
+    has_user = bool(settings.NASA_EARTHDATA_USERNAME)
+    if not has_token and not has_user:
         return False
-    os.environ.setdefault('EARTHDATA_USERNAME', settings.NASA_EARTHDATA_USERNAME)
-    os.environ.setdefault('EARTHDATA_PASSWORD', settings.NASA_EARTHDATA_PASSWORD)
+    if has_token:
+        os.environ['EARTHDATA_TOKEN'] = settings.NASA_EARTHDATA_TOKEN
+    if has_user:
+        os.environ.setdefault('EARTHDATA_USERNAME', settings.NASA_EARTHDATA_USERNAME)
+        os.environ.setdefault('EARTHDATA_PASSWORD', settings.NASA_EARTHDATA_PASSWORD or '')
     try:
         import earthaccess
         auth = earthaccess.login(strategy='environment')

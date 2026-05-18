@@ -80,4 +80,3 @@ class UserLocationHistory(models.Model):
     class Meta:
         ordering = ['-recorded_at']
         indexes = [models.Index(fields=['user', 'recorded_at'])]
-

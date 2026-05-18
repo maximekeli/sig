@@ -8,6 +8,8 @@
 ```env
 NASA_EARTHDATA_USERNAME=votre_login
 NASA_EARTHDATA_PASSWORD=votre_mot_de_passe
+# OU token JWT depuis le profil Earthdata (recommandé si OAuth)
+NASA_EARTHDATA_TOKEN=votre_token_jwt
 ```
 
 3. Redémarrer : `docker compose restart web celery`

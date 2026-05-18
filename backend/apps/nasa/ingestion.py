@@ -60,7 +60,9 @@ def ingest_product(product_code: str, layer_label: str, days_back: int = 30) -> 
             'source': 'NASA Earthdata',
             'crs': 'EPSG:4326',
             'credit': 'NASA Earth Science',
-            'demo_mode': not bool(settings.NASA_EARTHDATA_USERNAME),
+            'demo_mode': not bool(
+                settings.NASA_EARTHDATA_USERNAME or getattr(settings, 'NASA_EARTHDATA_TOKEN', ''),
+            ),
             'stac_items_found': len(stac_items),
         }
         if stac_items:

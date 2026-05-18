@@ -1,5 +1,4 @@
 import pytest
-from django.contrib.gis.geos import Point
 from django.utils import timezone
 
 from accounts.models import UserLocation

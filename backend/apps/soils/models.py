@@ -109,6 +109,7 @@ class SoilPoint(models.Model):
     class Meta:
         verbose_name = 'Point de sol'
         verbose_name_plural = 'Points de sol'
+        ordering = ['-collected_at', '-id']
         indexes = [
             models.Index(fields=['ph', 'soil_type']),
             models.Index(fields=['collected_at']),

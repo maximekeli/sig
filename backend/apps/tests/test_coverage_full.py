@@ -39,14 +39,15 @@ class TestAccountsCoverage:
             'role': 'agent',
         }, format='json').status_code == 201
         assert api_client.post('/api/v1/auth/register/', {
-            'username': f'u2_{suffix}', 'password': 'a', 'password_confirm': 'b',
+            'username': f'u2_{suffix}', 'email': f'u2_{suffix}@example.com',
+            'password': 'pass12345', 'password_confirm': 'pass12346',
         }, format='json').status_code == 400
         r_admin = api_client.post('/api/v1/auth/register/', {
-            'username': f'u3_{suffix}', 'email': f'a_{suffix}@b.c',
+            'username': f'u3_{suffix}', 'email': f'user_{suffix}@example.com',
             'password': 'pass12345', 'password_confirm': 'pass12345',
             'role': 'admin',
         }, format='json')
-        assert r_admin.status_code == 201
+        assert r_admin.status_code == 201, r_admin.content
         assert r_admin.json()['user']['role'] == 'public'
 
         tok = api_client.post('/api/v1/auth/token/', {
@@ -57,11 +58,12 @@ class TestAccountsCoverage:
         assert auth_client.get('/api/v1/auth/profile/').status_code == 200
         auth_client.patch('/api/v1/auth/profile/', {'first_name': 'Agent'}, format='json')
         assert auth_client.post('/api/v1/auth/password/change/', {
-            'old_password': 'wrong', 'new_password': 'x', 'new_password_confirm': 'x',
+            'old_password': 'wrong', 'new_password': 'pass12345',
+            'new_password_confirm': 'pass12345',
         }, format='json').status_code == 400
         assert auth_client.post('/api/v1/auth/password/change/', {
-            'old_password': 'testpass123', 'new_password': 'newpass123',
-            'new_password_confirm': 'other',
+            'old_password': 'testpass123', 'new_password': 'pass12345',
+            'new_password_confirm': 'pass12346',
         }, format='json').status_code == 400
         assert auth_client.get('/api/v1/auth/location/').status_code == 404
         assert auth_client.post('/api/v1/auth/location/', {
@@ -79,11 +81,29 @@ class TestAccountsCoverage:
         assert admin_client.get('/api/v1/auth/locations/live/').status_code == 200
         assert admin_client.get('/api/v1/auth/locations/live/?include_self=1').status_code == 200
 
-        loc = UserLocation.objects.create(
-            user=agent_user, location=Point(1.25, 6.35, srid=4326),
+        loc, _ = UserLocation.objects.get_or_create(
+            user=agent_user,
+            defaults={'location': Point(1.25, 6.35, srid=4326)},
         )
         assert str(loc)
-        assert auth_client.get(f'/api/v1/auth/trajectory/{admin_user.id}/').status_code == 403
+        from accounts.models import UserLocationHistory
+        h = UserLocationHistory.objects.create(
+            user=agent_user, location=loc.location, accuracy_m=5,
+        )
+        assert str(h)
+        from accounts.views import UserTrajectoryView
+        from rest_framework.test import APIRequestFactory
+        factory = APIRequestFactory()
+        req = factory.get('/')
+        req.user = agent_user
+        resp = UserTrajectoryView.as_view()(req, user_id=admin_user.id)
+        assert resp.status_code == 403
+        r_pw = auth_client.post('/api/v1/auth/password/change/', {
+            'old_password': 'testpass123', 'new_password': 'newpass999',
+            'new_password_confirm': 'newpass999',
+        }, format='json')
+        assert r_pw.status_code == 200
+        api_client.get('/api/v1/education/quiz/leaderboard/')
 
 
 @pytest.mark.django_db
@@ -499,6 +519,9 @@ class TestMlCoverage:
 
     def test_predict_and_batch_errors(self, api_client, auth_client):
         assert api_client.post('/api/v1/ml/predict/', {}, format='json').status_code == 400
+        assert api_client.post('/api/v1/ml/predict/', {
+            'ph': 6.2, 'humidity_pct': 35, 'soil_type': 'limoneux',
+        }, format='json').status_code == 200
         assert auth_client.post('/api/v1/ml/predict/batch/', {}, format='json').status_code == 400
         assert auth_client.post('/api/v1/ml/predict/batch/export/', {}, format='json').status_code == 400
 
@@ -923,7 +946,6 @@ class TestPlatformExtensions:
 
     def test_extended_platform_soils(self, auth_client, admin_client, api_client, sample_soil_point):
         from django.contrib.gis.geos import Point
-        from sig_platform.models import PasswordResetToken
         from sig_platform.tasks import check_drought_alerts
         from soils.models import SoilPoint
         from soils.validators import validate_soil_point_quality
@@ -999,8 +1021,6 @@ class TestPlatformExtensions:
             'new_password': 'newpass123',
             'new_password_confirm': 'newpass123',
         }, format='json').status_code == 400
-        from sig_platform.serializers import PasswordResetConfirmSerializer
-        ser = PasswordResetConfirmSerializer(data={
-            'token': 'x', 'new_password': 'a', 'new_password_confirm': 'b',
-        })
-        assert not ser.is_valid()
+        assert api_client.post('/api/v1/platform/password/reset/confirm/', {
+            'token': 'x', 'new_password': 'aaaa1234', 'new_password_confirm': 'bbbb1234',
+        }, format='json').status_code == 400
