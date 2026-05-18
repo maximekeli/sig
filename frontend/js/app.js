@@ -21,6 +21,8 @@ document.getElementById('btn-login').addEventListener('click', async () => {
     );
     alert('Connecté.');
     SigSolsMap.loadSoilPoints();
+    const share = document.getElementById('share-location')?.checked;
+    if (share) SigSolsMap.startLiveLocation();
   } catch (e) {
     alert('Erreur: ' + e.message);
   }
@@ -34,6 +36,11 @@ document.getElementById('btn-export-csv')?.addEventListener('click', () => {
   window.open('/api/v1/points/export-csv/', '_blank');
 });
 document.getElementById('btn-predict')?.addEventListener('click', () => SigSolsMap.runPrediction());
+document.getElementById('btn-location-toggle')?.addEventListener('click', () => SigSolsMap.toggleLiveLocation());
+document.getElementById('share-location')?.addEventListener('change', (e) => {
+  if (e.target.checked && SigSolsAPI.getToken()) SigSolsMap.startLiveLocation();
+  else if (!e.target.checked) SigSolsMap.stopLiveLocation();
+});
 document.getElementById('btn-quiz-start')?.addEventListener('click', () => SigSolsQuiz.startQuiz());
 document.getElementById('btn-quiz-finish')?.addEventListener('click', () => SigSolsQuiz.finishQuiz());
 

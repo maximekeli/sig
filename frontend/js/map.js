@@ -1,5 +1,11 @@
 import { phColorHex } from './core/phColor.js';
 import {
+  parseLiveUsers,
+  peerLocationStyle,
+  selfLocationStyle,
+} from './core/geolocationUtils.js';
+import { createLocationTracker } from './core/locationTracker.js';
+import {
   MARITIME_CENTER,
   buildSoilFiltersQuery,
   markerStyleForPoint,
@@ -7,7 +13,10 @@ import {
   parseSoilPointsList,
 } from './core/mapUtils.js';
 
-let map, markersLayer, nasaOverlays = {};
+let map, markersLayer, usersLayer, nasaOverlays = {};
+let locationTracker = null;
+let selfMarker = null;
+const peerMarkers = new Map();
 
 const basemaps = {
   osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -33,8 +42,91 @@ function initMap() {
     { 'OpenStreetMap': basemaps.osm, 'Satellite': basemaps.satellite, 'Topographique': basemaps.topo },
   ).addTo(map);
   markersLayer = L.layerGroup().addTo(map);
+  usersLayer = L.layerGroup().addTo(map);
   loadSoilPoints();
   loadNasaToggles();
+}
+
+function updateSelfMarker(lat, lon, accuracy_m) {
+  if (!map) return;
+  const latlng = [lat, lon];
+  if (!selfMarker) {
+    selfMarker = L.circleMarker(latlng, selfLocationStyle()).addTo(usersLayer);
+    selfMarker.bindPopup('<strong>Ma position</strong>');
+  } else {
+    selfMarker.setLatLng(latlng);
+  }
+  if (accuracy_m && accuracy_m < 500) {
+    L.circle(latlng, { radius: accuracy_m, color: '#3b82f6', fillOpacity: 0.08, weight: 1 })
+      .addTo(usersLayer);
+  }
+}
+
+function renderPeerMarkers(users) {
+  if (!usersLayer) return;
+  const seen = new Set();
+  parseLiveUsers({ users }).forEach((u) => {
+    seen.add(u.id);
+    const latlng = [u.lat, u.lon];
+    let marker = peerMarkers.get(u.id);
+    if (!marker) {
+      marker = L.circleMarker(latlng, peerLocationStyle(u.role));
+      marker.bindPopup(`<strong>${u.displayName}</strong><br/>Rôle: ${u.role}`);
+      marker.addTo(usersLayer);
+      peerMarkers.set(u.id, marker);
+    } else {
+      marker.setLatLng(latlng);
+    }
+  });
+  peerMarkers.forEach((marker, id) => {
+    if (!seen.has(id)) {
+      usersLayer.removeLayer(marker);
+      peerMarkers.delete(id);
+    }
+  });
+}
+
+async function startLiveLocation() {
+  if (!SigSolsAPI.getToken()) {
+    alert('Connectez-vous pour partager votre position.');
+    return;
+  }
+  if (locationTracker?.isActive()) return;
+  locationTracker = createLocationTracker({
+    api: (path, opts) => SigSolsAPI.api(path, opts),
+    onSelfUpdate: (p) => updateSelfMarker(p.lat, p.lon, p.accuracy_m),
+    onPeersUpdate: (data) => renderPeerMarkers(data.users),
+    onError: (e) => {
+      const el = document.getElementById('location-status');
+      if (el) el.textContent = e.message;
+    },
+  });
+  try {
+    await locationTracker.start();
+    const el = document.getElementById('location-status');
+    if (el) el.textContent = 'Position partagée en direct';
+    document.getElementById('btn-location-toggle')?.classList.add('active');
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function stopLiveLocation() {
+  if (locationTracker) {
+    await locationTracker.stop();
+    locationTracker = null;
+  }
+  usersLayer?.clearLayers();
+  peerMarkers.clear();
+  selfMarker = null;
+  const el = document.getElementById('location-status');
+  if (el) el.textContent = 'Localisation désactivée';
+  document.getElementById('btn-location-toggle')?.classList.remove('active');
+}
+
+async function toggleLiveLocation() {
+  if (locationTracker?.isActive()) await stopLiveLocation();
+  else await startLiveLocation();
 }
 
 async function loadSoilPoints() {
@@ -102,4 +194,11 @@ async function runPrediction() {
   document.getElementById('pred-result').textContent = JSON.stringify(r, null, 2);
 }
 
-window.SigSolsMap = { initMap, loadSoilPoints, runPrediction };
+window.SigSolsMap = {
+  initMap,
+  loadSoilPoints,
+  runPrediction,
+  startLiveLocation,
+  stopLiveLocation,
+  toggleLiveLocation,
+};
