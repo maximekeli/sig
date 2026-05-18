@@ -13,21 +13,6 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
   });
 });
 
-document.getElementById('btn-login').addEventListener('click', async () => {
-  try {
-    await SigSolsAPI.login(
-      document.getElementById('login-user').value,
-      document.getElementById('login-pass').value,
-    );
-    alert('Connecté.');
-    SigSolsMap.loadSoilPoints();
-    const share = document.getElementById('share-location')?.checked;
-    if (share) SigSolsMap.startLiveLocation();
-  } catch (e) {
-    alert('Erreur: ' + e.message);
-  }
-});
-
 document.getElementById('btn-apply-filters')?.addEventListener('click', () => SigSolsMap.loadSoilPoints());
 document.getElementById('btn-export-geojson')?.addEventListener('click', () => {
   window.open('/api/v1/points/geojson/', '_blank');
@@ -38,13 +23,14 @@ document.getElementById('btn-export-csv')?.addEventListener('click', () => {
 document.getElementById('btn-predict')?.addEventListener('click', () => SigSolsMap.runPrediction());
 document.getElementById('btn-location-toggle')?.addEventListener('click', () => SigSolsMap.toggleLiveLocation());
 document.getElementById('share-location')?.addEventListener('change', (e) => {
-  if (e.target.checked && SigSolsAPI.getToken()) SigSolsMap.startLiveLocation();
+  if (e.target.checked && SigSolsAPI.isAuthenticated()) SigSolsMap.startLiveLocation();
   else if (!e.target.checked) SigSolsMap.stopLiveLocation();
 });
 document.getElementById('btn-quiz-start')?.addEventListener('click', () => SigSolsQuiz.startQuiz());
 document.getElementById('btn-quiz-finish')?.addEventListener('click', () => SigSolsQuiz.finishQuiz());
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   SigSolsMap.initMap();
-  if (SigSolsAPI.getToken()) SigSolsMap.loadSoilPoints();
+  await SigSolsAuth.initAuth();
+  if (SigSolsAPI.isAuthenticated()) SigSolsMap.loadSoilPoints();
 });

@@ -163,9 +163,9 @@ async function initAuth() {
   $('btn-register')?.addEventListener('click', handleRegister);
   $('btn-logout')?.addEventListener('click', handleLogout);
   $('btn-profile')?.addEventListener('click', openProfileModal);
-  $('btn-profile-close')?.addEventListener('click', () => {
-    $('auth-profile-modal')?.classList.add('hidden');
-  });
+  const closeProfile = () => $('auth-profile-modal')?.classList.add('hidden');
+  $('btn-profile-close')?.addEventListener('click', closeProfile);
+  $('btn-profile-close-footer')?.addEventListener('click', closeProfile);
   $('btn-profile-save')?.addEventListener('click', saveProfile);
   $('btn-password-save')?.addEventListener('click', savePassword);
   $('login-pass')?.addEventListener('keydown', (e) => {

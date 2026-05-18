@@ -20,10 +20,36 @@
       <button type="button" class="nav-btn" data-view="sheets">Fiches</button>
     </nav>
     <div class="auth-box" id="auth-box">
-      <input type="text" id="login-user" placeholder="Utilisateur" value="agent1" />
-      <input type="password" id="login-pass" placeholder="Mot de passe" value="agent123" />
-      <button type="button" id="btn-login">Connexion</button>
-    </motion>
+      <div id="auth-guest" class="auth-guest">
+        <div class="auth-tabs">
+          <button type="button" class="auth-tab active" data-auth-tab="login">Connexion</button>
+          <button type="button" class="auth-tab" data-auth-tab="register">Inscription</button>
+        </div>
+        <div id="auth-login-form" class="auth-form">
+          <input type="text" id="login-user" placeholder="Utilisateur" value="agent1" autocomplete="username" />
+          <input type="password" id="login-pass" placeholder="Mot de passe" value="agent123" autocomplete="current-password" />
+          <button type="button" id="btn-login" class="btn-auth-primary">Se connecter</button>
+        </div>
+        <div id="auth-register-form" class="auth-form hidden">
+          <input type="text" id="reg-user" placeholder="Utilisateur" autocomplete="username" />
+          <input type="email" id="reg-email" placeholder="Email" />
+          <input type="password" id="reg-pass" placeholder="Mot de passe (8+)" autocomplete="new-password" />
+          <input type="password" id="reg-pass2" placeholder="Confirmer mot de passe" />
+          <select id="reg-role">
+            <option value="public">Public</option>
+            <option value="agent">Agent</option>
+          </select>
+          <input type="text" id="reg-org" placeholder="Organisation (optionnel)" />
+          <button type="button" id="btn-register" class="btn-auth-primary">Créer un compte</button>
+        </div>
+        <p id="auth-message" class="auth-message" aria-live="polite"></p>
+      </div>
+      <div id="auth-user" class="auth-user hidden">
+        <span id="auth-user-label" class="auth-user-label"></span>
+        <button type="button" id="btn-profile" class="btn-auth-secondary">Profil</button>
+        <button type="button" id="btn-logout" class="btn-auth-outline">Déconnexion</button>
+      </div>
+    </div>
   </header>
 
   <main>
@@ -56,7 +82,7 @@
       <p class="location-legend"><span class="dot dot-self"></span> Moi · <span class="dot dot-agent"></span> Agent · <span class="dot dot-admin"></span> Admin</p>
       <hr />
       <h3>Couches NASA</h3>
-      <div id="nasa-layers-toggles"></motion>
+      <div id="nasa-layers-toggles"></div>
       <hr />
       <h3>Export</h3>
       <button type="button" id="btn-export-geojson">GeoJSON</button>
@@ -90,7 +116,7 @@
       <article class="kpi-card wide"><h3>Précision IA (F1)</h3><p id="kpi-ml">—</p></article>
       <article class="chart-card wide"><h3>Distribution types de sol</h3><ul id="chart-soil-types"></ul></article>
       <article class="chart-card wide"><h3>Corrélation SMAP (R²)</h3><p id="smap-corr">—</p></article>
-    </motion>
+    </div>
   </section>
 
   <!-- QUIZ -->
@@ -118,12 +144,12 @@
       <ol id="leaderboard"></ol>
       <h3>Mes badges</h3>
       <ul id="my-badges"></ul>
-    </motion>
+    </div>
   </section>
 
   <!-- SHEETS -->
   <section id="view-sheets" class="view">
-    <div id="sheets-list" class="sheets-list"></motion>
+    <div id="sheets-list" class="sheets-list"></div>
   </section>
   </main>
 
@@ -134,7 +160,30 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <div id="auth-profile-modal" class="auth-modal hidden" role="dialog" aria-labelledby="profile-title">
+    <div class="auth-modal-backdrop" id="btn-profile-close"></div>
+    <div class="auth-modal-panel">
+      <h2 id="profile-title">Mon profil</h2>
+      <label>Email <input type="email" id="prof-email" /></label>
+      <label>Prénom <input type="text" id="prof-first" /></label>
+      <label>Nom <input type="text" id="prof-last" /></label>
+      <label>Organisation <input type="text" id="prof-org" /></label>
+      <label>Téléphone <input type="text" id="prof-phone" /></label>
+      <label>Pseudonyme (quiz) <input type="text" id="prof-pseudo" /></label>
+      <button type="button" id="btn-profile-save" class="btn-auth-primary">Enregistrer le profil</button>
+      <hr />
+      <h3>Changer le mot de passe</h3>
+      <label>Ancien <input type="password" id="prof-old-pass" autocomplete="current-password" /></label>
+      <label>Nouveau <input type="password" id="prof-new-pass" autocomplete="new-password" /></label>
+      <label>Confirmer <input type="password" id="prof-new-pass2" autocomplete="new-password" /></label>
+      <button type="button" id="btn-password-save" class="btn-auth-secondary">Mettre à jour le mot de passe</button>
+      <p id="profile-message" class="auth-message"></p>
+      <button type="button" class="btn-auth-outline modal-close" id="btn-profile-close-footer">Fermer</button>
+    </div>
+  </div>
+
   <script type="module" src="js/api.js"></script>
+  <script type="module" src="js/auth.js"></script>
   <script type="module" src="js/map.js"></script>
   <script type="module" src="js/dashboard.js"></script>
   <script type="module" src="js/quiz.js"></script>
