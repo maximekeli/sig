@@ -4,8 +4,8 @@
   "description": "Système d'information géographique des sols — DISIA Togo",
   "start_url": "/frontend/index.html",
   "display": "standalone",
-  "background_color": "#1b4332",
-  "theme_color": "#2d6a4f",
+  "background_color": "#0d2818",
+  "theme_color": "#0d2818",
   "lang": "fr",
   "icons": [
     { "src": "/frontend/icons/icon-192.png", "purpose": "any", "sizes": "192x192", "type": "image/png" },
