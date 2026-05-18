@@ -1,0 +1,14 @@
+{
+  "name": "SIG Sols Togo",
+  "short_name": "SIG Sols",
+  "description": "Système d'information géographique des sols — DISIA Togo",
+  "start_url": "/frontend/index.html",
+  "display": "standalone",
+  "background_color": "#1b4332",
+  "theme_color": "#2d6a4f",
+  "lang": "fr",
+  "icons": [
+    { "src": "/frontend/icons/icon-192.png", "purpose": "any", "sizes": "192x192", "type": "image/png" },
+    { "src": "/frontend/icons/icon-512.png", "purpose": "any", "sizes": "512x512", "type": "image/png" }
+  ]
+}

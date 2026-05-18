@@ -27,9 +27,10 @@ class SoilPointSerializer(GeoFeatureModelSerializer):
             'fertility_class', 'fertility_score', 'photo', 'slope_pct',
             'ndvi_3m_avg', 'smap_moisture_avg', 'elevation_m', 'notes',
             'source', 'producer', 'collected_at', 'zone', 'is_validated',
-            'ph_color', 'nasa_snapshots', 'created_at',
+            'validation_status', 'parent_point', 'ph_color', 'nasa_snapshots',
+            'created_at',
         )
-        read_only_fields = ('created_at', 'ph_color')
+        read_only_fields = ('created_at', 'ph_color', 'validation_status')
 
     def get_nasa_snapshots(self, obj):
         qs = obj.nasa_snapshots.order_by('-observed_at')[:12]
