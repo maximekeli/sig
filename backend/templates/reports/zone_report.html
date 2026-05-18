@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Rapport zone {{ zone.name }}</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; color: #1d3557; }
+    h1 { color: #2d6a4f; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.4rem; font-size: 0.85rem; }
+    th { background: #f4f1de; }
+    @media print { button { display: none; } }
+  </style>
+</head>
+<body>
+  <h1>Rapport SIG Sols — {{ zone.name }}</h1>
+  <p>Code: {{ zone.code }} · Type: {{ zone.zone_type }}</p>
+  <p>Points validés: {{ point_count }} · pH moyen: {{ avg_ph|floatformat:2 }}</p>
+  <p>Généré le {{ generated_at }}</p>
+  <p><em>Données NASA — crédit NASA Earth Science</em></p>
+  <button onclick="window.print()">Imprimer / PDF</button>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>pH</th><th>Humidité</th><th>Type</th><th>NDVI</th><th>Date</th></tr>
+    </thead>
+    <tbody>
+      {% for p in points %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.ph }}</td>
+        <td>{{ p.humidity_pct }}</td>
+        <td>{{ p.soil_type }}</td>
+        <td>{{ p.ndvi_3m_avg|default:"—" }}</td>
+        <td>{{ p.collected_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
