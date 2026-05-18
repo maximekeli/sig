@@ -59,8 +59,8 @@ def test_pedagogical_sheets_api(api_client, db):
 
 @pytest.mark.django_db
 def test_quiz_stats_api(api_client, db):
-    from education.management.commands.seed_quiz_questions import Command
-    Command().handle()
+    from django.core.management import call_command
+    call_command('seed_quiz_questions', '--force')
     r = api_client.get('/api/v1/education/quiz/stats/')
     assert r.status_code == 200
     data = r.json()
