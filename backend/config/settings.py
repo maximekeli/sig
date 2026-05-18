@@ -80,7 +80,11 @@ ASGI_APPLICATION = 'config.asgi.application'
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {'hosts': [os.environ.get('CELERY_BROKER_URL', 'redis://redis:6379/0')]},
+        'CONFIG': {
+            'hosts': [REDIS_CHANNELS_URL],
+            'capacity': int(os.environ.get('CHANNEL_CAPACITY', '1500')),
+            'expiry': int(os.environ.get('CHANNEL_EXPIRY', '60')),
+        },
     },
 }
 
@@ -188,15 +192,18 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'config.pagination.StandardResultsPagination',
     'PAGE_SIZE': 50,
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
+        'config.throttling.BurstAnonThrottle',
+        'config.throttling.BurstUserThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': os.environ.get('THROTTLE_RATE', '100/min'),
-        'user': os.environ.get('THROTTLE_RATE', '100/min'),
+        'anon_burst': os.environ.get('THROTTLE_ANON', '200/min'),
+        'user_burst': os.environ.get('THROTTLE_USER', '1000/min'),
+        'auth': os.environ.get('THROTTLE_AUTH', '20/min'),
+        'location': os.environ.get('THROTTLE_LOCATION', '120/min'),
+        'quiz': os.environ.get('THROTTLE_QUIZ', '60/min'),
     },
 }
 
@@ -240,10 +247,22 @@ ML_RETRAIN_NEW_SAMPLES = 50
 # Maritime region bbox (WGS84) — Togo Région Maritime approx.
 REGION_MARITIME_BBOX = (0.9, 6.0, 1.8, 6.8)  # min_lon, min_lat, max_lon, max_lat
 
-# Géolocalisation utilisateurs (temps réel)
+# Géolocalisation utilisateurs (temps réel) — millions d'utilisateurs
 LOCATION_STALE_MINUTES = int(os.environ.get('LOCATION_STALE_MINUTES', '5'))
 LOCATION_UPDATE_INTERVAL_MS = int(os.environ.get('LOCATION_UPDATE_INTERVAL_MS', '10000'))
 LOCATION_POLL_INTERVAL_MS = int(os.environ.get('LOCATION_POLL_INTERVAL_MS', '8000'))
+LOCATION_HISTORY_MIN_INTERVAL_SEC = int(os.environ.get('LOCATION_HISTORY_MIN_INTERVAL_SEC', '120'))
+LOCATION_HISTORY_MIN_DISTANCE_M = float(os.environ.get('LOCATION_HISTORY_MIN_DISTANCE_M', '75'))
+LOCATION_HISTORY_RETENTION_DAYS = int(os.environ.get('LOCATION_HISTORY_RETENTION_DAYS', '90'))
+LIVE_LOCATIONS_CACHE_SECONDS = int(os.environ.get('LIVE_LOCATIONS_CACHE_SECONDS', '15'))
+LEADERBOARD_CACHE_SECONDS = int(os.environ.get('LEADERBOARD_CACHE_SECONDS', '60'))
+QUIZ_STATS_CACHE_SECONDS = int(os.environ.get('QUIZ_STATS_CACHE_SECONDS', '3600'))
+
+# Celery — tâches lourdes hors requête HTTP
+CELERY_TASK_ALWAYS_EAGER = os.environ.get('CELERY_TASK_ALWAYS_EAGER', '0') == '1'
+CELERY_TASK_ACKS_LATE = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = int(os.environ.get('CELERY_PREFETCH', '4'))
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 EMAIL_BACKEND = os.environ.get(
     'EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend',
@@ -254,6 +273,14 @@ CELERY_BEAT_SCHEDULE = {
     'check-drought-alerts': {
         'task': 'sig_platform.tasks.check_drought_alerts',
         'schedule': 3600.0,
+    },
+    'purge-old-location-history': {
+        'task': 'accounts.tasks.purge_old_location_history',
+        'schedule': 86400.0,
+    },
+    'refresh-leaderboard-cache': {
+        'task': 'education.tasks.refresh_leaderboard_cache',
+        'schedule': float(LEADERBOARD_CACHE_SECONDS),
     },
 }
 

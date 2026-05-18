@@ -15,9 +15,13 @@ from .serializers import (
     UserRegistrationSerializer,
     UserSerializer,
 )
+from config.pagination import LargeTableCursorPagination
+from config.throttling import AuthAnonThrottle, LocationUserThrottle
+
+from .location_cache import get_cached_live_locations
 from .tokens import CustomTokenObtainPairSerializer
 from .models import UserLocation
-from .services import list_live_locations, upsert_user_location
+from .services import upsert_user_location
 
 User = get_user_model()
 
@@ -26,6 +30,7 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [AuthAnonThrottle]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -46,9 +51,12 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
 
 class UserListView(generics.ListAPIView):
-    queryset = User.objects.all().order_by('username')
+    queryset = User.objects.only(
+        'id', 'username', 'email', 'role', 'organization', 'is_active', 'date_joined',
+    ).order_by('id')
     serializer_class = UserSerializer
     permission_classes = [IsAdministrator]
+    pagination_class = LargeTableCursorPagination
 
 
 class TokenObtainView(TokenObtainPairView):
@@ -85,6 +93,7 @@ class MyLocationView(APIView):
     """Publier / mettre à jour sa position GPS (temps réel)."""
 
     permission_classes = [IsAuthenticated]
+    throttle_classes = [LocationUserThrottle]
 
     def get(self, request):
         loc = getattr(request.user, 'live_location', None)

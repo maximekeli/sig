@@ -34,6 +34,11 @@ def upsert_user_location(
             'is_sharing': is_sharing,
         },
     )
+    try:
+        from accounts.location_cache import invalidate_live_locations_cache
+        invalidate_live_locations_cache()
+    except Exception:
+        pass
     return loc
 
 
