@@ -41,6 +41,33 @@ def test_delete_location(auth_client, agent_user):
 
 
 @pytest.mark.django_db
+def test_get_my_location_404(auth_client):
+    assert auth_client.get('/api/v1/auth/location/').status_code == 404
+
+
+@pytest.mark.django_db
+def test_get_my_location_ok(auth_client, agent_user):
+    upsert_user_location(agent_user, 1.25, 6.35)
+    r = auth_client.get('/api/v1/auth/location/')
+    assert r.status_code == 200
+    assert r.json()['username'] == 'test_agent'
+
+
+@pytest.mark.django_db
+def test_live_locations_include_self(auth_client, agent_user):
+    upsert_user_location(agent_user, 1.25, 6.35)
+    r = auth_client.get('/api/v1/auth/locations/live/?include_self=1')
+    assert r.status_code == 200
+    assert r.json()['count'] >= 1
+
+
+@pytest.mark.django_db
+def test_user_location_str(agent_user):
+    loc = upsert_user_location(agent_user, 1.25, 6.35)
+    assert agent_user.username in str(loc)
+
+
+@pytest.mark.django_db
 def test_stale_locations_excluded(agent_user, admin_user):
     upsert_user_location(agent_user, 1.25, 6.35)
     loc = UserLocation.objects.get(user=agent_user)
