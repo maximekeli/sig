@@ -1,13 +1,8 @@
 """Vues étendues : validation, notes, heatmap, comparaison."""
-from django.db.models import Avg
-from django.utils import timezone
-from rest_framework import status, viewsets
+from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from accounts.permissions import IsAdministrator, IsAgentOrAdmin
-from sig_platform.audit import log_action
 
 from .models import SoilPoint, SoilPointNote
 from .serializers_notes import SoilPointNoteSerializer
@@ -26,27 +21,6 @@ class SoilPointNoteViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-
-class SoilPointValidateView(APIView):
-    permission_classes = [IsAdministrator]
-
-    def post(self, request, pk):
-        point = SoilPoint.objects.filter(pk=pk).first()
-        if not point:
-            return Response({'error': 'Point introuvable'}, status=404)
-        action = request.data.get('action', 'validate')
-        if action == 'reject':
-            point.validation_status = SoilPoint.ValidationStatus.REJECTED
-            point.is_validated = False
-        else:
-            point.validation_status = SoilPoint.ValidationStatus.VALIDATED
-            point.is_validated = True
-        point.validated_by = request.user
-        point.validated_at = timezone.now()
-        point.save()
-        log_action(request.user, 'validate', 'SoilPoint', point.pk, {'action': action})
-        return Response({'id': point.id, 'validation_status': point.validation_status})
 
 
 class SoilPointCompareView(APIView):

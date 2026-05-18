@@ -202,6 +202,12 @@ def load_artifact():
     return joblib.load(MODEL_FILE)
 
 
+def _to_float(value, default):
+    if value is None:
+        return float(default)
+    return float(value)
+
+
 def predict_fertility(features: dict) -> dict:
     start = time.perf_counter()
     artifact = load_artifact()
@@ -210,14 +216,14 @@ def predict_fertility(features: dict) -> dict:
 
     month = features.get('month', 6)
     row = {
-        'ph': float(features.get('ph', 6.0)),
-        'humidity_pct': float(features.get('humidity_pct', 30)),
+        'ph': _to_float(features.get('ph'), 6.0),
+        'humidity_pct': _to_float(features.get('humidity_pct'), 30),
         'soil_type': features.get('soil_type', 'limoneux'),
-        'slope_pct': float(features.get('slope_pct', 3)),
-        'ndvi_3m_avg': float(features.get('ndvi_3m_avg', 0.45)),
-        'smap_moisture_avg': float(features.get('smap_moisture_avg', 0.2)),
-        'temperature': float(features.get('temperature', 28)),
-        'elevation_m': float(features.get('elevation_m', 50)),
+        'slope_pct': _to_float(features.get('slope_pct'), 3),
+        'ndvi_3m_avg': _to_float(features.get('ndvi_3m_avg'), 0.45),
+        'smap_moisture_avg': _to_float(features.get('smap_moisture_avg'), 0.2),
+        'temperature': _to_float(features.get('temperature'), 28),
+        'elevation_m': _to_float(features.get('elevation_m'), 50),
         'season': features.get('season') or _season_from_month(int(month)),
     }
     X = pd.DataFrame([row])
