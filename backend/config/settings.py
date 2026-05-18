@@ -100,6 +100,13 @@ TEMPLATES = [
     },
 ]
 
+_db_options = {
+    'connect_timeout': int(os.environ.get('DB_CONNECT_TIMEOUT', '10')),
+    'options': os.environ.get('DB_OPTIONS', '-c statement_timeout=30000'),
+}
+if os.environ.get('DB_SSLMODE'):
+    _db_options['sslmode'] = os.environ['DB_SSLMODE']
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
@@ -108,7 +115,36 @@ DATABASES = {
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'sig_sols_secret'),
         'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
         'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '60')),
+        'CONN_HEALTH_CHECKS': True,
+        'OPTIONS': _db_options,
     }
+}
+
+# Réplique lecture seule (production à grande échelle)
+_replica_host = os.environ.get('POSTGRES_REPLICA_HOST', '').strip()
+if _replica_host:
+    DATABASES['replica'] = {
+        **DATABASES['default'],
+        'HOST': _replica_host,
+        'PORT': os.environ.get('POSTGRES_REPLICA_PORT', DATABASES['default']['PORT']),
+    }
+    DATABASE_ROUTERS = ['config.db_router.ReadReplicaRouter']
+
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+REDIS_CACHE_URL = os.environ.get('REDIS_CACHE_URL', REDIS_URL.replace('/0', '/1'))
+REDIS_CHANNELS_URL = os.environ.get('REDIS_CHANNELS_URL', REDIS_URL.replace('/0', '/2'))
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': REDIS_CACHE_URL,
+        'KEY_PREFIX': os.environ.get('CACHE_KEY_PREFIX', 'sigsols'),
+        'TIMEOUT': int(os.environ.get('CACHE_DEFAULT_TIMEOUT', '300')),
+        'OPTIONS': {
+            'max_connections': int(os.environ.get('REDIS_MAX_CONNECTIONS', '100')),
+        },
+    },
 }
 
 AUTH_USER_MODEL = 'accounts.User'
