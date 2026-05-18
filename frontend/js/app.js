@@ -13,6 +13,7 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
     target.style.animation = '';
     if (btn.dataset.view === 'dashboard') SigSolsDashboard.loadDashboard();
     if (btn.dataset.view === 'quiz') {
+      SigSolsQuiz.loadQuizStats?.();
       SigSolsQuiz.loadLeaderboard();
       SigSolsQuiz.loadBadges();
     }
