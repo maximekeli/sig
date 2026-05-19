@@ -31,6 +31,7 @@ class User(AbstractUser):
         indexes = [
             models.Index(fields=['role', 'is_active']),
             models.Index(fields=['date_joined']),
+            models.Index(fields=['email']),
         ]
 
     @property
