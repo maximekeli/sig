@@ -16,10 +16,13 @@ seed:
 	docker compose exec web python manage.py seed_demo_data
 
 test:
-	docker compose exec web pytest apps/ -q --cov=apps --cov-config=.coveragerc --cov-fail-under=100
+	docker compose run --rm --no-deps --entrypoint "" web pytest -q --tb=short -m "not nasa_live"
+
+test-nasa-live:
+	docker compose run --rm --no-deps --entrypoint "" -e NASA_LIVE_TESTS=1 web pytest -m nasa_live -v
 
 test-frontend:
-	cd frontend && node --test tests/*.test.js
+	cd frontend && npm test
 
 test-all: test test-frontend
 

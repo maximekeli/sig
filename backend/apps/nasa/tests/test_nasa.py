@@ -35,8 +35,10 @@ def test_nasa_catalog_summary(api_client):
     assert 'total_layers' in r.json()
 
 
+@pytest.mark.nasa_live
 @pytest.mark.django_db
 def test_stac_search_no_crash():
+    """Réseau NASA STAC — exécuter avec: NASA_LIVE_TESTS=1 pytest -m nasa_live."""
     from nasa.stac_client import search_granules
     bbox = (0.9, 6.0, 1.8, 6.8)
     results = search_granules('MOD13Q1', date(2025, 1, 1), date(2025, 1, 31), bbox, limit=2)

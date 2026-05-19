@@ -7,10 +7,28 @@ import pytest
 
 os.environ.setdefault('DJANGO_TEST', '1')
 os.environ.setdefault('CELERY_TASK_ALWAYS_EAGER', '1')
+os.environ.setdefault('NASA_SKIP_NETWORK', '1')
 
 _APPS = Path(__file__).resolve().parent / 'apps'
 if str(_APPS) not in sys.path:
     sys.path.insert(0, str(_APPS))
+
+
+@pytest.fixture(autouse=True)
+def _mock_nasa_network(monkeypatch):
+    """Évite les appels STAC/Earthdata lents ou bloquants pendant les tests."""
+    if os.environ.get('NASA_LIVE_TESTS') == '1':
+        return
+
+    def _noop_stac(*_args, **_kwargs):
+        return []
+
+    def _noop_download(*_args, **_kwargs):
+        return []
+
+    monkeypatch.setattr('nasa.stac_client.search_granules', _noop_stac)
+    monkeypatch.setattr('nasa.ingestion.search_granules', _noop_stac)
+    monkeypatch.setattr('nasa.ingestion.search_and_download', _noop_download)
 
 
 @pytest.fixture
