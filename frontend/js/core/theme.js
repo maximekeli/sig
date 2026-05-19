@@ -10,8 +10,11 @@ export function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', t);
   localStorage.setItem(KEY, t);
   const btn = document.getElementById('btn-theme');
-  if (btn) btn.setAttribute('aria-pressed', t === 'dark' ? 'true' : 'false');
-  btn?.classList.toggle('theme-dark-active', t === 'dark');
+  if (btn) {
+    btn.setAttribute('aria-pressed', t === 'dark' ? 'true' : 'false');
+    btn.textContent = t === 'dark' ? '☾' : '☀';
+    btn.classList.toggle('theme-dark-active', t === 'dark');
+  }
 }
 
 export function toggleTheme() {

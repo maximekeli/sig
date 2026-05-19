@@ -10,5 +10,9 @@
   "icons": [
     { "src": "/frontend/icons/icon-192.png", "purpose": "any", "sizes": "192x192", "type": "image/png" },
     { "src": "/frontend/icons/icon-512.png", "purpose": "any", "sizes": "512x512", "type": "image/png" }
+  ],
+  "shortcuts": [
+    { "name": "Carte", "url": "/frontend/index.html", "description": "Carte des sols" },
+    { "name": "Quiz", "url": "/frontend/index.html#quiz", "description": "Quiz pédagogique" }
   ]
 }
