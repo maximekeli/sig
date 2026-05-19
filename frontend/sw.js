@@ -10,6 +10,7 @@ const ASSETS = [
   '/frontend/js/map.js',
   '/frontend/js/dashboard.js',
   '/frontend/js/quiz.js',
+  '/frontend/js/tools.js',
   '/frontend/js/app.js',
   '/frontend/js/core/toast.js',
   '/frontend/js/core/i18n.js',

@@ -6,6 +6,8 @@ from .views import (
     IntersectionView,
     NdviTimeseriesView,
     ParcelAnalyzeView,
+    ParcelLiveView,
+    ParcelZonesGeoJsonView,
     ParcelZonesListView,
     ProximityView,
     SmapCorrelationView,
@@ -23,5 +25,7 @@ urlpatterns = [
     path('statistics/', SpatialStatisticsView.as_view(), name='spatial-statistics'),
     path('smap-correlation/', SmapCorrelationView.as_view(), name='spatial-smap-corr'),
     path('parcel/analyze/', ParcelAnalyzeView.as_view(), name='spatial-parcel-analyze'),
+    path('parcel/live/', ParcelLiveView.as_view(), name='spatial-parcel-live'),
+    path('parcel/zones/geojson/', ParcelZonesGeoJsonView.as_view(), name='spatial-parcel-zones-geojson'),
     path('parcel/zones/', ParcelZonesListView.as_view(), name='spatial-parcel-zones'),
 ]

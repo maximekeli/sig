@@ -30,6 +30,24 @@ function renderSoilChart(stats) {
   });
 }
 
+function renderFertilityChart(stats) {
+  const canvas = document.getElementById('chart-fertility-canvas');
+  if (!canvas || typeof Chart === 'undefined' || !stats.fertility_distribution?.length) return;
+  if (fertilityChart) fertilityChart.destroy();
+  fertilityChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: stats.fertility_distribution.map((r) => r.fertility_class || '?'),
+      datasets: [{
+        label: 'Points',
+        data: stats.fertility_distribution.map((r) => r.count),
+        backgroundColor: ['#2d8a52', '#c9a962', '#dc2626'],
+      }],
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } },
+  });
+}
+
 async function loadDashboard() {
   showLoading(true);
   try {
@@ -54,6 +72,7 @@ async function loadDashboard() {
       });
     }
     document.getElementById('smap-corr').textContent = formatSmapCorrelation(smap);
+    renderFertilityChart(stats);
   } catch (e) {
     notifyError(e);
   } finally {

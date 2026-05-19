@@ -53,7 +53,7 @@ document.getElementById('btn-heatmap')?.addEventListener('click', () => {
 });
 document.getElementById('btn-near-me')?.addEventListener('click', () => {
   const m = SigSolsMap.getMap?.();
-  if (m) SigSolsFeatures.nearMe(m);
+  if (m) window.SigSolsTools?.searchProximity?.(m) || SigSolsFeatures.nearMe(m);
 });
 document.getElementById('btn-trajectory')?.addEventListener('click', () => {
   const m = SigSolsMap.getMap?.();

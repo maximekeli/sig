@@ -127,3 +127,52 @@ class ParcelZonesListView(APIView):
             for z in qs[:200]
         ]
         return Response({'zones': data, 'count': len(data)})
+
+
+class ParcelZonesGeoJsonView(APIView):
+    """GeoJSON des parcelles / zones pour affichage et sélection sur la carte."""
+
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        from soils.serializers import AdministrativeZoneSerializer
+
+        types_param = request.query_params.get('types', 'canton,degraded')
+        types = [t.strip() for t in types_param.split(',') if t.strip()]
+        qs = AdministrativeZone.objects.filter(zone_type__in=types).order_by('name')
+        return Response(AdministrativeZoneSerializer(qs, many=True).data)
+
+
+class ParcelLiveView(APIView):
+    """
+    Analyse parcelle en temps réel (léger par défaut : sans IA).
+  query: zone_code | POST geometry
+    """
+
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        from .parcel_analysis import analyze_parcel
+
+        zone_code = request.query_params.get('zone_code')
+        if not zone_code:
+            return Response({'error': 'zone_code requis'}, status=400)
+        use_ml = request.query_params.get('use_ml', '0') == '1'
+        try:
+            return Response(analyze_parcel(zone_code=zone_code, use_ml=use_ml))
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=400)
+
+    def post(self, request):
+        from .parcel_analysis import analyze_parcel
+
+        use_ml = request.data.get('use_ml', False)
+        try:
+            return Response(analyze_parcel(
+                geometry=request.data.get('geometry'),
+                zone_code=request.data.get('zone_code'),
+                zone_id=request.data.get('zone_id'),
+                use_ml=bool(use_ml),
+            ))
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=400)
