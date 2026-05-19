@@ -119,18 +119,21 @@
       <label>#A <input type="number" id="compare-id-a" min="1" /></label>
       <label>#B <input type="number" id="compare-id-b" min="1" /></label>
       <button type="button" id="btn-compare-points">Comparer</button>
-      <motion-div id="compare-result" class="parcel-analysis-result hidden"></motion-div>
+      <div id="compare-result" class="parcel-analysis-result hidden"></div>
       <hr />
-      <h3>Parcelles — analyse auto</h3>
-      <label>Zone administrative
+      <h3>Parcelles</h3>
+      <label class="parcel-check"><input type="checkbox" id="parcel-show-on-map" checked /> Afficher les parcelles sur la carte</label>
+      <label class="parcel-check"><input type="checkbox" id="parcel-live-update" checked /> Infos en temps réel</label>
+      <label>Parcelle / zone
         <select id="parcel-zone-select">
-          <option value="">— Dessiner sur la carte —</option>
+          <option value="">— Cliquer sur la carte ou dessiner —</option>
         </select>
       </label>
-      <p id="parcel-status" class="parcel-status">Dessinez un polygone (outil carte) ou choisissez une zone.</p>
+      <ul id="parcel-list" class="parcel-list compact-list" aria-label="Liste des parcelles"></ul>
+      <p id="parcel-status" class="parcel-status">Sélectionnez une parcelle sur la carte ou dans la liste.</p>
       <label class="parcel-check"><input type="checkbox" id="parcel-use-nasa" checked /> Données NASA (NDVI, SMAP)</label>
-      <label class="parcel-check"><input type="checkbox" id="parcel-use-ml" checked /> Prédiction IA fertilité</label>
-      <button type="button" id="btn-parcel-analyze" class="btn-parcel-analyze">Analyser la parcelle</button>
+      <label class="parcel-check"><input type="checkbox" id="parcel-use-ml" /> Prédiction IA (analyse complète)</label>
+      <button type="button" id="btn-parcel-analyze" class="btn-parcel-analyze">Analyse complète</button>
       <button type="button" id="btn-parcel-clear" class="btn-parcel-clear">Effacer sélection</button>
       <div id="parcel-analysis-result" class="parcel-analysis-result hidden"></div>
       <hr />
@@ -175,7 +178,12 @@
       <button type="button" id="btn-predict">Prédire fertilité</button>
       <div id="pred-result" class="pred-result-card" role="status"></div>
     </aside>
-    <div id="map" class="map-container"></div>
+    <div id="map" class="map-container">
+      <div id="parcel-live-panel" class="parcel-live-panel hidden" role="region" aria-live="polite" aria-label="Informations parcelle">
+        <button type="button" id="parcel-live-close" class="parcel-live-close" aria-label="Fermer">×</button>
+        <div id="parcel-live-content"></div>
+      </div>
+    </div>
   </section>
 
   <!-- DASHBOARD -->
@@ -274,7 +282,7 @@
       <h3>Modèle IA</h3>
       <button type="button" id="btn-train-ml" class="btn-parcel-analyze">Réentraîner le modèle</button>
       <p class="parcel-status">Commande serveur : <code>manage.py ingest_nasa</code></p>
-    </motion-div>
+    </div>
   </section>
 
   <section id="view-help" class="view">
@@ -310,7 +318,7 @@
         <p>Données NASA : domaine public — crédit NASA Earth Science (RG05).</p>
         <p>DISIA – Ministère de l'Agriculture, Togo · DUSOL · MIT License.</p>
       </article>
-    </motion-div>
+    </div>
   </section>
   </main>
 
