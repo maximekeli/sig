@@ -126,8 +126,28 @@ class SoilPointViewSet(viewsets.ModelViewSet):
                     source=props.get('source', 'import'),
                 )
                 created += 1
+        elif name.endswith('.csv'):
+            decoded = upload.read().decode('utf-8-sig').splitlines()
+            reader = csv.DictReader(decoded)
+            for row in reader:
+                lon = float(row.get('lon') or row.get('longitude') or 0)
+                lat = float(row.get('lat') or row.get('latitude') or 0)
+                if not lon and not lat:
+                    continue
+                SoilPoint.objects.create(
+                    location=GEOSGeometry(f'POINT({lon} {lat})', srid=4326),
+                    ph=float(row.get('ph', 6.0)),
+                    humidity_pct=float(row.get('humidity_pct', 30)),
+                    soil_type=row.get('soil_type', 'limoneux'),
+                    collected_at=row.get('collected_at', '2025-01-01'),
+                    source=row.get('source', 'import'),
+                    created_by=request.user,
+                )
+                created += 1
         else:
-            return Response({'error': 'Format non supporté (GeoJSON).'}, status=400)
+            return Response({'error': 'Format non supporté (GeoJSON, CSV).'}, status=400)
+        if request.user.is_authenticated:
+            log_action(request.user, 'import', 'SoilPoint', None, {'created': created})
         return Response({'created': created})
 
 
