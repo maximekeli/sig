@@ -13,13 +13,13 @@ class SoilPointFilter(django_filters.FilterSet):
     collected_before = django_filters.DateFilter(field_name='collected_at', lookup_expr='lte')
     is_validated = django_filters.BooleanFilter(field_name='is_validated')
     bbox = django_filters.CharFilter(method='filter_bbox')
-    point_id = django_filters.NumberFilter(field_name='id')
 
     class Meta:
         model = SoilPoint
-        fields = ['soil_type', 'fertility_class', 'is_validated', 'zone', 'point_id']
+        fields = ['soil_type', 'fertility_class', 'is_validated', 'zone']
 
-    def filter_bbox(self, queryset, name, value):
+    def filter_bbox(self, queryset, _name, value):
+        """bbox=min_lon,min_lat,max_lon,max_lat (WGS84) — chargement carte par fenêtre."""
         try:
             parts = [float(x.strip()) for x in value.split(',')]
             if len(parts) != 4:

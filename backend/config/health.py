@@ -1,26 +1,36 @@
-"""Contrôle de santé étendu (DB, Redis, Celery broker)."""
+"""Contrôle de santé détaillé (DB, Redis, Celery broker)."""
+from django.conf import settings
 from django.db import connection
 from django.http import JsonResponse
 
 
 def health_check(request):
-    checks = {'api': 'ok', 'project': 'SIG-SOLS-TOGO-2026-01'}
-    status_code = 200
+    detail = request.GET.get('detail') == '1'
+    payload = {
+        'status': 'ok',
+        'project': 'SIG-SOLS-TOGO-2026-01',
+    }
+    if not detail:
+        return JsonResponse(payload)
 
+    checks = {}
     try:
         with connection.cursor() as cursor:
             cursor.execute('SELECT 1')
         checks['database'] = 'ok'
     except Exception as exc:
-        checks['database'] = str(exc)[:120]
-        status_code = 503
+        checks['database'] = str(exc)
+        payload['status'] = 'degraded'
 
     try:
-        from django.core.cache import cache
-        cache.set('health_ping', '1', 5)
-        checks['cache'] = 'ok' if cache.get('health_ping') == '1' else 'degraded'
+        import redis
+        r = redis.from_url(settings.REDIS_URL)
+        r.ping()
+        checks['redis'] = 'ok'
     except Exception as exc:
-        checks['cache'] = str(exc)[:120]
+        checks['redis'] = str(exc)
+        payload['status'] = 'degraded'
 
-    overall = 'ok' if checks.get('database') == 'ok' else 'degraded'
-    return JsonResponse({'status': overall, 'checks': checks}, status=status_code)
+    payload['checks'] = checks
+    status_code = 200 if payload['status'] == 'ok' else 503
+    return JsonResponse(payload, status=status_code)
