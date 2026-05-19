@@ -16,6 +16,8 @@ def api_schema(_request):
             '/api/v1/points/': {'get': {'summary': 'Liste points'}, 'post': {'summary': 'Créer point'}},
             '/api/v1/points/import_data/': {'post': {'summary': 'Import GeoJSON/CSV'}},
             '/api/v1/points/compare/': {'get': {'summary': 'Comparer deux points (a, b)'}},
+            '/api/v1/spatial/parcel/zones/geojson/': {'get': {'summary': 'Parcelles GeoJSON (carte)'}},
+            '/api/v1/spatial/parcel/live/': {'get': {'summary': 'Infos parcelle temps réel'}, 'post': {'summary': 'Infos parcelle (géométrie)'}},
             '/api/v1/points/?bbox=': {'get': {'summary': 'Liste filtrée par bbox'}},
             '/api/v1/spatial/proximity/': {'get': {'summary': 'Proximité GPS'}},
             '/api/v1/ml/predict/': {'post': {'summary': 'Prédiction fertilité'}},

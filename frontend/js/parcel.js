@@ -261,15 +261,15 @@ function formatLivePanelHtml(data, { loading = false } = {}) {
       <h4>${data.parcel_name || 'Parcelle'}</h4>
       <p class="parcel-live-meta">${data.area?.area_ha ?? '—'} ha · ${sp.count ?? 0} pts sol</p>
       <div class="parcel-live-grid">
-        <div><span>pH</span><strong>${sp.avg_ph ?? '—'}</strong></motion-div>
-        <div><span>NDVI</span><strong>${sp.avg_ndvi ?? nasa.avg_ndvi ?? '—'}</strong></motion-div>
-        <div><span>SMAP</span><strong>${sp.avg_smap ?? nasa.avg_smap ?? '—'}</strong></motion-div>
-        <div><span>Vuln.</span><strong>${vuln.level ?? '—'}</strong></motion-div>
-      </motion-div>
+        <div><span>pH</span><strong>${sp.avg_ph ?? '—'}</strong></div>
+        <div><span>NDVI</span><strong>${sp.avg_ndvi ?? nasa.avg_ndvi ?? '—'}</strong></div>
+        <div><span>SMAP</span><strong>${sp.avg_smap ?? nasa.avg_smap ?? '—'}</strong></div>
+        <div><span>Vuln.</span><strong>${vuln.level ?? '—'}</strong></div>
+      </div>
       <p class="parcel-live-nasa">${ndviLabel[nasa.ndvi_status] || '—'}</p>
       ${ml.predicted_class ? `<p class="parcel-live-ml">IA : <strong>${ml.predicted_class}</strong></p>` : ''}
       <p class="parcel-live-time">Mis à jour : ${updated}</p>
-    </motion-div>`;
+    </div>`;
 }
 
 function showLivePanel(html) {
@@ -380,7 +380,7 @@ function renderAnalysisResult(data) {
           ${data.recommendations.map((r) => `<li>${r}</li>`).join('')}
         </ul>
       ` : ''}
-    </motion-div>
+    </div>
   `;
 }
 
