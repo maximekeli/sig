@@ -305,8 +305,11 @@ export async function syncOfflineQueue() {
 }
 
 export function applyPublicMode() {
-  const isPublic = SigSolsAPI.getUser()?.role === 'public';
+  const user = SigSolsAPI.getUser();
+  const isPublic = user?.role === 'public';
+  const isAgent = user?.role === 'agent' || user?.role === 'admin';
   document.body.classList.toggle('public-mode', isPublic);
+  document.body.classList.toggle('agent-mode', isAgent);
 }
 
 export { notifyError, notifySuccess };

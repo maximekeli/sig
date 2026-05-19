@@ -237,6 +237,28 @@
   white-space: pre-wrap;
 }
 
+.help-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.25rem 2rem;
+}
+.help-card {
+  background: var(--cream-2);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  border: 1px solid var(--sand);
+}
+.help-card h3 { margin-top: 0; font-family: var(--font-display); }
+.help-card kbd {
+  background: var(--emerald-900);
+  color: #fff;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+body:not(.agent-mode) .agent-only { display: none !important; }
+
 @media (max-width: 768px) {
   #btn-sidebar-toggle { display: block; }
   .sidebar {

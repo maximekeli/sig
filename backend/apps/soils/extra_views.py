@@ -61,7 +61,6 @@ class SoilPointPairCompareView(APIView):
 
     def get(self, request):
         from django.contrib.gis.db.models.functions import Distance
-        from django.contrib.gis.geos import Point
 
         a_id = request.query_params.get('a') or request.query_params.get('other_id')
         b_id = request.query_params.get('b')

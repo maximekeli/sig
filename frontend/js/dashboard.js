@@ -3,6 +3,7 @@ import { showLoading } from './core/ui.js';
 import { notifyError } from './core/ui.js';
 
 let soilChart = null;
+let fertilityChart = null;
 
 function renderSoilChart(stats) {
   const canvas = document.getElementById('chart-soil-types-canvas');

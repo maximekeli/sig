@@ -68,6 +68,11 @@ document.getElementById('btn-quiz-finish')?.addEventListener('click', () => SigS
 
 window.addEventListener('online', () => SigSolsFeatures.syncOfflineQueue());
 
+document.getElementById('proximity-radius')?.addEventListener('input', (e) => {
+  const el = document.getElementById('proximity-radius-label');
+  if (el) el.textContent = `${e.target.value} m`;
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
   window.SigSolsInit?.initAppShell?.();
   SigSolsMap.initMap();
@@ -85,4 +90,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/frontend/sw.js').catch(() => {});
   }
+  window.SigSolsTools?.initTools?.();
 });

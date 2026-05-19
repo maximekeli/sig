@@ -10,7 +10,7 @@ export function initShortcuts() {
       return;
     }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
-    const views = { m: 'map', d: 'dashboard', q: 'quiz', s: 'sheets', a: 'admin' };
+    const views = { m: 'map', d: 'dashboard', q: 'quiz', s: 'sheets', a: 'admin', h: 'help' };
     const v = views[e.key.toLowerCase()];
     if (!v) return;
     const btn = document.querySelector(`.nav-btn[data-view="${v}"]`);
