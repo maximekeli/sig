@@ -43,7 +43,11 @@ export async function triggerNasaIngest() {
   }
 }
 
+let adminPanelReady = false;
+
 export function initAdminPanel() {
+  if (adminPanelReady) return;
+  adminPanelReady = true;
   document.getElementById('btn-adm-train-ml')?.addEventListener('click', trainMlModel);
   document.getElementById('btn-adm-nasa-ingest')?.addEventListener('click', triggerNasaIngest);
 }

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { phColorClass, phColorFromPh, phColorHex } from '../js/core/phColor.js';
 
 describe('phColor', () => {

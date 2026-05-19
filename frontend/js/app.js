@@ -22,7 +22,6 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
     if (btn.dataset.view === 'admin') {
       SigSolsFeatures.loadAdminDashboard();
       SigSolsFeatures.loadPendingValidation?.();
-      window.SigSolsAdminPanel?.initAdminPanel?.();
     }
   });
 });
