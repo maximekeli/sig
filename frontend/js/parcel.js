@@ -4,9 +4,7 @@
 import { phColorHex } from './core/phColor.js';
 import { notifyError, notifySuccess } from './core/ui.js';
 import {
-  HEALTH_CLASS,
   NDVI_LABELS,
-  PH_COLORS,
   SMAP_LABELS,
   VULN_COLORS,
   ZONE_STYLES,
@@ -323,9 +321,9 @@ function formatHealthGauge(index) {
   return `
     <div class="parcel-health parcel-health--${cls}">
       <span class="parcel-health-label">Indice santé sol</span>
-      <div class="parcel-health-bar"><div class="parcel-health-fill" style="width:${index}%"></div></motion-div>
+      <div class="parcel-health-bar"><div class="parcel-health-fill" style="width:${index}%"></div></div>
       <strong class="parcel-health-value">${index}/100</strong>
-    </motion-div>`;
+    </div>`;
 }
 
 function formatTypesBreakdown(rows) {
@@ -342,7 +340,7 @@ function formatTypesBreakdown(rows) {
 
 function formatLivePanelHtml(data, { loading = false } = {}) {
   if (loading) {
-    return '<div class="parcel-live-skeleton"><div class="sk-line"></div><motion-div class="sk-grid"></motion-div></motion-div>';
+    return '<div class="parcel-live-skeleton"><div class="sk-line"></div><div class="sk-grid"></div></div>';
   }
   const sp = data.soil_points || {};
   const nasa = data.nasa || {};
@@ -357,22 +355,22 @@ function formatLivePanelHtml(data, { loading = false } = {}) {
       <div class="parcel-live-header">
         <h4>${data.parcel_name || 'Parcelle'}</h4>
         <span class="parcel-vuln-badge parcel-vuln-badge--${vuln.level || 'moyenne'}">${vulnLabel(vuln.level)}</span>
-      </motion-div>
+      </div>
       ${data.zone_code ? `<p class="parcel-live-code">${data.zone_code}</p>` : ''}
       <p class="parcel-live-meta">${data.area?.area_ha ?? '—'} ha · ${sp.count ?? 0} point(s) sol</p>
       ${formatHealthGauge(data.health_index)}
       <div class="parcel-live-grid">
         <div><span>pH</span><strong>${sp.avg_ph ?? '—'}</strong><small>${sp.min_ph != null ? `${sp.min_ph}–${sp.max_ph}` : ''}</small></div>
-        <motion-div><span>NDVI</span><strong>${sp.avg_ndvi ?? nasa.avg_ndvi ?? '—'}</strong></motion-div>
-        <motion-div><span>SMAP</span><strong>${sp.avg_smap ?? nasa.avg_smap ?? '—'}</strong></motion-div>
-        <motion-div><span>Humid.</span><strong>${sp.avg_humidity_pct ?? '—'}%</strong></motion-div>
-      </motion-div>
+        <div><span>NDVI</span><strong>${sp.avg_ndvi ?? nasa.avg_ndvi ?? '—'}</strong></div>
+        <div><span>SMAP</span><strong>${sp.avg_smap ?? nasa.avg_smap ?? '—'}</strong></div>
+        <div><span>Humid.</span><strong>${sp.avg_humidity_pct ?? '—'}%</strong></div>
+      </div>
       <p class="parcel-live-nasa">${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
       ${formatTypesBreakdown(data.soil_types_breakdown)}
       ${ml?.predicted_class ? `<p class="parcel-live-ml">IA fertilité : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
       ${(data.recommendations || []).slice(0, 2).map((r) => `<p class="parcel-live-tip">• ${r}</p>`).join('')}
       <p class="parcel-live-time">Mis à jour : ${updated}</p>
-    </motion-div>`;
+    </div>`;
 }
 
 function showLivePanel(html) {
@@ -453,17 +451,17 @@ function renderAnalysisResult(data) {
         Santé <strong>${data.health_index ?? '—'}/100</strong> ·
         Vuln. <strong>${vulnLabel(vuln.level)}</strong>
       </p>
-      <motion-div class="parcel-metrics">
+      <div class="parcel-metrics">
         <span>pH <strong>${sp.avg_ph ?? '—'}</strong> (${sp.min_ph ?? '—'} – ${sp.max_ph ?? '—'})</span>
         <span>NDVI <strong>${sp.avg_ndvi ?? nasa.avg_ndvi ?? '—'}</strong></span>
         <span>SMAP <strong>${sp.avg_smap ?? nasa.avg_smap ?? '—'}</strong></span>
         <span>Humid. <strong>${sp.avg_humidity_pct ?? '—'}%</strong></span>
-      </motion-div>
+      </div>
       ${formatTypesBreakdown(data.soil_types_breakdown)}
       <p class="parcel-nasa">NASA : ${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
       ${ml?.predicted_class ? `<p class="parcel-ml">IA : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
       ${(data.recommendations || []).length ? `<ul class="parcel-recs">${data.recommendations.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
-    </motion-div>`;
+    </div>`;
 }
 
 function exportParcelReport() {
