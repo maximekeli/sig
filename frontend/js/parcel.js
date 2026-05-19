@@ -482,7 +482,32 @@ function exportParcelReport() {
   a.download = `parcelle-${lastParcelData.zone_code || 'custom'}-${Date.now()}.json`;
   a.click();
   URL.revokeObjectURL(url);
-  notifySuccess('Rapport parcelle exporté.');
+  notifySuccess('Rapport JSON exporté.');
+}
+
+function printParcelReport() {
+  if (!lastParcelData) {
+    notifyError({ message: 'Sélectionnez une parcelle avant d\'imprimer.' });
+    return;
+  }
+  const d = lastParcelData;
+  const sp = d.soil_points || {};
+  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>${d.parcel_name}</title>
+    <style>body{font-family:sans-serif;padding:2rem}h1{color:#134e2a}table{border-collapse:collapse;width:100%}
+    td,th{border:1px solid #ccc;padding:8px}th{background:#f3efe6}</style></head><body>
+    <h1>${d.parcel_name}</h1><p>${d.zone_code || ''} · ${d.area?.area_ha ?? '—'} ha · Santé ${d.health_index ?? '—'}/100</p>
+    <table><tr><th>pH moy.</th><th>NDVI</th><th>SMAP</th><th>Points sol</th><th>Vulnérabilité</th></tr>
+    <tr><td>${sp.avg_ph ?? '—'}</td><td>${sp.avg_ndvi ?? '—'}</td><td>${sp.avg_smap ?? '—'}</td>
+    <td>${sp.count ?? 0}</td><td>${d.vulnerability?.level ?? '—'}</td></tr></table>
+    <p><em>Données NASA — crédit NASA Earth Science · SIG Sols Togo</em></p>
+    <script>window.onload=()=>window.print()</script></body></html>`;
+  const w = window.open('', '_blank');
+  if (!w) {
+    notifyError({ message: 'Pop-up bloquée — autorisez les fenêtres pour imprimer.' });
+    return;
+  }
+  w.document.write(html);
+  w.document.close();
 }
 
 async function runParcelAnalysis() {
@@ -549,6 +574,7 @@ function initParcelTools() {
   document.getElementById('btn-parcel-refresh')?.addEventListener('click', () => refreshLiveParcelInfo(false));
   document.getElementById('parcel-live-refresh')?.addEventListener('click', () => refreshLiveParcelInfo(false));
   document.getElementById('btn-parcel-export')?.addEventListener('click', exportParcelReport);
+  document.getElementById('btn-parcel-print')?.addEventListener('click', printParcelReport);
   document.getElementById('parcel-zone-select')?.addEventListener('change', onZoneSelectChange);
   document.getElementById('parcel-show-on-map')?.addEventListener('change', loadParcelsOnMap);
   document.getElementById('parcel-show-soil-points')?.addEventListener('change', () => {
