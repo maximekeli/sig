@@ -3,7 +3,7 @@ let container = null;
 
 export function initToast() {
   if (container) return;
-  container = document.createElement('motion-div');
+  container = document.createElement('div');
   container.id = 'toast-container';
   container.className = 'toast-container';
   container.setAttribute('aria-live', 'polite');
@@ -13,7 +13,7 @@ export function initToast() {
 
 export function toast(message, type = 'info', duration = 4200) {
   initToast();
-  const el = document.createElement('motion-div');
+  const el = document.createElement('div');
   el.className = `toast toast-${type}`;
   el.setAttribute('role', 'status');
   el.textContent = message;
