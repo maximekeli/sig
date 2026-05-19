@@ -123,7 +123,14 @@
       <hr />
       <h3>Parcelles</h3>
       <label class="parcel-check"><input type="checkbox" id="parcel-show-on-map" checked /> Afficher les parcelles sur la carte</label>
+      <label class="parcel-check"><input type="checkbox" id="parcel-show-soil-points" checked /> Points de sol dans la parcelle</label>
       <label class="parcel-check"><input type="checkbox" id="parcel-live-update" checked /> Infos en temps réel</label>
+      <input type="search" id="parcel-search" class="parcel-search" placeholder="Rechercher une parcelle…" />
+      <div class="parcel-filter-tabs" role="tablist">
+        <button type="button" class="parcel-filter-tab active" data-filter="all">Toutes</button>
+        <button type="button" class="parcel-filter-tab" data-filter="canton">Cantons</button>
+        <button type="button" class="parcel-filter-tab" data-filter="degraded">Dégradées</button>
+      </div>
       <label>Parcelle / zone
         <select id="parcel-zone-select">
           <option value="">— Cliquer sur la carte ou dessiner —</option>
@@ -133,8 +140,12 @@
       <p id="parcel-status" class="parcel-status">Sélectionnez une parcelle sur la carte ou dans la liste.</p>
       <label class="parcel-check"><input type="checkbox" id="parcel-use-nasa" checked /> Données NASA (NDVI, SMAP)</label>
       <label class="parcel-check"><input type="checkbox" id="parcel-use-ml" /> Prédiction IA (analyse complète)</label>
-      <button type="button" id="btn-parcel-analyze" class="btn-parcel-analyze">Analyse complète</button>
-      <button type="button" id="btn-parcel-clear" class="btn-parcel-clear">Effacer sélection</button>
+      <div class="parcel-actions-row">
+        <button type="button" id="btn-parcel-refresh" class="btn-parcel-clear" title="Actualiser">↻</button>
+        <button type="button" id="btn-parcel-analyze" class="btn-parcel-analyze">Analyse complète</button>
+        <button type="button" id="btn-parcel-export" class="btn-parcel-clear">Exporter</button>
+        <button type="button" id="btn-parcel-clear" class="btn-parcel-clear">Effacer</button>
+      </div>
       <div id="parcel-analysis-result" class="parcel-analysis-result hidden"></div>
       <hr />
       <h3>Outils carte</h3>
@@ -179,8 +190,14 @@
       <div id="pred-result" class="pred-result-card" role="status"></div>
     </aside>
     <div id="map" class="map-container">
+      <div id="parcel-map-legend" class="parcel-map-legend" aria-hidden="true">
+        <span><i class="legend-swatch legend-canton"></i> Canton</span>
+        <span><i class="legend-swatch legend-degraded"></i> Zone dégradée</span>
+        <span><i class="legend-swatch legend-selected"></i> Sélection</span>
+      </div>
       <div id="parcel-live-panel" class="parcel-live-panel hidden" role="region" aria-live="polite" aria-label="Informations parcelle">
         <button type="button" id="parcel-live-close" class="parcel-live-close" aria-label="Fermer">×</button>
+        <button type="button" id="parcel-live-refresh" class="parcel-live-refresh" title="Actualiser">↻</button>
         <div id="parcel-live-content"></div>
       </div>
     </div>

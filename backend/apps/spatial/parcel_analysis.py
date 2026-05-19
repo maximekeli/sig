@@ -178,6 +178,25 @@ def analyze_parcel(*, geometry=None, zone_code=None, zone_id=None, use_ml=True):
 
     recommendations = list(dict.fromkeys(recommendations))[:8]
 
+    soil_types_breakdown = list(
+        points.values('soil_type').annotate(count=Count('id')).order_by('-count'),
+    )
+    soil_points_map = [
+        {
+            'id': p.id,
+            'lat': p.location.y,
+            'lon': p.location.x,
+            'ph': p.ph,
+            'soil_type': p.soil_type,
+            'ph_color': getattr(p, 'ph_color', 'green'),
+        }
+        for p in points[:300]
+    ]
+    vuln_level = vulnerability['level']
+    health_index = {'faible': 88, 'moyenne': 58, 'elevee': 28}.get(vuln_level, 50)
+    if agg['count'] == 0:
+        health_index = None
+
     from nasa.models import NasaLayerCatalog
     active_layers = list(
         NasaLayerCatalog.objects.filter(is_active=True).values_list('product', flat=True)[:10],
@@ -210,6 +229,9 @@ def analyze_parcel(*, geometry=None, zone_code=None, zone_id=None, use_ml=True):
         'vulnerability': vulnerability,
         'ml_prediction': ml_prediction,
         'recommendations': recommendations,
+        'soil_types_breakdown': soil_types_breakdown,
+        'soil_points_map': soil_points_map,
+        'health_index': health_index,
         'analyzed_at': timezone.now().isoformat(),
         'geometry_geojson': json.loads(geom.geojson),
     }
