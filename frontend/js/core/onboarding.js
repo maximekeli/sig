@@ -18,10 +18,10 @@ export function initOnboarding() {
     <div class="onboarding-card">
       <h2 id="onb-title"></h2>
       <p id="onb-text"></p>
-      <motion-div class="onboarding-actions">
+      <div class="onboarding-actions">
         <button type="button" class="btn-auth-outline" id="onb-skip">Passer</button>
         <button type="button" class="btn-auth-primary" id="onb-next">Suivant</button>
-      </motion-div>
+      </div>
       <p class="onboarding-step" id="onb-step"></p>
     </div>`;
   document.body.appendChild(overlay);
