@@ -13,20 +13,29 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/enhancements.css" />
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Aller au contenu</a>
+  <div id="connection-banner" class="hidden" role="status"></motion-div>
+  <motion-div id="global-loading" class="hidden" aria-busy="false"><div class="spinner" aria-hidden="true"></motion-div></motion-div>
   <header class="app-header">
     <div class="brand">
       <h1>SIG Sols Togo</h1>
       <p class="subtitle">SIG-SOLS-TOGO-2026-01 · Région Maritime</p>
     </div>
-    <nav class="main-nav">
-      <button type="button" class="nav-btn active" data-view="map">Carte</button>
-      <button type="button" class="nav-btn" data-view="dashboard">Tableau de bord</button>
-      <button type="button" class="nav-btn" data-view="quiz">Quiz</button>
-      <button type="button" class="nav-btn" data-view="sheets">Fiches</button>
-      <button type="button" class="nav-btn admin-only hidden" data-view="admin">Admin</button>
+    <nav class="main-nav" aria-label="Navigation principale">
+      <button type="button" class="nav-btn active" data-view="map" data-i18n="nav.map">Carte</button>
+      <button type="button" class="nav-btn" data-view="dashboard" data-i18n="nav.dashboard">Tableau de bord</button>
+      <button type="button" class="nav-btn" data-view="quiz" data-i18n="nav.quiz">Quiz</button>
+      <button type="button" class="nav-btn" data-view="sheets" data-i18n="nav.sheets">Fiches</button>
+      <button type="button" class="nav-btn admin-only hidden" data-view="admin" data-i18n="nav.admin">Admin</button>
     </nav>
+    <div class="header-tools">
+      <button type="button" id="btn-theme" class="btn-icon" aria-pressed="false" title="Thème clair/sombre">☀</button>
+      <button type="button" id="btn-lang" class="btn-icon" title="Langue">EN</button>
+      <button type="button" id="btn-help-tour" class="btn-icon" data-i18n="help.tour" title="Visite guidée">?</button>
+    </motion-div>
     <div class="auth-box" id="auth-box">
       <div id="auth-guest" class="auth-guest">
         <div class="auth-tabs">
@@ -61,10 +70,15 @@
     </div>
   </header>
 
-  <main>
+  <main id="main-content">
+  <section id="welcome-banner" class="welcome-banner hidden" aria-label="Bienvenue">
+    <h2 data-i18n="welcome.title">Bienvenue sur SIG Sols Togo</h2>
+    <p data-i18n="welcome.sub">Cartographie des sols, NASA, IA et quiz — Région Maritime.</p>
+  </section>
+  <button type="button" id="btn-sidebar-toggle" aria-expanded="false" aria-controls="sidebar">☰ Filtres</button>
   <!-- MAP VIEW -->
   <section id="view-map" class="view active">
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <h2>Filtres</h2>
       <label>pH min <input type="number" id="filter-ph-min" step="0.1" min="3.5" max="9.5" /></label>
       <label>pH max <input type="number" id="filter-ph-max" step="0.1" min="3.5" max="9.5" /></label>
