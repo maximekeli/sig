@@ -269,7 +269,47 @@
       <h3>Rapport zone</h3>
       <label>Code zone <input type="text" id="adm-zone-code" placeholder="MAR-01" /></label>
       <button type="button" id="btn-zone-report">Ouvrir rapport HTML</button>
-    </div>
+      <hr />
+      <h3>Modèle IA</h3>
+      <button type="button" id="btn-train-ml" class="btn-parcel-analyze">Réentraîner le modèle</button>
+      <p class="parcel-status">Commande serveur : <code>manage.py ingest_nasa</code></p>
+    </motion-div>
+  </section>
+
+  <section id="view-help" class="view">
+    <header class="view-hero">
+      <h2 class="view-hero-title" data-i18n="nav.help">Aide</h2>
+      <p class="view-hero-sub">Guide rapide SIG Sols Togo</p>
+    </header>
+    <div class="help-panel">
+      <article class="help-card">
+        <h3>Carte</h3>
+        <ul>
+          <li>Filtrez par pH, type de sol, validation.</li>
+          <li>Cochez « Limiter à la carte visible » pour charger uniquement la zone affichée.</li>
+          <li>Superposez les couches NASA et activez la carte de chaleur pH.</li>
+          <li>Agents : ajoutez un point (clic carte) ou importez GeoJSON/CSV.</li>
+        </ul>
+      </article>
+      <article class="help-card">
+        <h3>Raccourcis clavier</h3>
+        <ul>
+          <li><kbd>M</kbd> Carte · <kbd>D</kbd> Tableau de bord · <kbd>Q</kbd> Quiz · <kbd>S</kbd> Fiches</li>
+          <li><kbd>?</kbd> Afficher l'aide · <kbd>Échap</kbd> Fermer les fenêtres</li>
+        </ul>
+      </article>
+      <article class="help-card">
+        <h3>API &amp; documentation</h3>
+        <p><a href="/api/schema/" target="_blank" rel="noopener">Schéma OpenAPI</a> ·
+        <a href="/health/?detail=1" target="_blank" rel="noopener">Santé système</a> ·
+        <a href="/admin/" target="_blank" rel="noopener">Admin Django</a></p>
+      </article>
+      <article class="help-card">
+        <h3>Crédits</h3>
+        <p>Données NASA : domaine public — crédit NASA Earth Science (RG05).</p>
+        <p>DISIA – Ministère de l'Agriculture, Togo · DUSOL · MIT License.</p>
+      </article>
+    </motion-div>
   </section>
   </main>
 
