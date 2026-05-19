@@ -98,7 +98,28 @@
         </select>
       </label>
       <label><input type="checkbox" id="filter-validated" checked /> Validés uniquement</label>
+      <label><input type="checkbox" id="filter-bbox" checked /> Limiter à la carte visible</label>
       <button type="button" id="btn-apply-filters">Appliquer</button>
+      <hr />
+      <h3>Recherche &amp; proximité</h3>
+      <label>ID point <input type="number" id="search-point-id" min="1" placeholder="ex. 42" /></label>
+      <button type="button" id="btn-search-point">Localiser</button>
+      <label>Rayon proximité (m)
+        <input type="range" id="proximity-radius" min="100" max="10000" step="100" value="5000" />
+        <span id="proximity-radius-label">5000 m</span>
+      </label>
+      <button type="button" id="btn-proximity-search">Recherche autour de moi</button>
+      <hr />
+      <h3 class="agent-only">Import terrain</h3>
+      <label class="agent-only">Fichier GeoJSON / CSV
+        <input type="file" id="import-file" accept=".geojson,.json,.csv" />
+      </label>
+      <hr />
+      <h3>Comparer deux points</h3>
+      <label>#A <input type="number" id="compare-id-a" min="1" /></label>
+      <label>#B <input type="number" id="compare-id-b" min="1" /></label>
+      <button type="button" id="btn-compare-points">Comparer</button>
+      <motion-div id="compare-result" class="parcel-analysis-result hidden"></motion-div>
       <hr />
       <h3>Parcelles — analyse auto</h3>
       <label>Zone administrative
