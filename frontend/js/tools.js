@@ -109,23 +109,6 @@ export async function comparePoints() {
   }
 }
 
-export async function trainMlModel() {
-  if (!confirm('Lancer le réentraînement du modèle IA ? (peut prendre plusieurs minutes)')) return;
-  showLoading(true);
-  try {
-    const r = await SigSolsAPI.api('/ml/train/', {
-      method: 'POST',
-      body: JSON.stringify({ algorithm: 'RandomForest' }),
-    });
-    notifySuccess(`Modèle entraîné — F1 ${r.f1_macro ?? '—'}`);
-    SigSolsDashboard?.loadDashboard?.();
-  } catch (e) {
-    notifyError(e);
-  } finally {
-    showLoading(false);
-  }
-}
-
 export function initTools() {
   document.getElementById('import-file')?.addEventListener('change', (e) => {
     const f = e.target.files?.[0];
@@ -145,6 +128,5 @@ window.SigSolsTools = {
   searchProximity,
   focusPointById,
   comparePoints,
-  trainMlModel,
   initTools,
 };

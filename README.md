@@ -102,6 +102,10 @@ Sans identifiants : catalogue STAC + démo. Avec identifiants : téléchargement
 | L7 Guide utilisateur | `docs/GUIDE_UTILISATEUR.md` |
 | L8 Déploiement | Docker + nginx |
 
+## API externes (carte, NASA, IA)
+
+Voir [docs/API_EXTERNES.md](docs/API_EXTERNES.md) : OpenStreetMap, NASA Earthdata, ce qui est **non intégré** (Gemini, Mapbox, etc.).
+
 ## Licence
 
 MIT — voir [LICENSE](LICENSE). Données terrain : propriété DISIA. Données NASA : domaine public (crédit requis).
