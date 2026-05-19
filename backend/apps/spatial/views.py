@@ -144,10 +144,7 @@ class ParcelZonesGeoJsonView(APIView):
 
 
 class ParcelLiveView(APIView):
-    """
-    Analyse parcelle en temps réel (léger par défaut : sans IA).
-  query: zone_code | POST geometry
-    """
+    """Analyse parcelle en temps réel (léger par défaut : sans IA). GET zone_code ou POST geometry."""
 
     permission_classes = [IsAuthenticatedOrReadOnly]
 

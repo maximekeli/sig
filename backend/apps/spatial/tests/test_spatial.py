@@ -109,6 +109,26 @@ def test_parcel_zones_list(api_client, sample_zone):
 
 
 @pytest.mark.django_db
+def test_parcel_zones_geojson(api_client, sample_zone):
+    r = api_client.get('/api/v1/spatial/parcel/zones/geojson/')
+    assert r.status_code == 200
+    data = r.json()
+    assert data['type'] == 'FeatureCollection'
+    assert len(data['features']) >= 1
+
+
+@pytest.mark.django_db
+def test_parcel_live_by_zone(api_client, sample_zone):
+    r = api_client.get(
+        f'/api/v1/spatial/parcel/live/?zone_code={sample_zone.code}&use_ml=0',
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body['zone_code'] == sample_zone.code
+    assert 'geometry_geojson' in body
+
+
+@pytest.mark.django_db
 def test_ndvi_timeseries_empty(api_client, sample_soil_point):
     r = api_client.get(f'/api/v1/spatial/ndvi-timeseries/{sample_soil_point.id}/')
     assert r.status_code == 200
