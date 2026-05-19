@@ -54,6 +54,37 @@ class SoilPointPairCompareView(APIView):
         })
 
 
+class SoilPointPairCompareView(APIView):
+    """Compare deux points par identifiant (?a=1&b=2)."""
+
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        from django.contrib.gis.db.models.functions import Distance
+        from django.contrib.gis.geos import Point
+
+        a_id = request.query_params.get('a') or request.query_params.get('other_id')
+        b_id = request.query_params.get('b')
+        if not a_id or not b_id:
+            return Response({'error': 'Paramètres a et b requis'}, status=400)
+        pa = SoilPoint.objects.filter(pk=a_id).first()
+        pb = SoilPoint.objects.filter(pk=b_id).first()
+        if not pa or not pb:
+            return Response({'error': 'Point introuvable'}, status=404)
+        dist = (
+            SoilPoint.objects.filter(pk=pa.pk)
+            .annotate(d=Distance('location', pb.location))
+            .values_list('d', flat=True)
+            .first()
+        )
+        return Response({
+            'point_a': {'id': pa.id, 'ph': pa.ph, 'ndvi_3m_avg': pa.ndvi_3m_avg, 'soil_type': pa.soil_type},
+            'point_b': {'id': pb.id, 'ph': pb.ph, 'ndvi_3m_avg': pb.ndvi_3m_avg, 'soil_type': pb.soil_type},
+            'delta_ph': round(pa.ph - pb.ph, 2),
+            'distance_m': round(dist.m, 1) if dist else None,
+        })
+
+
 class SoilPointCompareView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 

@@ -93,7 +93,7 @@ export async function comparePoints() {
   const el = document.getElementById('compare-result');
   showLoading(true);
   try {
-    const data = await SigSolsAPI.api(`/points/${a}/compare/?other_id=${b}`);
+    const data = await SigSolsAPI.api(`/points/compare/?a=${a}&b=${b}`);
     if (el) {
       el.classList.remove('hidden');
       el.innerHTML = `

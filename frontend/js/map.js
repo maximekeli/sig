@@ -7,6 +7,7 @@ import {
 import { createLocationTracker } from './core/locationTracker.js';
 import {
   MARITIME_CENTER,
+  bboxFromLeaflet,
   buildSoilFiltersQuery,
   markerStyleForPoint,
   nasaTileUrl,
@@ -18,6 +19,8 @@ import { toast } from './core/toast.js';
 
 let map, markersLayer, usersLayer, nasaOverlays = {};
 let mapReady = false;
+let loadDebounce = null;
+let bboxLoadEnabled = true;
 let locationTracker = null;
 let selfMarker = null;
 let accuracyCircle = null;
@@ -47,6 +50,11 @@ function initMap() {
   mapReady = true;
   window.SigSolsFeatures?.initMapAdvanced(map, markersLayer);
   window.SigSolsParcel?.initParcelTools?.();
+  map.on('moveend', () => {
+    if (!bboxLoadEnabled) return;
+    clearTimeout(loadDebounce);
+    loadDebounce = setTimeout(() => loadSoilPoints(), 450);
+  });
   loadSoilPoints();
   loadNasaToggles();
 }
@@ -152,6 +160,7 @@ async function loadSoilPoints() {
       phMax: document.getElementById('filter-ph-max')?.value,
       soilType: document.getElementById('filter-soil-type')?.value,
       validated: validatedOnly,
+      bbox: document.getElementById('filter-bbox')?.checked ? bboxFromLeaflet(map) : '',
     });
     const data = await SigSolsAPI.api('/points/?' + query);
     markersLayer.clearLayers();

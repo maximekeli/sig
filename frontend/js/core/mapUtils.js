@@ -17,14 +17,23 @@ export function parseSoilPointsList(data) {
   return [];
 }
 
-export function buildSoilFiltersQuery({ phMin, phMax, soilType, validated, light = true }) {
+export function buildSoilFiltersQuery({ phMin, phMax, soilType, validated, bbox, light = true }) {
   const params = new URLSearchParams();
   if (light) params.set('light', '1');
   if (phMin) params.set('ph_min', phMin);
   if (phMax) params.set('ph_max', phMax);
   if (soilType) params.set('soil_type', soilType);
   if (validated) params.set('is_validated', 'true');
+  if (bbox) params.set('bbox', bbox);
   return params.toString();
+}
+
+export function bboxFromLeaflet(map) {
+  if (!map) return '';
+  const b = map.getBounds();
+  const sw = b.getSouthWest();
+  const ne = b.getNorthEast();
+  return `${sw.lng},${sw.lat},${ne.lng},${ne.lat}`;
 }
 
 export function markerStyleForPoint(point) {

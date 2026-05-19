@@ -6,6 +6,7 @@ from .extra_views import (
     PendingValidationView,
     SoilPointCompareView,
     SoilPointNoteViewSet,
+    SoilPointPairCompareView,
 )
 from .views import AdministrativeZoneViewSet, DashboardStatsView, SoilPointViewSet
 
@@ -18,6 +19,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('dashboard/stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
     path('heatmap/', HeatmapDataView.as_view(), name='soil-heatmap'),
+    path('points/compare/', SoilPointPairCompareView.as_view(), name='soil-pair-compare'),
     path('points/<int:pk>/compare/', SoilPointCompareView.as_view(), name='soil-compare'),
     path('validation/pending/', PendingValidationView.as_view(), name='soil-pending'),
 ]
