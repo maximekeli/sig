@@ -18,7 +18,6 @@ def api_schema(_request):
             '/api/v1/points/compare/': {'get': {'summary': 'Comparer deux points (a, b)'}},
             '/api/v1/spatial/parcel/zones/geojson/': {'get': {'summary': 'Parcelles GeoJSON (carte)'}},
             '/api/v1/spatial/parcel/live/': {'get': {'summary': 'Infos parcelle temps réel'}, 'post': {'summary': 'Infos parcelle (géométrie)'}},
-            '/api/v1/spatial/parcel/zones/geojson/': {'get': {'summary': 'Parcelles GeoJSON (carte)'}},
             '/api/v1/nasa/ingest/': {'post': {'summary': 'Ingestion NASA (admin)'}},
             '/api/v1/points/?bbox=': {'get': {'summary': 'Liste filtrée par bbox'}},
             '/api/v1/spatial/proximity/': {'get': {'summary': 'Proximité GPS'}},
