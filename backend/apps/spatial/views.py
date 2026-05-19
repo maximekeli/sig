@@ -140,7 +140,10 @@ class ParcelZonesGeoJsonView(APIView):
         types_param = request.query_params.get('types', 'canton,degraded')
         types = [t.strip() for t in types_param.split(',') if t.strip()]
         qs = AdministrativeZone.objects.filter(zone_type__in=types).order_by('name')
-        return Response(AdministrativeZoneSerializer(qs, many=True).data)
+        data = AdministrativeZoneSerializer(qs, many=True).data
+        if isinstance(data, list):
+            return Response({'type': 'FeatureCollection', 'features': data})
+        return Response(data)
 
 
 class ParcelLiveView(APIView):

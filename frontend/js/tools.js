@@ -138,7 +138,6 @@ export function initTools() {
   });
   document.getElementById('btn-search-point')?.addEventListener('click', focusPointById);
   document.getElementById('btn-compare-points')?.addEventListener('click', comparePoints);
-  document.getElementById('btn-train-ml')?.addEventListener('click', trainMlModel);
 }
 
 window.SigSolsTools = {
