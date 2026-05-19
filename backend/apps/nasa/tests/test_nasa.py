@@ -48,5 +48,7 @@ def test_stac_search_no_crash():
 @pytest.mark.django_db
 def test_earthdata_login_without_credentials(settings):
     settings.NASA_EARTHDATA_USERNAME = ''
+    settings.NASA_EARTHDATA_PASSWORD = ''
+    settings.NASA_EARTHDATA_TOKEN = ''
     from nasa.earthdata import login
     assert login() is False
