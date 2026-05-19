@@ -26,6 +26,7 @@ let shouldFitBounds = true;
 let lastParcelData = null;
 let allZones = [];
 let parcelFilter = 'all';
+let zonesGeoJsonCache = null;
 
 function getMap() {
   return window.SigSolsMap?.getMap?.();
@@ -224,7 +225,12 @@ async function loadParcelsOnMap() {
   if (!show) return;
 
   try {
-    const geojson = await SigSolsAPI.api('/spatial/parcel/zones/geojson/?types=canton,degraded');
+    if (!zonesGeoJsonCache) {
+      zonesGeoJsonCache = await SigSolsAPI.api('/spatial/parcel/zones/geojson/?types=canton,degraded');
+    }
+    const geojson = zonesGeoJsonCache?.features
+      ? zonesGeoJsonCache
+      : { type: 'FeatureCollection', features: zonesGeoJsonCache || [] };
     parcelsLayer = L.geoJSON(geojson, {
       style: (f) => styleForZoneFeature(f, f.properties?.code === selectedParcelCode),
       onEachFeature: (feature, layer) => {
