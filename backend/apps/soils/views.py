@@ -128,7 +128,17 @@ class SoilPointViewSet(viewsets.ModelViewSet):
                 created += 1
         elif name.endswith('.csv'):
             decoded = upload.read().decode('utf-8-sig').splitlines()
+            if not decoded:
+                return Response({'error': 'CSV vide.'}, status=400)
             reader = csv.DictReader(decoded)
+            fieldnames = {str(f or '').lower() for f in (reader.fieldnames or [])}
+            has_lon = 'lon' in fieldnames or 'longitude' in fieldnames
+            has_lat = 'lat' in fieldnames or 'latitude' in fieldnames
+            if not has_lon or not has_lat:
+                return Response(
+                    {'error': 'CSV invalide : colonnes lon/lat (ou longitude/latitude) requises.'},
+                    status=400,
+                )
             for row in reader:
                 lon = float(row.get('lon') or row.get('longitude') or 0)
                 lat = float(row.get('lat') or row.get('latitude') or 0)
@@ -144,8 +154,12 @@ class SoilPointViewSet(viewsets.ModelViewSet):
                     created_by=request.user,
                 )
                 created += 1
+            if created == 0:
+                return Response({'error': 'Aucune ligne valide dans le CSV.'}, status=400)
         else:
             return Response({'error': 'Format non supporté (GeoJSON, CSV).'}, status=400)
+        if created == 0 and (name.endswith('.geojson') or name.endswith('.json')):
+            return Response({'error': 'GeoJSON sans entités importables.'}, status=400)
         if request.user.is_authenticated:
             log_action(request.user, 'import', 'SoilPoint', None, {'created': created})
         return Response({'created': created})

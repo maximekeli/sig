@@ -363,7 +363,9 @@ class TestNasaCoverage:
         item.assets = {'data': MagicMock()}
         item.bbox = [0.9, 6, 1.8, 6.8]
         item.self_href = 'http://example.com/item'
-        mock_open.return_value.search.return_value.items.return_value = [item]
+        mock_client = MagicMock()
+        mock_client.search.return_value.items.return_value = [item]
+        mock_open.return_value = mock_client
         from nasa.stac_client import search_granules
         results = search_granules(
             'MOD13Q1', date.today(), date.today(), (0.9, 6, 1.8, 6.8), limit=1,

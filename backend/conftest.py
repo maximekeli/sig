@@ -20,14 +20,11 @@ def _mock_nasa_network(monkeypatch):
     if os.environ.get('NASA_LIVE_TESTS') == '1':
         return
 
-    def _noop_stac(*_args, **_kwargs):
-        return []
-
     def _noop_download(*_args, **_kwargs):
         return []
 
-    monkeypatch.setattr('nasa.stac_client.search_granules', _noop_stac)
-    monkeypatch.setattr('nasa.ingestion.search_granules', _noop_stac)
+    # Ne pas patcher stac_client (tests unitaires avec mock Client.open).
+    monkeypatch.setattr('nasa.ingestion.search_granules', lambda *_a, **_k: [])
     monkeypatch.setattr('nasa.ingestion.search_and_download', _noop_download)
 
 
