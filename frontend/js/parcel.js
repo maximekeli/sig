@@ -186,7 +186,8 @@ async function runParcelAnalysis() {
   const useNasa = document.getElementById('parcel-use-nasa')?.checked !== false;
 
   if (!zoneCode && !geometry) {
-    alert('Dessinez un polygone sur la carte ou sélectionnez une zone administrative.');
+    window.SigSolsFeatures?.notifyError?.({ message: 'Dessinez un polygone ou sélectionnez une zone administrative.' })
+      || alert('Dessinez un polygone sur la carte ou sélectionnez une zone administrative.');
     return;
   }
 

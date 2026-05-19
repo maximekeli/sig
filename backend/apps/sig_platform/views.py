@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.permissions import IsAdministrator
+from config.admin_large_table import pg_table_row_estimate
 from soils.models import AdministrativeZone, SoilPoint
 
 from .models import AuditLog, DroughtAlert, Notification, PasswordResetToken
@@ -35,9 +36,16 @@ class AdminDashboardView(APIView):
         from nasa.models import NasaLayerCatalog
         from ml_predict.models import FertilityModelRun
 
+        users_est = pg_table_row_estimate(User)
+        users_total = users_est if users_est is not None else User.objects.count()
+        users_active = User.objects.filter(is_active=True).count()
+        if users_est is not None and users_active > users_total:
+            users_active = users_total
+
         return Response({
-            'users_total': User.objects.count(),
-            'users_active': User.objects.filter(is_active=True).count(),
+            'users_total': users_total,
+            'users_total_estimated': users_est is not None,
+            'users_active': users_active,
             'soil_points': SoilPoint.objects.count(),
             'pending_validation': SoilPoint.objects.filter(
                 validation_status=SoilPoint.ValidationStatus.PENDING,

@@ -11,6 +11,7 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
     target.classList.add('active');
     void target.offsetWidth;
     target.style.animation = '';
+    document.getElementById('welcome-banner')?.classList.add('hidden');
     if (btn.dataset.view === 'dashboard') SigSolsDashboard.loadDashboard();
     if (btn.dataset.view === 'quiz') {
       SigSolsQuiz.loadQuizStats?.();
@@ -27,10 +28,18 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
 
 document.getElementById('btn-apply-filters')?.addEventListener('click', () => SigSolsMap.loadSoilPoints());
 document.getElementById('btn-export-geojson')?.addEventListener('click', () => {
-  window.open('/api/v1/points/geojson/', '_blank');
+  if (SigSolsAPI.isAuthenticated()) {
+    SigSolsMap.exportWithAuth('/points/geojson/', 'points.geojson');
+  } else {
+    window.open('/api/v1/points/geojson/', '_blank');
+  }
 });
 document.getElementById('btn-export-csv')?.addEventListener('click', () => {
-  window.open('/api/v1/points/export-csv/', '_blank');
+  if (SigSolsAPI.isAuthenticated()) {
+    SigSolsMap.exportWithAuth('/points/export-csv/', 'points.csv');
+  } else {
+    window.open('/api/v1/points/export-csv/', '_blank');
+  }
 });
 document.getElementById('btn-predict')?.addEventListener('click', () => SigSolsMap.runPrediction());
 document.getElementById('btn-location-toggle')?.addEventListener('click', () => SigSolsMap.toggleLiveLocation());
@@ -60,11 +69,13 @@ document.getElementById('btn-quiz-finish')?.addEventListener('click', () => SigS
 window.addEventListener('online', () => SigSolsFeatures.syncOfflineQueue());
 
 document.addEventListener('DOMContentLoaded', async () => {
+  window.SigSolsInit?.initAppShell?.();
   SigSolsMap.initMap();
   SigSolsQuiz.loadQuizStats?.();
   await SigSolsAuth.initAuth();
   SigSolsFeatures.applyPublicMode();
   if (SigSolsAPI.isAuthenticated()) {
+    document.getElementById('welcome-banner')?.classList.add('hidden');
     SigSolsMap.loadSoilPoints();
     SigSolsFeatures.loadAlerts();
     SigSolsFeatures.loadNotifications();

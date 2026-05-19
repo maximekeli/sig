@@ -1,6 +1,8 @@
 /**
  * Interface d'authentification — connexion, inscription, profil, déconnexion.
  */
+import { toast } from './core/toast.js';
+import { notifyError, notifySuccess } from './core/ui.js';
 
 const ROLE_LABELS = {
   admin: 'Administrateur',
@@ -30,6 +32,7 @@ function renderAuthUI() {
 
   const adminNav = document.querySelector('.nav-btn[data-view="admin"]');
   if (authed && user) {
+    document.getElementById('welcome-banner')?.classList.add('hidden');
     guest?.classList.add('hidden');
     logged?.classList.remove('hidden');
     const label = $('auth-user-label');
@@ -81,9 +84,14 @@ async function handleLogin() {
       msg.className = 'auth-message';
     }
     renderAuthUI();
+    notifySuccess('Connexion réussie.');
     SigSolsMap.loadSoilPoints();
+    SigSolsFeatures.loadAlerts();
+    SigSolsFeatures.loadNotifications();
+    SigSolsFeatures.connectWebSocket();
     if ($('share-location')?.checked) SigSolsMap.startLiveLocation();
   } catch (e) {
+    notifyError(e);
     if (msg) {
       msg.textContent = e.message;
       msg.className = 'auth-message error';
@@ -121,6 +129,8 @@ async function handleLogout() {
   await SigSolsAPI.logout();
   renderAuthUI();
   $('auth-profile-modal')?.classList.add('hidden');
+  document.getElementById('welcome-banner')?.classList.remove('hidden');
+  toast('Déconnexion réussie.', 'info');
 }
 
 function openProfileModal() {

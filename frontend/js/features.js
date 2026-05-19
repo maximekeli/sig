@@ -309,7 +309,11 @@ export function applyPublicMode() {
   document.body.classList.toggle('public-mode', isPublic);
 }
 
+export { notifyError, notifySuccess };
+
 window.SigSolsFeatures = {
+  notifyError,
+  notifySuccess,
   initMapAdvanced,
   addMarkerToCluster,
   clearClusters,

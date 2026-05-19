@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.gis.admin import GISModelAdmin
 
+from config.admin_large_table import LargeTableAdminMixin
+
 from .models import AdministrativeZone, SoilPoint, SoilPointNasaSnapshot
 
 
@@ -11,9 +13,11 @@ class AdministrativeZoneAdmin(GISModelAdmin):
 
 
 @admin.register(SoilPoint)
-class SoilPointAdmin(GISModelAdmin):
+class SoilPointAdmin(LargeTableAdminMixin, GISModelAdmin):
+    ordering = ('-id',)
     list_display = ('id', 'ph', 'soil_type', 'humidity_pct', 'collected_at', 'is_validated')
     list_filter = ('soil_type', 'fertility_class', 'is_validated')
+    search_fields = ('=id',)
 
 
 @admin.register(SoilPointNasaSnapshot)

@@ -23,4 +23,5 @@ window.SigSolsAPI = {
   updateLocation: client.updateLocation,
   getLiveLocations: client.getLiveLocations,
   clearLocation: client.clearLocation,
+  download: client.download,
 };

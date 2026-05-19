@@ -237,7 +237,7 @@ async function runPrediction() {
     const r = await SigSolsAPI.api('/ml/predict/', { method: 'POST', body: JSON.stringify(body) });
     const el = document.getElementById('pred-result');
     if (el) {
-      el.innerHTML = `<strong>${r.fertility_class || r.prediction}</strong>
+      el.innerHTML = `<strong>${r.predicted_class || r.fertility_class || '—'}</strong>
         <br/>Confiance : ${((r.confidence || 0) * 100).toFixed(0)}%
         <br/><small>${r.recommendation || ''}</small>`;
     }

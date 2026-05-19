@@ -35,3 +35,5 @@ export function initAppShell() {
   }
   setTimeout(initOnboarding, 800);
 }
+
+window.SigSolsInit = { initAppShell };

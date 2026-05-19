@@ -172,6 +172,24 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
     return api('/auth/location/', { method: 'DELETE' });
   }
 
+  async function download(path, filename) {
+    const headers = {};
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+    const res = await fetchFn(`${baseUrl}${path}`, { headers });
+    if (res.status === 401 && refreshToken) {
+      await refreshAccessToken();
+      return download(path, filename);
+    }
+    if (!res.ok) throw new Error(await parseError(res));
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return {
     api,
     login,
@@ -190,5 +208,6 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
     updateLocation,
     getLiveLocations,
     clearLocation,
+    download,
   };
 }
