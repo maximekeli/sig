@@ -17,8 +17,8 @@
 </head>
 <body>
   <a href="#main-content" class="skip-link">Aller au contenu</a>
-  <div id="connection-banner" class="hidden" role="status"></motion-div>
-  <motion-div id="global-loading" class="hidden" aria-busy="false"><div class="spinner" aria-hidden="true"></motion-div></motion-div>
+  <div id="connection-banner" class="hidden" role="status"></div>
+  <div id="global-loading" class="hidden" aria-busy="false"><div class="spinner" aria-hidden="true"></div></div>
   <header class="app-header">
     <div class="brand">
       <h1>SIG Sols Togo</h1>
@@ -35,7 +35,7 @@
       <button type="button" id="btn-theme" class="btn-icon" aria-pressed="false" title="Thème clair/sombre">☀</button>
       <button type="button" id="btn-lang" class="btn-icon" title="Langue">EN</button>
       <button type="button" id="btn-help-tour" class="btn-icon" data-i18n="help.tour" title="Visite guidée">?</button>
-    </motion-div>
+    </div>
     <div class="auth-box" id="auth-box">
       <div id="auth-guest" class="auth-guest">
         <div class="auth-tabs">
@@ -147,7 +147,7 @@
         </select>
       </label>
       <button type="button" id="btn-predict">Prédire fertilité</button>
-      <pre id="pred-result" class="pred-result"></pre>
+      <div id="pred-result" class="pred-result-card" role="status"></div>
     </aside>
     <div id="map" class="map-container"></div>
   </section>
@@ -164,7 +164,7 @@
       <article class="kpi-card"><h3>NDVI moyen</h3><p id="kpi-ndvi">—</p></article>
       <article class="kpi-card"><h3>Zones dégradées</h3><p id="kpi-degraded">—</p></article>
       <article class="kpi-card wide"><h3>Précision IA (F1)</h3><p id="kpi-ml">—</p></article>
-      <article class="chart-card wide"><h3>Distribution types de sol</h3><ul id="chart-soil-types"></ul></article>
+      <article class="chart-card wide"><h3>Distribution types de sol</h3><div class="chart-wrap"><canvas id="chart-soil-types-canvas"></canvas></div><ul id="chart-soil-types" class="hidden"></ul></article>
       <article class="chart-card wide"><h3>Corrélation SMAP (R²)</h3><p id="smap-corr">—</p></article>
     </div>
   </section>
@@ -279,6 +279,28 @@
     </div>
   </div>
 
+  <div id="add-point-modal" class="app-modal hidden" role="dialog" aria-labelledby="add-point-title">
+    <div class="app-modal-backdrop" data-close-modal="add-point-modal"></div>
+    <div class="app-modal-panel">
+      <h2 id="add-point-title">Nouveau point de sol</h2>
+      <p id="add-point-coords" class="parcel-status"></p>
+      <label>pH (3,5–9,5) <input type="number" id="ap-ph" step="0.1" min="3.5" max="9.5" value="6.2" /></label>
+      <label>Humidité % <input type="number" id="ap-humidity" value="35" min="0" max="100" /></label>
+      <label>Type de sol
+        <select id="ap-soil-type">
+          <option value="limoneux">Limoneux</option>
+          <option value="argileux">Argileux</option>
+          <option value="sableux">Sableux</option>
+          <option value="tourbeux">Tourbeux</option>
+          <option value="calcaire">Calcaire</option>
+        </select>
+      </label>
+      <button type="button" id="btn-add-point-save" class="btn-auth-primary">Enregistrer</button>
+      <button type="button" class="btn-auth-outline" data-close-modal="add-point-modal">Annuler</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/init.js"></script>
   <script type="module" src="js/api.js"></script>
   <script type="module" src="js/auth.js"></script>
   <script type="module" src="js/features.js"></script>
