@@ -92,4 +92,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     navigator.serviceWorker.register('/frontend/sw.js').catch(() => {});
   }
   window.SigSolsTools?.initTools?.();
+  window.SigSolsAdminPanel?.initAdminPanel?.();
 });
