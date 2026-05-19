@@ -126,6 +126,8 @@ def test_parcel_live_by_zone(api_client, sample_zone):
     body = r.json()
     assert body['zone_code'] == sample_zone.code
     assert 'geometry_geojson' in body
+    assert 'health_index' in body
+    assert 'soil_points_map' in body
 
 
 @pytest.mark.django_db

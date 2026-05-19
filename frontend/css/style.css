@@ -1098,6 +1098,179 @@ main {
 [data-theme="dark"] .parcel-live-grid div { background: #1a2332; }
 [data-theme="dark"] .parcel-live-grid strong { color: var(--emerald-400); }
 
+.parcel-search {
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--sand);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+.parcel-filter-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+.parcel-filter-tab {
+  flex: 1;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid var(--sand);
+  background: var(--cream-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+.parcel-filter-tab.active {
+  background: linear-gradient(135deg, var(--emerald-700), var(--emerald-800));
+  color: #fff;
+  border-color: transparent;
+}
+.parcel-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+}
+.parcel-actions-row .btn-parcel-analyze { flex: 1; min-width: 120px; }
+.parcel-list-btn--degraded { border-left: 3px solid #dc2626; }
+.parcel-empty { font-size: 0.8rem; color: var(--slate-500); padding: 0.35rem; }
+
+.parcel-map-legend {
+  position: absolute;
+  bottom: 28px;
+  left: 12px;
+  z-index: 750;
+  background: rgba(250, 248, 243, 0.92);
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--sand);
+}
+.parcel-map-legend.hidden { display: none; }
+.legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+.legend-canton { background: #c9a962; opacity: 0.7; }
+.legend-degraded { background: #dc2626; opacity: 0.7; }
+.legend-selected { background: #3b82f6; }
+
+.parcel-live-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.parcel-live-header h4 { margin: 0; flex: 1; }
+.parcel-vuln-badge {
+  font-size: 0.68rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.parcel-vuln-badge--faible { background: rgba(45, 138, 82, 0.2); color: var(--emerald-800); }
+.parcel-vuln-badge--moyenne { background: rgba(233, 163, 25, 0.25); color: #92400e; }
+.parcel-vuln-badge--elevee { background: rgba(220, 38, 38, 0.15); color: #b91c1c; }
+.parcel-live-code { margin: 0 0 0.25rem; font-size: 0.75rem; opacity: 0.7; font-family: monospace; }
+.parcel-live-refresh {
+  position: absolute;
+  top: 8px;
+  right: 36px;
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--slate-500);
+}
+.parcel-live-grid small { display: block; font-size: 0.65rem; opacity: 0.65; font-weight: 400; }
+
+.parcel-health {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--cream-2);
+}
+.parcel-health-label { font-size: 0.72rem; opacity: 0.75; }
+.parcel-health-bar {
+  height: 6px;
+  background: var(--sand);
+  border-radius: 3px;
+  margin: 0.35rem 0 0.2rem;
+  overflow: hidden;
+}
+.parcel-health-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.parcel-health--good .parcel-health-fill { background: var(--emerald-600); }
+.parcel-health--mid .parcel-health-fill { background: #e9a319; }
+.parcel-health--low .parcel-health-fill { background: #dc2626; }
+.parcel-health-value { font-size: 0.9rem; color: var(--emerald-800); }
+
+.parcel-types {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  font-size: 0.78rem;
+}
+.parcel-types li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem 0.5rem;
+  margin-bottom: 0.35rem;
+  position: relative;
+}
+.parcel-types li i {
+  grid-column: 1 / -1;
+  display: block;
+  height: 3px;
+  background: var(--emerald-500);
+  border-radius: 2px;
+  opacity: 0.5;
+}
+.parcel-types em { font-style: normal; opacity: 0.7; }
+.parcel-live-tip { margin: 0.25rem 0; font-size: 0.75rem; color: var(--emerald-800); line-height: 1.35; }
+
+.parcel-live-skeleton .sk-line {
+  height: 14px;
+  width: 70%;
+  background: linear-gradient(90deg, var(--sand), var(--cream-2), var(--sand));
+  background-size: 200% 100%;
+  animation: parcel-shimmer 1.2s infinite;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+.parcel-live-skeleton .sk-grid {
+  height: 60px;
+  background: var(--cream-2);
+  border-radius: var(--radius-sm);
+  animation: parcel-shimmer 1.2s infinite;
+}
+@keyframes parcel-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.leaflet-tooltip.parcel-tooltip {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+
 .leaflet-draw-toolbar a {
   background-color: #fff !important;
 }
