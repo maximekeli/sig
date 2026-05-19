@@ -3,6 +3,8 @@ STAC catalog search via pystac-client — MODIS, SMAP, GPM, etc.
 https://github.com/stac-utils/pystac-client
 """
 import logging
+import os
+import socket
 from datetime import date
 from typing import Any
 
@@ -48,8 +50,16 @@ def search_granules(
         logger.warning('pystac-client not installed')
         return []
 
+    if os.environ.get('NASA_SKIP_NETWORK') == '1':
+        return []
+
     try:
-        client = Client.open(catalog_url)
+        prev_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(15)
+        try:
+            client = Client.open(catalog_url)
+        finally:
+            socket.setdefaulttimeout(prev_timeout)
         min_lon, min_lat, max_lon, max_lat = bbox
         search = client.search(
             collections=[COLLECTION_HINTS.get(product_code)] if COLLECTION_HINTS.get(product_code) else None,

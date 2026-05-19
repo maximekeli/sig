@@ -22,7 +22,7 @@ from .serializers import (
 from config.throttling import QuizUserThrottle
 
 from .quiz_cache import get_cached_leaderboard, get_cached_quiz_stats, invalidate_quiz_stats
-from .services import award_badges, weekly_leaderboard
+from .services import award_badges
 from .tasks import refresh_leaderboard_cache
 
 
