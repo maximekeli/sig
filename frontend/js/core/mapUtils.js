@@ -17,12 +17,13 @@ export function parseSoilPointsList(data) {
   return [];
 }
 
-export function buildSoilFiltersQuery({ phMin, phMax, soilType, light = true }) {
+export function buildSoilFiltersQuery({ phMin, phMax, soilType, validated, light = true }) {
   const params = new URLSearchParams();
   if (light) params.set('light', '1');
   if (phMin) params.set('ph_min', phMin);
   if (phMax) params.set('ph_max', phMax);
   if (soilType) params.set('soil_type', soilType);
+  if (validated) params.set('is_validated', 'true');
   return params.toString();
 }
 

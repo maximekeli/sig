@@ -12,6 +12,9 @@ import {
   nasaTileUrl,
   parseSoilPointsList,
 } from './core/mapUtils.js';
+import { showLoading } from './core/ui.js';
+import { notifyError, notifySuccess } from './core/ui.js';
+import { toast } from './core/toast.js';
 
 let map, markersLayer, usersLayer, nasaOverlays = {};
 let mapReady = false;
@@ -32,10 +35,6 @@ const basemaps = {
     attribution: 'OpenTopoMap',
   }),
 };
-
-function phColor(c) {
-  return phColorHex(c);
-}
 
 function initMap() {
   map = L.map('map', { center: MARITIME_CENTER, zoom: 9 });
@@ -101,7 +100,7 @@ function renderPeerMarkers(users) {
 
 async function startLiveLocation() {
   if (!SigSolsAPI.getToken()) {
-    alert('Connectez-vous pour partager votre position.');
+    toast('Connectez-vous pour partager votre position.', 'warning');
     return;
   }
   if (locationTracker?.isActive()) return;
@@ -119,8 +118,9 @@ async function startLiveLocation() {
     const el = document.getElementById('location-status');
     if (el) el.textContent = 'Position partagée en direct';
     document.getElementById('btn-location-toggle')?.classList.add('active');
+    notifySuccess('GPS activé.');
   } catch (e) {
-    alert(e.message);
+    notifyError(e);
   }
 }
 
@@ -144,31 +144,40 @@ async function toggleLiveLocation() {
 }
 
 async function loadSoilPoints() {
-  const query = buildSoilFiltersQuery({
-    phMin: document.getElementById('filter-ph-min')?.value,
-    phMax: document.getElementById('filter-ph-max')?.value,
-    soilType: document.getElementById('filter-soil-type')?.value,
-  });
-  const data = await SigSolsAPI.api('/points/?' + query);
-  markersLayer.clearLayers();
-  window.SigSolsFeatures?.clearClusters();
-  parseSoilPointsList(data).forEach((props) => {
-    const coords = [props.lon, props.lat];
-    const style = markerStyleForPoint(props);
-    const marker = L.circleMarker([coords[1], coords[0]], style);
-    const status = props.validation_status || (props.is_validated ? 'validated' : 'pending');
-    marker.bindPopup(`
-      <strong>Point #${props.id}</strong> (${status})<br/>
-      pH: ${props.ph} · Humidité: ${props.humidity_pct}%<br/>
-      Type: ${props.soil_type}<br/>
-      NDVI: ${props.ndvi_3m_avg ?? '—'} · SMAP: ${props.smap_moisture_avg ?? '—'}<br/>
-      <button onclick="predictAtPoint(${props.ph}, ${props.humidity_pct}, '${props.soil_type}')">Prédire fertilité</button>
-      <button onclick="SigSolsFeatures.loadNdviChart(${props.id}, 'ndvi-${props.id}')">Série NDVI</button>
-      <div id="ndvi-${props.id}"></div>
-    `);
-    markersLayer.addLayer(marker);
-    window.SigSolsFeatures?.addMarkerToCluster(marker);
-  });
+  showLoading(true);
+  try {
+    const validatedOnly = document.getElementById('filter-validated')?.checked;
+    const query = buildSoilFiltersQuery({
+      phMin: document.getElementById('filter-ph-min')?.value,
+      phMax: document.getElementById('filter-ph-max')?.value,
+      soilType: document.getElementById('filter-soil-type')?.value,
+      validated: validatedOnly,
+    });
+    const data = await SigSolsAPI.api('/points/?' + query);
+    markersLayer.clearLayers();
+    window.SigSolsFeatures?.clearClusters();
+    parseSoilPointsList(data).forEach((props) => {
+      const coords = [props.lon, props.lat];
+      const style = markerStyleForPoint(props);
+      const marker = L.circleMarker([coords[1], coords[0]], style);
+      const status = props.validation_status || (props.is_validated ? 'validated' : 'pending');
+      marker.bindPopup(`
+        <strong>Point #${props.id}</strong> (${status})<br/>
+        pH: ${props.ph} · Humidité: ${props.humidity_pct}%<br/>
+        Type: ${props.soil_type}<br/>
+        NDVI: ${props.ndvi_3m_avg ?? '—'} · SMAP: ${props.smap_moisture_avg ?? '—'}<br/>
+        <button type="button" onclick="predictAtPoint(${props.ph}, ${props.humidity_pct}, '${props.soil_type}')">Prédire fertilité</button>
+        <button type="button" onclick="SigSolsFeatures.loadNdviChart(${props.id}, 'ndvi-${props.id}')">Série NDVI</button>
+        <div id="ndvi-${props.id}"></div>
+      `);
+      markersLayer.addLayer(marker);
+      window.SigSolsFeatures?.addMarkerToCluster(marker);
+    });
+  } catch (e) {
+    notifyError(e);
+  } finally {
+    showLoading(false);
+  }
 }
 
 function getMap() {
@@ -184,15 +193,18 @@ function onWsLocation(msg) {
 }
 
 async function loadNasaToggles() {
-  const summary = await SigSolsAPI.api('/nasa/catalog/summary/');
-  const container = document.getElementById('nasa-layers-toggles');
-  container.innerHTML = '';
-  (summary.by_product || []).forEach((p) => {
-    const label = document.createElement('label');
-    label.innerHTML = `<input type="checkbox" data-product="${p.product}" /> ${p.product} (${p.count})`;
-    label.querySelector('input').addEventListener('change', (e) => toggleNasaLayer(p.product, e.target.checked));
-    container.appendChild(label);
-  });
+  try {
+    const summary = await SigSolsAPI.api('/nasa/catalog/summary/');
+    const container = document.getElementById('nasa-layers-toggles');
+    container.innerHTML = '';
+    (summary.by_product || []).forEach((p) => {
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="checkbox" data-product="${p.product}" /> ${p.product} (${p.count})`;
+      label.querySelector('input').addEventListener('change', (e) => toggleNasaLayer(p.product, e.target.checked));
+      container.appendChild(label);
+    });
+  } catch {
+  }
 }
 
 function toggleNasaLayer(product, on) {
@@ -216,13 +228,32 @@ window.predictAtPoint = async (ph, humidity, soilType) => {
 };
 
 async function runPrediction() {
-  const body = {
-    ph: parseFloat(document.getElementById('pred-ph').value),
-    humidity_pct: parseFloat(document.getElementById('pred-humidity').value),
-    soil_type: document.getElementById('pred-soil-type').value,
-  };
-  const r = await SigSolsAPI.api('/ml/predict/', { method: 'POST', body: JSON.stringify(body) });
-  document.getElementById('pred-result').textContent = JSON.stringify(r, null, 2);
+  try {
+    const body = {
+      ph: parseFloat(document.getElementById('pred-ph').value),
+      humidity_pct: parseFloat(document.getElementById('pred-humidity').value),
+      soil_type: document.getElementById('pred-soil-type').value,
+    };
+    const r = await SigSolsAPI.api('/ml/predict/', { method: 'POST', body: JSON.stringify(body) });
+    const el = document.getElementById('pred-result');
+    if (el) {
+      el.innerHTML = `<strong>${r.fertility_class || r.prediction}</strong>
+        <br/>Confiance : ${((r.confidence || 0) * 100).toFixed(0)}%
+        <br/><small>${r.recommendation || ''}</small>`;
+    }
+    notifySuccess('Prédiction terminée.');
+  } catch (e) {
+    notifyError(e);
+  }
+}
+
+async function exportWithAuth(path, filename) {
+  try {
+    await SigSolsAPI.download(path, filename);
+    notifySuccess(`Export ${filename} lancé.`);
+  } catch (e) {
+    notifyError(e);
+  }
 }
 
 window.SigSolsMap = {
@@ -234,4 +265,5 @@ window.SigSolsMap = {
   stopLiveLocation,
   toggleLiveLocation,
   onWsLocation,
+  exportWithAuth,
 };
