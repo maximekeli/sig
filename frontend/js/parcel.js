@@ -1,30 +1,33 @@
 /**
- * Parcelles — sélection sur carte, liste, infos en temps réel.
+ * Parcelles — sélection, recherche, points de sol, panneau temps réel enrichi.
  */
-import { notifyError } from './core/ui.js';
+import { phColorHex } from './core/phColor.js';
+import { notifyError, notifySuccess } from './core/ui.js';
+import {
+  HEALTH_CLASS,
+  NDVI_LABELS,
+  PH_COLORS,
+  SMAP_LABELS,
+  VULN_COLORS,
+  ZONE_STYLES,
+  healthClass,
+  vulnLabel,
+} from './core/parcelUtils.js';
 
 let drawControl = null;
 let drawnLayer = null;
 let parcelHighlight = null;
 let parcelsLayer = null;
+let parcelSoilLayer = null;
 let liveDebounce = null;
+let liveInterval = null;
 let selectedParcelCode = null;
 let selectedGeometry = null;
 let refreshInFlight = false;
-
-const VULN_COLORS = {
-  faible: '#2d8a52',
-  moyenne: '#e9a319',
-  elevee: '#dc2626',
-  degraded: '#dc2626',
-  canton: '#c9a962',
-};
-
-const ZONE_STYLES = {
-  canton: { color: '#c9a962', weight: 2, fillOpacity: 0.08 },
-  degraded: { color: '#dc2626', weight: 2, fillOpacity: 0.12, dashArray: '6' },
-  default: { color: '#2d8a52', weight: 1.5, fillOpacity: 0.06 },
-};
+let shouldFitBounds = true;
+let lastParcelData = null;
+let allZones = [];
+let parcelFilter = 'all';
 
 function getMap() {
   return window.SigSolsMap?.getMap?.();
@@ -34,12 +37,20 @@ function isLiveEnabled() {
   return document.getElementById('parcel-live-update')?.checked !== false;
 }
 
+function showSoilPointsOnMap() {
+  return document.getElementById('parcel-show-soil-points')?.checked !== false;
+}
+
 function clearParcelLayers() {
   const map = getMap();
   if (!map) return;
   if (parcelHighlight) {
     map.removeLayer(parcelHighlight);
     parcelHighlight = null;
+  }
+  if (parcelSoilLayer) {
+    map.removeLayer(parcelSoilLayer);
+    parcelSoilLayer = null;
   }
 }
 
@@ -52,7 +63,6 @@ function initDrawControl() {
   if (!map || typeof L.Control.Draw === 'undefined') return;
 
   drawnLayer = new L.FeatureGroup().addTo(map);
-
   drawControl = new L.Control.Draw({
     draw: {
       polyline: false,
@@ -74,7 +84,8 @@ function initDrawControl() {
     const sel = document.getElementById('parcel-zone-select');
     if (sel) sel.value = '';
     selectedGeometry = getDrawnGeometry();
-    setParcelStatus('Parcelle dessinée — mise à jour des indicateurs…');
+    shouldFitBounds = true;
+    setParcelStatus('Parcelle dessinée — analyse…');
     scheduleLiveRefresh();
   };
 
@@ -83,11 +94,11 @@ function initDrawControl() {
     drawnLayer.addLayer(e.layer);
     onDrawChange();
   });
-
   map.on(L.Draw.Event.EDITED, onDrawChange);
   map.on(L.Draw.Event.DELETED, () => {
     selectedGeometry = null;
     hideLivePanel();
+    clearParcelLayers();
     setParcelStatus('Sélection effacée.');
   });
 }
@@ -107,63 +118,107 @@ function getDrawnGeometry() {
 function scheduleLiveRefresh() {
   if (!isLiveEnabled()) return;
   clearTimeout(liveDebounce);
-  liveDebounce = setTimeout(() => refreshLiveParcelInfo(false), 600);
+  liveDebounce = setTimeout(() => refreshLiveParcelInfo(false), 500);
 }
 
 async function loadZonesSelect() {
   const select = document.getElementById('parcel-zone-select');
   if (!select) return;
   try {
-    const data = await SigSolsAPI.api('/spatial/parcel/zones/?zone_type=canton');
-    select.innerHTML = '<option value="">— Cliquer sur la carte ou dessiner —</option>';
-    (data.zones || []).forEach((z) => {
-      const opt = document.createElement('option');
-      opt.value = z.code;
-      opt.textContent = `${z.name} (${z.code})`;
-      select.appendChild(opt);
-    });
-    const deg = await SigSolsAPI.api('/spatial/parcel/zones/?zone_type=degraded');
-    if (deg.zones?.length) {
-      const grp = document.createElement('optgroup');
-      grp.label = 'Zones dégradées';
-      deg.zones.forEach((z) => {
-        const opt = document.createElement('option');
-        opt.value = z.code;
-        opt.textContent = `${z.name} (${z.code})`;
-        grp.appendChild(opt);
-      });
-      select.appendChild(grp);
-    }
+    const [cantons, degraded] = await Promise.all([
+      SigSolsAPI.api('/spatial/parcel/zones/?zone_type=canton'),
+      SigSolsAPI.api('/spatial/parcel/zones/?zone_type=degraded'),
+    ]);
+    allZones = [
+      ...(cantons.zones || []).map((z) => ({ ...z, zone_type: 'canton' })),
+      ...(degraded.zones || []).map((z) => ({ ...z, zone_type: 'degraded' })),
+    ];
+    rebuildZoneSelect();
     renderParcelList();
   } catch {
     select.innerHTML = '<option value="">Zones non chargées</option>';
   }
 }
 
+function rebuildZoneSelect() {
+  const select = document.getElementById('parcel-zone-select');
+  if (!select) return;
+  const current = select.value;
+  select.innerHTML = '<option value="">— Cliquer sur la carte ou dessiner —</option>';
+  const filtered = allZones.filter((z) => {
+    if (parcelFilter === 'all') return true;
+    return z.zone_type === parcelFilter;
+  });
+  const cantons = filtered.filter((z) => z.zone_type === 'canton');
+  const degraded = filtered.filter((z) => z.zone_type === 'degraded');
+  cantons.forEach((z) => {
+    const opt = document.createElement('option');
+    opt.value = z.code;
+    opt.textContent = `${z.name} (${z.code})`;
+    opt.dataset.zoneType = z.zone_type;
+    select.appendChild(opt);
+  });
+  if (degraded.length) {
+    const grp = document.createElement('optgroup');
+    grp.label = 'Zones dégradées';
+    degraded.forEach((z) => {
+      const opt = document.createElement('option');
+      opt.value = z.code;
+      opt.textContent = `${z.name} (${z.code})`;
+      opt.dataset.zoneType = z.zone_type;
+      grp.appendChild(opt);
+    });
+    select.appendChild(grp);
+  }
+  if ([...select.options].some((o) => o.value === current)) select.value = current;
+}
+
+function getFilteredZones() {
+  const q = document.getElementById('parcel-search')?.value?.trim().toLowerCase() || '';
+  return allZones.filter((z) => {
+    if (parcelFilter !== 'all' && z.zone_type !== parcelFilter) return false;
+    if (!q) return true;
+    return z.name.toLowerCase().includes(q) || z.code.toLowerCase().includes(q);
+  });
+}
+
 function renderParcelList() {
   const ul = document.getElementById('parcel-list');
-  const select = document.getElementById('parcel-zone-select');
-  if (!ul || !select) return;
+  if (!ul) return;
   ul.innerHTML = '';
-  [...select.options].forEach((opt) => {
-    if (!opt.value) return;
+  getFilteredZones().forEach((z) => {
     const li = document.createElement('li');
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'parcel-list-btn';
-    btn.textContent = opt.textContent;
-    btn.dataset.code = opt.value;
-    if (opt.value === selectedParcelCode) btn.classList.add('active');
-    btn.addEventListener('click', () => selectParcelByCode(opt.value));
+    if (z.zone_type === 'degraded') btn.classList.add('parcel-list-btn--degraded');
+    btn.textContent = `${z.name} (${z.code})`;
+    btn.dataset.code = z.code;
+    if (z.code === selectedParcelCode) btn.classList.add('active');
+    btn.addEventListener('click', () => selectParcelByCode(z.code));
     li.appendChild(btn);
     ul.appendChild(li);
   });
+  if (!ul.children.length) {
+    ul.innerHTML = '<li class="parcel-empty">Aucune parcelle trouvée</li>';
+  }
+}
+
+function styleForZoneFeature(f, selected) {
+  const t = f.properties?.zone_type || 'canton';
+  const base = ZONE_STYLES[t] || ZONE_STYLES.default;
+  if (selected) {
+    return { color: '#3b82f6', weight: 4, fillOpacity: 0.3, dashArray: null };
+  }
+  return { ...base };
 }
 
 async function loadParcelsOnMap() {
   const map = getMap();
   if (!map) return;
   const show = document.getElementById('parcel-show-on-map')?.checked !== false;
+  document.getElementById('parcel-map-legend')?.classList.toggle('hidden', !show);
+
   if (parcelsLayer) {
     map.removeLayer(parcelsLayer);
     parcelsLayer = null;
@@ -173,20 +228,24 @@ async function loadParcelsOnMap() {
   try {
     const geojson = await SigSolsAPI.api('/spatial/parcel/zones/geojson/?types=canton,degraded');
     parcelsLayer = L.geoJSON(geojson, {
-      style: (f) => {
-        const t = f.properties?.zone_type || 'canton';
-        const base = ZONE_STYLES[t] || ZONE_STYLES.default;
-        const selected = f.properties?.code === selectedParcelCode;
-        return {
-          ...base,
-          weight: selected ? 4 : base.weight,
-          fillOpacity: selected ? 0.28 : base.fillOpacity,
-          color: selected ? '#3b82f6' : base.color,
-        };
-      },
+      style: (f) => styleForZoneFeature(f, f.properties?.code === selectedParcelCode),
       onEachFeature: (feature, layer) => {
         const p = feature.properties || {};
-        layer.bindTooltip(`${p.name} (${p.code})`, { sticky: true });
+        const typeLabel = p.zone_type === 'degraded' ? 'Zone dégradée' : 'Canton';
+        layer.bindTooltip(`<strong>${p.name}</strong><br/>${typeLabel} · ${p.code}`, {
+          sticky: true,
+          className: 'parcel-tooltip',
+        });
+        layer.on('mouseover', () => {
+          if (p.code !== selectedParcelCode) {
+            layer.setStyle({ weight: 3, fillOpacity: 0.2 });
+          }
+        });
+        layer.on('mouseout', () => {
+          if (p.code !== selectedParcelCode) {
+            layer.setStyle(styleForZoneFeature(feature, false));
+          }
+        });
         layer.on('click', (e) => {
           L.DomEvent.stopPropagation(e);
           selectParcelByCode(p.code, feature.geometry);
@@ -198,9 +257,33 @@ async function loadParcelsOnMap() {
   }
 }
 
+function renderSoilPointsInParcel(points) {
+  const map = getMap();
+  if (!map || !showSoilPointsOnMap() || !points?.length) return;
+  if (parcelSoilLayer) map.removeLayer(parcelSoilLayer);
+  parcelSoilLayer = L.layerGroup();
+  points.forEach((p) => {
+    const color = phColorHex(p.ph_color || 'green');
+    L.circleMarker([p.lat, p.lon], {
+      radius: 6,
+      color: '#333',
+      weight: 1,
+      fillColor: color,
+      fillOpacity: 0.9,
+    })
+      .bindPopup(`
+        <strong>Point #${p.id}</strong><br/>
+        pH ${p.ph} · ${p.soil_type}
+      `)
+      .addTo(parcelSoilLayer);
+  });
+  parcelSoilLayer.addTo(map);
+}
+
 function selectParcelByCode(code, geometry = null) {
   selectedParcelCode = code;
   selectedGeometry = geometry;
+  shouldFitBounds = true;
   clearDrawnOnly();
   const sel = document.getElementById('parcel-zone-select');
   if (sel) sel.value = code;
@@ -208,68 +291,88 @@ function selectParcelByCode(code, geometry = null) {
   setParcelStatus(`Parcelle « ${code} » — chargement…`);
   if (parcelsLayer) {
     parcelsLayer.eachLayer((layer) => {
-      const c = layer.feature?.properties?.code;
-      const t = layer.feature?.properties?.zone_type;
-      const base = ZONE_STYLES[t] || ZONE_STYLES.default;
-      layer.setStyle({
-        ...base,
-        weight: c === code ? 4 : base.weight,
-        fillOpacity: c === code ? 0.28 : base.fillOpacity,
-        color: c === code ? '#3b82f6' : base.color,
-      });
+      const f = layer.feature;
+      const selected = f?.properties?.code === code;
+      layer.setStyle(styleForZoneFeature(f, selected));
     });
   }
   scheduleLiveRefresh();
 }
 
-function highlightParcel(geojson, vulnerabilityLevel) {
+function highlightParcel(geojson, vulnerabilityLevel, fit = true) {
   const map = getMap();
   if (!map || !geojson) return;
   if (parcelHighlight) map.removeLayer(parcelHighlight);
   const color = VULN_COLORS[vulnerabilityLevel] || VULN_COLORS.moyenne;
   parcelHighlight = L.geoJSON(geojson, {
-    style: { color, weight: 3, fillColor: color, fillOpacity: 0.22 },
+    style: { color, weight: 3, fillColor: color, fillOpacity: 0.18, dashArray: '4 6' },
   }).addTo(map);
-  try {
-    map.fitBounds(parcelHighlight.getBounds(), { padding: [48, 48], maxZoom: 14 });
-  } catch {
-    /* ignore */
+  if (fit && shouldFitBounds) {
+    try {
+      map.fitBounds(parcelHighlight.getBounds(), { padding: [56, 56], maxZoom: 14 });
+      shouldFitBounds = false;
+    } catch { /* ignore */ }
   }
+}
+
+function formatHealthGauge(index) {
+  if (index == null) {
+    return '<p class="parcel-health parcel-health--unknown">Indice santé : données insuffisantes</p>';
+  }
+  const cls = healthClass(index);
+  return `
+    <div class="parcel-health parcel-health--${cls}">
+      <span class="parcel-health-label">Indice santé sol</span>
+      <div class="parcel-health-bar"><div class="parcel-health-fill" style="width:${index}%"></div></motion-div>
+      <strong class="parcel-health-value">${index}/100</strong>
+    </motion-div>`;
+}
+
+function formatTypesBreakdown(rows) {
+  if (!rows?.length) return '';
+  const total = rows.reduce((s, r) => s + r.count, 0) || 1;
+  return `
+    <ul class="parcel-types">
+      ${rows.map((r) => {
+        const pct = Math.round((r.count / total) * 100);
+        return `<li><span>${r.soil_type}</span><em>${r.count}</em><i style="width:${pct}%"></i></li>`;
+      }).join('')}
+    </ul>`;
 }
 
 function formatLivePanelHtml(data, { loading = false } = {}) {
   if (loading) {
-    return '<p class="parcel-live-loading">Mise à jour en cours…</p>';
+    return '<div class="parcel-live-skeleton"><div class="sk-line"></div><motion-div class="sk-grid"></motion-div></motion-div>';
   }
   const sp = data.soil_points || {};
   const nasa = data.nasa || {};
   const vuln = data.vulnerability || {};
   const ml = data.ml_prediction || {};
-  const ndviLabel = {
-    stress_severe: 'Stress sévère',
-    stress_modere: 'Stress modéré',
-    vegetation_moyenne: 'Végétation moyenne',
-    vegetation_vigoureuse: 'Végétation vigoureuse',
-    donnees_manquantes: '—',
-  };
   const updated = data.analyzed_at
     ? new Date(data.analyzed_at).toLocaleTimeString('fr-FR')
     : '—';
 
   return `
     <div class="parcel-live-inner parcel-live-inner--${vuln.level || 'moyenne'}">
-      <h4>${data.parcel_name || 'Parcelle'}</h4>
-      <p class="parcel-live-meta">${data.area?.area_ha ?? '—'} ha · ${sp.count ?? 0} pts sol</p>
+      <div class="parcel-live-header">
+        <h4>${data.parcel_name || 'Parcelle'}</h4>
+        <span class="parcel-vuln-badge parcel-vuln-badge--${vuln.level || 'moyenne'}">${vulnLabel(vuln.level)}</span>
+      </motion-div>
+      ${data.zone_code ? `<p class="parcel-live-code">${data.zone_code}</p>` : ''}
+      <p class="parcel-live-meta">${data.area?.area_ha ?? '—'} ha · ${sp.count ?? 0} point(s) sol</p>
+      ${formatHealthGauge(data.health_index)}
       <div class="parcel-live-grid">
-        <div><span>pH</span><strong>${sp.avg_ph ?? '—'}</strong></div>
-        <div><span>NDVI</span><strong>${sp.avg_ndvi ?? nasa.avg_ndvi ?? '—'}</strong></div>
-        <div><span>SMAP</span><strong>${sp.avg_smap ?? nasa.avg_smap ?? '—'}</strong></div>
-        <div><span>Vuln.</span><strong>${vuln.level ?? '—'}</strong></div>
-      </div>
-      <p class="parcel-live-nasa">${ndviLabel[nasa.ndvi_status] || '—'}</p>
-      ${ml.predicted_class ? `<p class="parcel-live-ml">IA : <strong>${ml.predicted_class}</strong></p>` : ''}
+        <div><span>pH</span><strong>${sp.avg_ph ?? '—'}</strong><small>${sp.min_ph != null ? `${sp.min_ph}–${sp.max_ph}` : ''}</small></div>
+        <motion-div><span>NDVI</span><strong>${sp.avg_ndvi ?? nasa.avg_ndvi ?? '—'}</strong></motion-div>
+        <motion-div><span>SMAP</span><strong>${sp.avg_smap ?? nasa.avg_smap ?? '—'}</strong></motion-div>
+        <motion-div><span>Humid.</span><strong>${sp.avg_humidity_pct ?? '—'}%</strong></motion-div>
+      </motion-div>
+      <p class="parcel-live-nasa">${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
+      ${formatTypesBreakdown(data.soil_types_breakdown)}
+      ${ml?.predicted_class ? `<p class="parcel-live-ml">IA fertilité : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
+      ${(data.recommendations || []).slice(0, 2).map((r) => `<p class="parcel-live-tip">• ${r}</p>`).join('')}
       <p class="parcel-live-time">Mis à jour : ${updated}</p>
-    </div>`;
+    </motion-div>`;
 }
 
 function showLivePanel(html) {
@@ -289,13 +392,13 @@ async function refreshLiveParcelInfo(fullAnalysis = false) {
 
   if (!zoneCode && !geometry) {
     hideLivePanel();
+    clearParcelLayers();
     return;
   }
   if (refreshInFlight) return;
   refreshInFlight = true;
 
   showLivePanel(formatLivePanelHtml({}, { loading: true }));
-
   const useMl = fullAnalysis || document.getElementById('parcel-use-ml')?.checked === true;
 
   try {
@@ -314,10 +417,12 @@ async function refreshLiveParcelInfo(fullAnalysis = false) {
       });
     }
 
+    lastParcelData = data;
     showLivePanel(formatLivePanelHtml(data));
-    highlightParcel(data.geometry_geojson, data.vulnerability?.level);
+    highlightParcel(data.geometry_geojson, data.vulnerability?.level, shouldFitBounds);
+    renderSoilPointsInParcel(data.soil_points_map);
     renderAnalysisResult(data);
-    setParcelStatus(`Parcelle active — ${data.parcel_name || zoneCode || 'dessinée'}`);
+    setParcelStatus(`${data.parcel_name || zoneCode} — ${spCount(data)} pt(s) · vuln. ${vulnLabel(data.vulnerability?.level)}`);
   } catch (e) {
     notifyError(e);
     setParcelStatus('Erreur : ' + (e.message || 'impossible'));
@@ -327,92 +432,86 @@ async function refreshLiveParcelInfo(fullAnalysis = false) {
   }
 }
 
+function spCount(data) {
+  return data?.soil_points?.count ?? 0;
+}
+
 function renderAnalysisResult(data) {
   const box = document.getElementById('parcel-analysis-result');
   if (!box) return;
-
   const sp = data.soil_points || {};
   const nasa = data.nasa || {};
   const vuln = data.vulnerability || {};
   const ml = data.ml_prediction || {};
-
-  const ndviLabel = {
-    stress_severe: 'Stress sévère',
-    stress_modere: 'Stress modéré',
-    vegetation_moyenne: 'Végétation moyenne',
-    vegetation_vigoureuse: 'Végétation vigoureuse',
-    donnees_manquantes: 'Données manquantes',
-  };
-  const smapLabel = {
-    secheresse_probable: 'Sécheresse probable',
-    humidite_faible: 'Humidité faible',
-    humidite_moyenne: 'Humidité moyenne',
-    humidite_bonne: 'Humidité bonne',
-    donnees_manquantes: 'Données manquantes',
-  };
 
   box.classList.remove('hidden');
   box.innerHTML = `
     <div class="parcel-report parcel-report--${vuln.level || 'moyenne'}">
       <h4>${data.parcel_name || 'Parcelle'}</h4>
       <p class="parcel-meta">
-        ${data.area?.area_ha ?? '—'} ha ·
-        ${sp.count ?? 0} point(s) sol ·
-        Vulnérabilité <strong>${vuln.level || '—'}</strong>
+        ${data.area?.area_ha ?? '—'} ha · ${sp.count ?? 0} point(s) ·
+        Santé <strong>${data.health_index ?? '—'}/100</strong> ·
+        Vuln. <strong>${vulnLabel(vuln.level)}</strong>
       </p>
-      <div class="parcel-metrics">
-        <span>pH moy. <strong>${sp.avg_ph ?? '—'}</strong></span>
+      <motion-div class="parcel-metrics">
+        <span>pH <strong>${sp.avg_ph ?? '—'}</strong> (${sp.min_ph ?? '—'} – ${sp.max_ph ?? '—'})</span>
         <span>NDVI <strong>${sp.avg_ndvi ?? nasa.avg_ndvi ?? '—'}</strong></span>
         <span>SMAP <strong>${sp.avg_smap ?? nasa.avg_smap ?? '—'}</strong></span>
         <span>Humid. <strong>${sp.avg_humidity_pct ?? '—'}%</strong></span>
-      </div>
-      <p class="parcel-nasa">
-        NASA : ${ndviLabel[nasa.ndvi_status] || '—'} · ${smapLabel[nasa.smap_status] || '—'}
-      </p>
-      ${ml.predicted_class ? `
-        <p class="parcel-ml">
-          IA fertilité : <strong>${ml.predicted_class}</strong>
-          (confiance ${Math.round((ml.confidence || 0) * 100)}%)
-        </p>
-      ` : ''}
-      ${(data.recommendations || []).length ? `
-        <ul class="parcel-recs">
-          ${data.recommendations.map((r) => `<li>${r}</li>`).join('')}
-        </ul>
-      ` : ''}
-    </div>
-  `;
+      </motion-div>
+      ${formatTypesBreakdown(data.soil_types_breakdown)}
+      <p class="parcel-nasa">NASA : ${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
+      ${ml?.predicted_class ? `<p class="parcel-ml">IA : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
+      ${(data.recommendations || []).length ? `<ul class="parcel-recs">${data.recommendations.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
+    </motion-div>`;
+}
+
+function exportParcelReport() {
+  if (!lastParcelData) {
+    notifyError({ message: 'Sélectionnez une parcelle avant d\'exporter.' });
+    return;
+  }
+  const blob = new Blob([JSON.stringify(lastParcelData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `parcelle-${lastParcelData.zone_code || 'custom'}-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  notifySuccess('Rapport parcelle exporté.');
 }
 
 async function runParcelAnalysis() {
-  const zoneCode = document.getElementById('parcel-zone-select')?.value;
-  if (zoneCode) selectedParcelCode = zoneCode;
-  selectedGeometry = zoneCode ? null : getDrawnGeometry();
-
-  if (!selectedParcelCode && !selectedGeometry) {
+  if (!selectedParcelCode && !getDrawnGeometry()) {
     notifyError({ message: 'Sélectionnez ou dessinez une parcelle.' });
     return;
   }
-
-  setParcelStatus('Analyse complète en cours…');
+  setParcelStatus('Analyse complète (IA)…');
   await refreshLiveParcelInfo(true);
 }
 
 function onZoneSelectChange() {
   const code = document.getElementById('parcel-zone-select')?.value;
   if (code) selectParcelByCode(code);
-  else {
-    selectedParcelCode = null;
-    hideLivePanel();
-    clearParcelLayers();
-    setParcelStatus('Sélectionnez une parcelle.');
-  }
+  else clearParcelSelectionSoft();
+}
+
+function clearParcelSelectionSoft() {
+  selectedParcelCode = null;
+  hideLivePanel();
+  clearParcelLayers();
+  renderParcelList();
+  loadParcelsOnMap();
+  setParcelStatus('Sélectionnez une parcelle.');
 }
 
 function clearParcelSelection() {
   selectedParcelCode = null;
   selectedGeometry = null;
+  lastParcelData = null;
+  shouldFitBounds = true;
   document.getElementById('parcel-zone-select').value = '';
+  document.getElementById('parcel-search').value = '';
   clearDrawnOnly();
   clearParcelLayers();
   hideLivePanel();
@@ -426,27 +525,48 @@ function clearParcelSelection() {
   setParcelStatus('Sélection effacée.');
 }
 
+function startLiveInterval() {
+  if (liveInterval) clearInterval(liveInterval);
+  liveInterval = setInterval(() => {
+    if (isLiveEnabled() && (selectedParcelCode || selectedGeometry || getDrawnGeometry())) {
+      refreshLiveParcelInfo(false);
+    }
+  }, 30000);
+}
+
 function initParcelTools() {
   initDrawControl();
   loadZonesSelect();
   loadParcelsOnMap();
+  startLiveInterval();
 
   document.getElementById('btn-parcel-analyze')?.addEventListener('click', runParcelAnalysis);
   document.getElementById('btn-parcel-clear')?.addEventListener('click', clearParcelSelection);
+  document.getElementById('btn-parcel-refresh')?.addEventListener('click', () => refreshLiveParcelInfo(false));
+  document.getElementById('parcel-live-refresh')?.addEventListener('click', () => refreshLiveParcelInfo(false));
+  document.getElementById('btn-parcel-export')?.addEventListener('click', exportParcelReport);
   document.getElementById('parcel-zone-select')?.addEventListener('change', onZoneSelectChange);
   document.getElementById('parcel-show-on-map')?.addEventListener('change', loadParcelsOnMap);
+  document.getElementById('parcel-show-soil-points')?.addEventListener('change', () => {
+    if (lastParcelData) renderSoilPointsInParcel(lastParcelData.soil_points_map);
+    else clearParcelLayers();
+  });
   document.getElementById('parcel-live-update')?.addEventListener('change', () => {
     if (isLiveEnabled()) scheduleLiveRefresh();
   });
   document.getElementById('parcel-live-close')?.addEventListener('click', hideLivePanel);
+  document.getElementById('parcel-search')?.addEventListener('input', renderParcelList);
+  document.querySelectorAll('.parcel-filter-tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.parcel-filter-tab').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      parcelFilter = btn.dataset.filter || 'all';
+      rebuildZoneSelect();
+      renderParcelList();
+    });
+  });
 
-  setInterval(() => {
-    if (isLiveEnabled() && (selectedParcelCode || selectedGeometry || getDrawnGeometry())) {
-      refreshLiveParcelInfo(false);
-    }
-  }, 45000);
-
-  setParcelStatus('Cliquez sur une parcelle ou dessinez un polygone.');
+  setParcelStatus('Cliquez sur une parcelle, cherchez par nom ou dessinez un polygone.');
 }
 
 window.SigSolsParcel = {
