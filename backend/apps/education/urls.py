@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     LeaderboardView,
     MyBadgesView,
+    PedagogicalSheetPdfView,
     PedagogicalSheetViewSet,
     QuizFinishView,
     QuizShareView,
@@ -16,6 +17,7 @@ router = DefaultRouter()
 router.register('sheets', PedagogicalSheetViewSet, basename='pedagogical-sheets')
 
 urlpatterns = [
+    path('sheets/<int:pk>/pdf/', PedagogicalSheetPdfView.as_view(), name='pedagogical-sheet-pdf'),
     path('', include(router.urls)),
     path('quiz/stats/', QuizStatsView.as_view(), name='quiz-stats'),
     path('quiz/start/', QuizStartView.as_view(), name='quiz-start'),

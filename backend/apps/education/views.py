@@ -2,6 +2,7 @@ import random
 
 from django.http import HttpResponse
 from django.utils import timezone
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
@@ -29,19 +30,47 @@ from .services import award_badges
 from .tasks import refresh_leaderboard_cache
 
 
+def pedagogical_sheet_pdf_response(request, pk):
+    """Réponse PDF (inline ou ?download=1)."""
+    try:
+        sheet = PedagogicalSheet.objects.get(pk=pk)
+    except PedagogicalSheet.DoesNotExist:
+        return Response({'error': 'Fiche introuvable.'}, status=404)
+    try:
+        data = build_pedagogical_pdf_bytes(sheet)
+    except Exception as exc:
+        return Response(
+            {'error': f'Génération PDF impossible : {exc}'},
+            status=500,
+        )
+    safe = sheet.theme.replace('/', '-').replace(' ', '_')
+    filename = f'sig-sols-fiche-{safe}.pdf'
+    resp = HttpResponse(data, content_type='application/pdf')
+    if request.query_params.get('download'):
+        resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+    else:
+        resp['Content-Disposition'] = f'inline; filename="{filename}"'
+    return resp
+
+
+class PedagogicalSheetPdfView(APIView):
+    """Route explicite pour le PDF (lecture iframe + téléchargement)."""
+    permission_classes = [AllowAny]
+
+    @xframe_options_sameorigin
+    def get(self, request, pk):
+        return pedagogical_sheet_pdf_response(request, pk)
+
+
 class PedagogicalSheetViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PedagogicalSheet.objects.all()
     serializer_class = PedagogicalSheetSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     @action(detail=True, methods=['get'], url_path='pdf', permission_classes=[AllowAny])
+    @xframe_options_sameorigin
     def pdf(self, request, pk=None):
-        sheet = self.get_object()
-        data = build_pedagogical_pdf_bytes(sheet)
-        safe = sheet.theme.replace('/', '-').replace(' ', '_')
-        resp = HttpResponse(data, content_type='application/pdf')
-        resp['Content-Disposition'] = f'attachment; filename="sig-sols-fiche-{safe}.pdf"'
-        return resp
+        return pedagogical_sheet_pdf_response(request, pk)
 
 
 class QuizStatsView(APIView):

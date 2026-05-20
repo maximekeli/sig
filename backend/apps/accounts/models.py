@@ -24,6 +24,17 @@ class User(AbstractUser):
         blank=True,
         help_text='For quiz leaderboard anonymization',
     )
+    age = models.PositiveSmallIntegerField(null=True, blank=True)
+    gender = models.CharField(max_length=20, blank=True)
+    city = models.CharField(max_length=120, blank=True)
+    region = models.CharField(max_length=120, blank=True, default='Maritime')
+    profession = models.CharField(max_length=120, blank=True)
+    education_level = models.CharField(max_length=40, blank=True)
+    motivation = models.TextField(blank=True, help_text='Motivation / usage prévu de la plateforme')
+    consent_analytics = models.BooleanField(
+        default=False,
+        help_text='Accepte le suivi d’activité à des fins statistiques (admin / data science)',
+    )
 
     class Meta:
         verbose_name = 'Utilisateur'

@@ -88,8 +88,14 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
     if (!res.ok) throw new Error(await parseError(res));
     if (res.status === 204) return null;
     const ct = res.headers.get('content-type') || '';
-    if (ct.includes('application/json')) return res.json();
-    return res;
+    let payload;
+    if (ct.includes('application/json')) payload = await res.json();
+    else payload = res;
+    try {
+      const { trackApi } = await import('./activityTracker.js');
+      trackApi(path, (options.method || 'GET').toUpperCase(), res.status);
+    } catch { /* tracker optional */ }
+    return payload;
   }
 
   async function login(username, password) {

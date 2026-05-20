@@ -9,9 +9,12 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'username', 'email', 'first_name', 'last_name',
-            'role', 'organization', 'phone', 'pseudonym', 'date_joined',
+            'role', 'organization', 'phone', 'pseudonym',
+            'age', 'gender', 'city', 'region', 'profession',
+            'education_level', 'motivation', 'consent_analytics',
+            'date_joined',
         )
-        read_only_fields = ('id', 'date_joined')
+        read_only_fields = ('id', 'date_joined', 'role')
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -22,7 +25,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'username', 'email', 'password', 'password_confirm',
+            'first_name', 'last_name', 'age', 'phone',
             'role', 'organization', 'pseudonym',
+            'gender', 'city', 'region', 'profession',
+            'education_level', 'motivation', 'consent_analytics',
         )
 
     def validate(self, attrs):
@@ -33,6 +39,19 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         role = attrs.get('role', User.Role.PUBLIC)
         if role == User.Role.ADMIN:
             attrs['role'] = User.Role.PUBLIC
+        age = attrs.get('age')
+        if age is None or age < 13 or age > 120:
+            raise serializers.ValidationError({'age': 'Âge requis (13–120 ans).'})
+        if not attrs.get('first_name', '').strip():
+            raise serializers.ValidationError({'first_name': 'Le prénom est requis.'})
+        if not attrs.get('last_name', '').strip():
+            raise serializers.ValidationError({'last_name': 'Le nom est requis.'})
+        if not attrs.get('email', '').strip():
+            raise serializers.ValidationError({'email': 'L’email est requis.'})
+        if not attrs.get('consent_analytics'):
+            raise serializers.ValidationError({
+                'consent_analytics': 'Vous devez accepter le suivi statistique anonymisé.',
+            })
         return attrs
 
     def create(self, validated_data):

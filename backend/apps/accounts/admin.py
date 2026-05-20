@@ -21,7 +21,13 @@ class UserAdmin(LargeTableAdminMixin, BaseUserAdmin):
     search_fields = ('=id', '=username', '=email', '^username')
     fieldsets = (
         *tuple(BaseUserAdmin.fieldsets or ()),
-        ('SIG Sols', {'fields': ('role', 'organization', 'phone', 'pseudonym')}),
+        ('SIG Sols', {
+            'fields': (
+                'role', 'organization', 'phone', 'pseudonym',
+                'age', 'gender', 'city', 'region', 'profession',
+                'education_level', 'motivation', 'consent_analytics',
+            ),
+        }),
     )
     add_fieldsets = (
         *tuple(BaseUserAdmin.add_fieldsets or ()),

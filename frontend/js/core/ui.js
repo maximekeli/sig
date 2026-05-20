@@ -61,6 +61,7 @@ export function initModals() {
         if (id === 'sheet-pdf-modal') {
           const f = document.getElementById('sheet-pdf-frame');
           if (f) f.src = 'about:blank';
+          document.getElementById('sheet-pdf-newtab')?.setAttribute('href', '#');
         }
       }
     });

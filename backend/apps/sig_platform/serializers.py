@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import AuditLog, DroughtAlert, Notification
+from .models import AuditLog, DroughtAlert, Notification, UserActivityEvent
 
 
 class AuditLogSerializer(serializers.ModelSerializer):
@@ -55,3 +55,33 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
                 'new_password_confirm': 'Les mots de passe ne correspondent pas.',
             })
         return attrs
+
+
+class ActivityEventInSerializer(serializers.Serializer):
+    event_type = serializers.CharField(max_length=80)
+    category = serializers.CharField(max_length=20, required=False, default='other')
+    view_name = serializers.CharField(max_length=40, required=False, allow_blank=True)
+    detail = serializers.DictField(required=False, default=dict)
+
+
+class ActivityBatchSerializer(serializers.Serializer):
+    session_id = serializers.CharField(max_length=64)
+    events = ActivityEventInSerializer(many=True)
+
+    def validate_events(self, value):
+        if len(value) > 100:
+            raise serializers.ValidationError('Maximum 100 événements par lot.')
+        if not value:
+            raise serializers.ValidationError('Liste vide.')
+        return value
+
+
+class UserActivityEventSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True, default='')
+
+    class Meta:
+        model = UserActivityEvent
+        fields = (
+            'id', 'username', 'user', 'session_id', 'event_type', 'category',
+            'view_name', 'detail', 'ip_address', 'created_at',
+        )

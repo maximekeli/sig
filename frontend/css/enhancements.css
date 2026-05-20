@@ -302,6 +302,10 @@ body:not(.agent-mode) .agent-only { display: none !important; }
   opacity: 0.85;
   margin: 0 0 0.5rem 0;
 }
+.sheet-pdf-hint--error {
+  color: #b45309;
+  opacity: 1;
+}
 .sheet-pdf-frame {
   flex: 1;
   min-height: 70vh;

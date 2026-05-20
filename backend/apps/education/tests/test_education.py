@@ -69,6 +69,16 @@ def test_pedagogical_sheet_pdf(api_client, db):
     r = api_client.get(f'/api/v1/education/sheets/{s.pk}/pdf/')
     assert r.status_code == 200
     assert r.content[:4] == b'%PDF'
+    assert 'inline' in (r.get('Content-Disposition') or '').lower()
+
+
+@pytest.mark.django_db
+def test_pedagogical_sheet_pdf_download_attachment(api_client, db):
+    from education.models import PedagogicalSheet
+    s = PedagogicalSheet.objects.create(title='Fiche DL', theme='types', content_fr='x', order=1)
+    r = api_client.get(f'/api/v1/education/sheets/{s.pk}/pdf/?download=1')
+    assert r.status_code == 200
+    assert 'attachment' in (r.get('Content-Disposition') or '').lower()
 
 
 @pytest.mark.django_db

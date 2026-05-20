@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AuditLog, DroughtAlert, Notification, PasswordResetToken
+from .models import AuditLog, DroughtAlert, Notification, PasswordResetToken, UserActivityEvent
 
 
 @admin.register(AuditLog)
@@ -22,3 +22,13 @@ class DroughtAlertAdmin(admin.ModelAdmin):
 @admin.register(PasswordResetToken)
 class PasswordResetTokenAdmin(admin.ModelAdmin):
     list_display = ('user', 'used', 'created_at')
+
+
+@admin.register(UserActivityEvent)
+class UserActivityEventAdmin(admin.ModelAdmin):
+    ordering = ('-created_at',)
+    list_display = ('created_at', 'user', 'event_type', 'category', 'view_name', 'session_id')
+    list_filter = ('category', 'event_type', 'view_name')
+    search_fields = ('=user__id', '=user__username', 'session_id', 'event_type')
+    raw_id_fields = ('user',)
+    readonly_fields = ('created_at',)

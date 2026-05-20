@@ -16,14 +16,17 @@ from accounts.permissions import IsAdministrator
 from config.admin_large_table import pg_table_row_estimate
 from soils.models import AdministrativeZone, SoilPoint
 
-from .models import AuditLog, DroughtAlert, Notification, PasswordResetToken
+from .models import AuditLog, DroughtAlert, Notification, PasswordResetToken, UserActivityEvent
 from .serializers import (
+    ActivityBatchSerializer,
     AuditLogSerializer,
     DroughtAlertSerializer,
     NotificationSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
+    UserActivityEventSerializer,
 )
+from .activity import analytics_summary, ingest_activity_events, user_activity_summary
 
 User = get_user_model()
 
@@ -97,6 +100,60 @@ class AuditLogListView(generics.ListAPIView):
     queryset = AuditLog.objects.select_related('user').all()[:200]
     serializer_class = AuditLogSerializer
     permission_classes = [IsAdministrator]
+
+
+class ActivityIngestView(APIView):
+    """Réception des événements front (carte, navigation, quiz…)."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        ser = ActivityBatchSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        user = request.user if request.user.is_authenticated else None
+        if user and not user.consent_analytics:
+            return Response({'accepted': 0, 'detail': 'Consentement analytics absent.'})
+        ip = request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip() or request.META.get('REMOTE_ADDR')
+        ua = request.META.get('HTTP_USER_AGENT', '')
+        n = ingest_activity_events(
+            user,
+            ser.validated_data['session_id'],
+            ser.validated_data['events'],
+            ip=ip or None,
+            user_agent=ua,
+        )
+        return Response({'accepted': n})
+
+
+class ActivityListView(generics.ListAPIView):
+    serializer_class = UserActivityEventSerializer
+    permission_classes = [IsAdministrator]
+
+    def get_queryset(self):
+        qs = UserActivityEvent.objects.select_related('user').all()
+        uid = self.request.query_params.get('user_id')
+        et = self.request.query_params.get('event_type')
+        if uid:
+            qs = qs.filter(user_id=uid)
+        if et:
+            qs = qs.filter(event_type=et)
+        limit = min(int(self.request.query_params.get('limit', 200)), 1000)
+        return qs[:limit]
+
+
+class AnalyticsSummaryView(APIView):
+    permission_classes = [IsAdministrator]
+
+    def get(self, request):
+        days = min(int(request.query_params.get('days', 30)), 365)
+        return Response(analytics_summary(days=days))
+
+
+class UserActivityDetailView(APIView):
+    permission_classes = [IsAdministrator]
+
+    def get(self, request, user_id):
+        days = min(int(request.query_params.get('days', 90)), 365)
+        return Response(user_activity_summary(user_id, days=days))
 
 
 class PasswordResetRequestView(APIView):

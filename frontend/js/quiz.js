@@ -17,9 +17,11 @@ let quizTimer = null;
 let timeLeft = QUIZ_TIMER_SECONDS;
 let answerInFlight = false;
 
-/** URL PDF fiche : toujours depuis l’origine du site (évite les URLs internes Docker). */
-export function sheetPdfAbsoluteUrl(sheetId) {
-  return `${window.location.origin}/api/v1/education/sheets/${sheetId}/pdf/`;
+/** URL PDF fiche ; { download: true } force l’en-tête attachment (téléchargement). */
+export function sheetPdfAbsoluteUrl(sheetId, { download = false } = {}) {
+  let u = `${window.location.origin}/api/v1/education/sheets/${sheetId}/pdf/`;
+  if (download) u += (u.includes('?') ? '&' : '?') + 'download=1';
+  return u;
 }
 
 export function openSheetPdfModal(sheet) {
@@ -28,14 +30,28 @@ export function openSheetPdfModal(sheet) {
   const titleEl = document.getElementById('sheet-pdf-modal-title');
   const frame = document.getElementById('sheet-pdf-frame');
   const dl = document.getElementById('sheet-pdf-download');
+  const hint = document.querySelector('.sheet-pdf-hint');
   if (!modal || !frame || !dl) {
     window.open(url, '_blank', 'noopener,noreferrer');
     return;
   }
   if (titleEl) titleEl.textContent = sheet.title || 'Fiche pédagogique';
-  dl.href = url;
-  dl.setAttribute('download', `sig-sols-${sheet.theme || 'fiche'}.pdf`);
-  frame.src = `${url}#view=FitH`;
+  dl.href = sheetPdfAbsoluteUrl(sheet.id, { download: true });
+  document.getElementById('sheet-pdf-newtab')?.setAttribute('href', url);
+  if (hint) {
+    hint.textContent = 'Chargement du document…';
+    hint.classList.remove('sheet-pdf-hint--error');
+  }
+  frame.onload = () => {
+    if (hint) hint.textContent = 'Lecture intégrée. Sinon : « Nouvel onglet » ou « Télécharger ».';
+  };
+  frame.onerror = () => {
+    if (hint) {
+      hint.textContent = 'Affichage intégré indisponible — ouvrez « Nouvel onglet » ou téléchargez le PDF.';
+      hint.classList.add('sheet-pdf-hint--error');
+    }
+  };
+  frame.src = url;
   modal.classList.remove('hidden');
 }
 
@@ -222,8 +238,7 @@ async function loadSheets() {
 
       const dl = document.createElement('a');
       dl.className = 'btn-sheet-download';
-      dl.href = pdfUrl;
-      dl.download = `sig-sols-${s.theme || i}.pdf`;
+      dl.href = sheetPdfAbsoluteUrl(s.id, { download: true });
       dl.target = '_blank';
       dl.rel = 'noopener noreferrer';
       dl.textContent = 'Télécharger';

@@ -44,5 +44,9 @@ ingest-nasa:
 restart:
 	docker compose restart web nginx
 
+rebuild-web:
+	docker compose build web
+	docker compose up -d --force-recreate web
+
 logs-web:
 	docker compose logs -f web
