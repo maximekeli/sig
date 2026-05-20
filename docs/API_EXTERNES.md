@@ -25,6 +25,10 @@ Tuiles NASA affichées sur la carte : **placeholder PNG** via l’API interne `/
 | **API REST Django** | Toute la logique métier (`/api/v1/`) |
 | **JWT** | Authentification |
 
+## Fiches pédagogiques (PDF)
+
+Les fiches listées via l’API incluent un champ `pdf_url` pointant vers **GET** `/api/v1/education/sheets/<id>/pdf/` : PDF généré côté serveur (ReportLab), environ **20 à 30 pages** selon le thème, à partir des contenus `manuscript_fr.py`.
+
 ## Non intégrés — utiles si vous voulez aller plus loin
 
 | Service | Intérêt possible | Statut |
@@ -58,10 +62,18 @@ DEFAULT_FROM_EMAIL=noreply@sig-sols.tg
 
 ## Parcelles et API
 
-Les parcelles utilisent **uniquement l’API interne** :
+- **Interne** : `parcel/zones/geojson/`, `parcel/live/`, `parcel/analyze/`.
+- **NASA (optionnel, prod)** : lors de l’analyse d’une parcelle, le backend peut interroger le **catalogue STAC CMR** (public) sur la bbox du polygone et retourner un résumé dans `nasa.stac_parcel` (granules MODIS / SMAP récents). **Pas d’appel réseau pendant les tests** (`DJANGO_TEST=1`).
 
-- `GET /api/v1/spatial/parcel/zones/geojson/`
-- `GET|POST /api/v1/spatial/parcel/live/`
-- `POST /api/v1/spatial/parcel/analyze/`
+## Données & API gratuites ou ouvertes (suggestions)
 
-Aucune API externe supplémentaire n’est requise pour la sélection et l’analyse temps réel des parcelles.
+| Source | Intérêt |
+|--------|---------|
+| **NASA Earthdata / STAC CMR** | Déjà utilisés pour MODIS, SMAP, GPM ; suffisent pour NDVI / humidité / pluie. |
+| **SoilGrids (ISRIC)** | Propriétés pédologiques globales (résolution relative au produit). |
+| **FAO HWSD / SoilInfo** | Contexte pédologique régional. |
+| **Copernicus Browser (Sentinel-2)** | NDVI haute résolution (compte gratuit). |
+| **Open-Meteo** | Météo locale pour conseils irrigation / stress thermique. |
+| **OpenLandMap / OSM** | Occupation du sol, chemins, hydro (déjà OSM en fond carte). |
+
+Clé API **non obligatoire** pour la plupart de ces couches ouvertes (respecter licences et citations).
