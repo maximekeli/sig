@@ -45,10 +45,14 @@ function renderAuthUI() {
     window.SigSolsFeatures?.connectWebSocket();
     window.SigSolsFeatures?.loadAlerts();
     window.SigSolsFeatures?.loadNotifications();
+    window.dispatchEvent(new Event('sig-auth-changed'));
+    window.SigSolsVideos?.updateAuthPanels?.();
   } else {
     guest?.classList.remove('hidden');
     logged?.classList.add('hidden');
     adminNav?.classList.add('hidden');
+    window.dispatchEvent(new Event('sig-auth-changed'));
+    window.SigSolsVideos?.updateAuthPanels?.();
   }
 }
 
