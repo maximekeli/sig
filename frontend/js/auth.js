@@ -103,15 +103,35 @@ async function handleLogin() {
 
 async function handleRegister() {
   const msg = $('auth-message');
+  if (!$('reg-consent')?.checked) {
+    if (msg) {
+      msg.textContent = 'Vous devez accepter le suivi statistique pour créer un compte.';
+      msg.className = 'auth-message error';
+    }
+    return;
+  }
   try {
     await SigSolsAPI.register({
       username: $('reg-user')?.value?.trim(),
       email: $('reg-email')?.value?.trim() || '',
       password: $('reg-pass')?.value,
       password_confirm: $('reg-pass2')?.value,
+      first_name: $('reg-first')?.value?.trim(),
+      last_name: $('reg-last')?.value?.trim(),
+      age: parseInt($('reg-age')?.value, 10),
+      phone: $('reg-phone')?.value?.trim() || '',
+      gender: $('reg-gender')?.value || '',
+      city: $('reg-city')?.value?.trim() || '',
+      region: $('reg-region')?.value?.trim() || 'Maritime',
+      profession: $('reg-profession')?.value?.trim() || '',
+      education_level: $('reg-education')?.value || '',
+      motivation: $('reg-motivation')?.value?.trim() || '',
+      pseudonym: $('reg-pseudo')?.value?.trim() || '',
       role: $('reg-role')?.value || 'public',
       organization: $('reg-org')?.value?.trim() || '',
+      consent_analytics: true,
     });
+    trackAuth('register', { username: $('reg-user')?.value?.trim() });
     if (msg) {
       msg.textContent = 'Compte créé — connectez-vous.';
       msg.className = 'auth-message success';
@@ -127,6 +147,7 @@ async function handleRegister() {
 }
 
 async function handleLogout() {
+  trackAuth('logout');
   await SigSolsMap.stopLiveLocation();
   await SigSolsAPI.logout();
   renderAuthUI();

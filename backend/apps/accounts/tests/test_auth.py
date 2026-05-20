@@ -4,15 +4,25 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-@pytest.mark.django_db
-def test_register_and_token(api_client):
-    r = api_client.post('/api/v1/auth/register/', {
+def _reg_payload(**overrides):
+    data = {
         'username': 'newuser',
         'email': 'n@test.tg',
         'password': 'securepass123',
         'password_confirm': 'securepass123',
+        'first_name': 'New',
+        'last_name': 'User',
+        'age': 25,
+        'consent_analytics': True,
         'role': 'public',
-    })
+    }
+    data.update(overrides)
+    return data
+
+
+@pytest.mark.django_db
+def test_register_and_token(api_client):
+    r = api_client.post('/api/v1/auth/register/', _reg_payload(), format='json')
     assert r.status_code == 201
     assert r.json()['user']['username'] == 'newuser'
     r2 = api_client.post('/api/v1/auth/token/', {
@@ -25,12 +35,11 @@ def test_register_and_token(api_client):
 
 @pytest.mark.django_db
 def test_register_cannot_self_assign_admin(api_client):
-    r = api_client.post('/api/v1/auth/register/', {
-        'username': 'hacker',
-        'password': 'securepass123',
-        'password_confirm': 'securepass123',
-        'role': 'admin',
-    })
+    r = api_client.post('/api/v1/auth/register/', _reg_payload(
+        username='hacker',
+        email='h@test.tg',
+        role='admin',
+    ), format='json')
     assert r.status_code == 201
     user = User.objects.get(username='hacker')
     assert user.role == User.Role.PUBLIC
@@ -65,12 +74,19 @@ def test_token_returns_user(api_client, agent_user):
 
 
 @pytest.mark.django_db
+def test_register_requires_consent(api_client):
+    r = api_client.post('/api/v1/auth/register/', _reg_payload(consent_analytics=False), format='json')
+    assert r.status_code == 400
+    assert 'consent_analytics' in r.json()
+
+
+@pytest.mark.django_db
 def test_register_password_mismatch(api_client):
-    r = api_client.post('/api/v1/auth/register/', {
-        'username': 'x',
-        'password': 'securepass123',
-        'password_confirm': 'different',
-    })
+    r = api_client.post('/api/v1/auth/register/', _reg_payload(
+        username='x',
+        email='x@test.tg',
+        password_confirm='different',
+    ), format='json')
     assert r.status_code == 400
 
 

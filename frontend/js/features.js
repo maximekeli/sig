@@ -237,6 +237,8 @@ export async function loadAdminDashboard() {
         (a) => `<li>${a.created_at?.slice(0, 16)} — ${a.username || '?'} — ${a.action} ${a.resource}</li>`,
       ).join('');
     }
+    window.SigSolsAdminAnalytics?.loadAdminAnalytics?.();
+    window.SigSolsAdminAnalytics?.loadRecentActivity?.();
   } catch (e) {
     console.warn('Admin dashboard', e);
   }

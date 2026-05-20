@@ -3,6 +3,7 @@
  */
 import { phColorHex } from './core/phColor.js';
 import { notifyError, notifySuccess } from './core/ui.js';
+import { trackActivity } from './core/activityTracker.js';
 import {
   NDVI_LABELS,
   SMAP_LABELS,
@@ -534,6 +535,7 @@ async function runParcelAnalysis() {
     notifyError({ message: 'Sélectionnez ou dessinez une parcelle.' });
     return;
   }
+  trackActivity('parcel_analyze', { parcel: selectedParcelCode || 'drawn' }, 'parcel');
   setParcelStatus('Analyse complète (IA)…');
   await refreshLiveParcelInfo(true);
 }

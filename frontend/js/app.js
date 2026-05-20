@@ -79,6 +79,12 @@ document.getElementById('proximity-radius')?.addEventListener('input', (e) => {
 
 document.addEventListener('DOMContentLoaded', async () => {
   window.SigSolsInit?.initAppShell?.();
+  const { initActivityTracker, initAdminAnalytics } = await Promise.all([
+    import('./core/activityTracker.js'),
+    import('./adminAnalytics.js'),
+  ]).then(([a, b]) => ({ initActivityTracker: a.initActivityTracker, initAdminAnalytics: b.initAdminAnalytics }));
+  initActivityTracker();
+  initAdminAnalytics();
   SigSolsMap.initMap();
   SigSolsQuiz.loadQuizStats?.();
   await SigSolsAuth.initAuth();

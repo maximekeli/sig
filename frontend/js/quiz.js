@@ -9,6 +9,7 @@ import {
   updateProgress,
 } from './core/quizUtils.js';
 import { notifyError } from './core/ui.js';
+import { trackActivity } from './core/activityTracker.js';
 
 let quizSession = null;
 let quizQuestions = [];
@@ -25,6 +26,7 @@ export function sheetPdfAbsoluteUrl(sheetId, { download = false } = {}) {
 }
 
 export function openSheetPdfModal(sheet) {
+  trackActivity('sheet_open', { sheet_id: sheet.id, title: sheet.title }, 'sheet');
   const url = sheetPdfAbsoluteUrl(sheet.id);
   const modal = document.getElementById('sheet-pdf-modal');
   const titleEl = document.getElementById('sheet-pdf-modal-title');
@@ -75,6 +77,7 @@ async function loadQuizStats() {
 async function startQuiz() {
   const difficulty = document.getElementById('quiz-difficulty').value;
   const count = getQuizCount();
+  trackActivity('quiz_start', { difficulty, count }, 'quiz');
   const data = await SigSolsAPI.api('/education/quiz/start/', {
     method: 'POST',
     body: JSON.stringify({ difficulty, count }),
@@ -159,6 +162,7 @@ async function submitAnswer(selectedIndex) {
 
 async function finishQuiz() {
   const r = await SigSolsAPI.api(`/education/quiz/${quizSession}/finish/`, { method: 'POST', body: '{}' });
+  trackActivity('quiz_finish', { score: r.score, total: r.total_questions }, 'quiz');
   document.getElementById('quiz-feedback').textContent = formatFinishMessage(r);
   document.getElementById('quiz-feedback').className = 'quiz-feedback quiz-feedback--ok';
   document.getElementById('btn-quiz-start').disabled = false;
