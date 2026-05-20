@@ -391,7 +391,9 @@ function hideLivePanel() {
 }
 
 async function refreshLiveParcelInfo(fullAnalysis = false) {
-  const zoneCode = selectedParcelCode || document.getElementById('parcel-zone-select')?.value;
+  const selRaw = document.getElementById('parcel-zone-select')?.value;
+  const selVal = selRaw && String(selRaw).trim() ? String(selRaw).trim() : '';
+  const zoneCode = selectedParcelCode || selVal || null;
   const geometry = zoneCode ? null : (selectedGeometry || getDrawnGeometry());
 
   if (!zoneCode && !geometry) {
@@ -465,6 +467,7 @@ function renderAnalysisResult(data) {
       </div>
       ${formatTypesBreakdown(data.soil_types_breakdown)}
       <p class="parcel-nasa">NASA : ${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
+      ${formatStacLine(nasa)}
       ${ml?.predicted_class ? `<p class="parcel-ml">IA : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
       ${(data.recommendations || []).length ? `<ul class="parcel-recs">${data.recommendations.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
     </div>`;

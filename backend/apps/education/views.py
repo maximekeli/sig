@@ -2,9 +2,11 @@ import random
 
 from django.utils import timezone
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.http import HttpResponse
 
 from .models import (
     PedagogicalSheet,
@@ -21,6 +23,7 @@ from .serializers import (
 )
 from config.throttling import QuizUserThrottle
 
+from .pdf_build import build_pedagogical_pdf_bytes
 from .quiz_cache import get_cached_leaderboard, get_cached_quiz_stats, invalidate_quiz_stats
 from .services import award_badges
 from .tasks import refresh_leaderboard_cache
@@ -30,6 +33,15 @@ class PedagogicalSheetViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PedagogicalSheet.objects.all()
     serializer_class = PedagogicalSheetSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+
+    @action(detail=True, methods=['get'], url_path='pdf', permission_classes=[AllowAny])
+    def pdf(self, request, pk=None):
+        sheet = self.get_object()
+        data = build_pedagogical_pdf_bytes(sheet)
+        safe = sheet.theme.replace('/', '-').replace(' ', '_')
+        resp = HttpResponse(data, content_type='application/pdf')
+        resp['Content-Disposition'] = f'attachment; filename="sig-sols-fiche-{safe}.pdf"'
+        return resp
 
 
 class QuizStatsView(APIView):
@@ -51,11 +63,13 @@ class QuizStartView(APIView):
         qs = QuizQuestion.objects.filter(is_active=True, difficulty=difficulty)
         if difficulty == 'mixte':
             qs = QuizQuestion.objects.filter(is_active=True)
-        questions = list(qs)
-        available = len(questions)
+        pks = list(qs.values_list('pk', flat=True).distinct())
+        available = len(pks)
         if available < count:
             count = available
-        selected = random.sample(questions, count) if questions else []
+        chosen = random.sample(pks, count) if pks else []
+        selected = list(QuizQuestion.objects.filter(pk__in=chosen))
+        selected.sort(key=lambda q: chosen.index(q.pk))
         session = QuizSession.objects.create(user=request.user, difficulty=difficulty)
         return Response({
             'session_id': session.id,

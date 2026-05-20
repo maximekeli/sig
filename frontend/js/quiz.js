@@ -8,12 +8,14 @@ import {
   isQuizComplete,
   updateProgress,
 } from './core/quizUtils.js';
+import { notifyError } from './core/ui.js';
 
 let quizSession = null;
 let quizQuestions = [];
 let quizIndex = 0;
 let quizTimer = null;
 let timeLeft = QUIZ_TIMER_SECONDS;
+let answerInFlight = false;
 
 function getQuizCount() {
   const el = document.getElementById('quiz-count');
@@ -84,21 +86,37 @@ function showQuestion() {
 }
 
 async function submitAnswer(selectedIndex) {
+  if (answerInFlight) return;
+  answerInFlight = true;
   clearInterval(quizTimer);
   const q = quizQuestions[quizIndex];
   const buttons = document.querySelectorAll('#quiz-choices .quiz-choice');
   buttons.forEach((b) => { b.disabled = true; });
 
-  const r = await SigSolsAPI.api(`/education/quiz/${quizSession}/answer/`, {
-    method: 'POST',
-    body: JSON.stringify(buildAnswerBody(q.id, selectedIndex)),
-  });
-  const feedback = document.getElementById('quiz-feedback');
-  feedback.textContent = formatAnswerFeedback(r);
-  feedback.className = r.correct ? 'quiz-feedback quiz-feedback--ok' : 'quiz-feedback quiz-feedback--ko';
-  document.getElementById('quiz-score').textContent = r.session_score;
-  quizIndex += 1;
-  setTimeout(showQuestion, 1500);
+  try {
+    const r = await SigSolsAPI.api(`/education/quiz/${quizSession}/answer/`, {
+      method: 'POST',
+      body: JSON.stringify(buildAnswerBody(q.id, selectedIndex)),
+    });
+    const feedback = document.getElementById('quiz-feedback');
+    feedback.textContent = formatAnswerFeedback(r);
+    feedback.className = r.correct ? 'quiz-feedback quiz-feedback--ok' : 'quiz-feedback quiz-feedback--ko';
+    document.getElementById('quiz-score').textContent = r.session_score;
+    quizIndex += 1;
+    answerInFlight = false;
+    setTimeout(showQuestion, 1500);
+  } catch (e) {
+    notifyError(e);
+    answerInFlight = false;
+    buttons.forEach((b) => { b.disabled = false; });
+    timeLeft = QUIZ_TIMER_SECONDS;
+    document.getElementById('quiz-timer').textContent = timeLeft;
+    quizTimer = setInterval(() => {
+      timeLeft -= 1;
+      document.getElementById('quiz-timer').textContent = timeLeft;
+      if (timeLeft <= 0) submitAnswer(-1);
+    }, 1000);
+  }
 }
 
 async function finishQuiz() {

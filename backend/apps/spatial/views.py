@@ -1,6 +1,6 @@
 import json
 
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from soils.models import AdministrativeZone
@@ -92,7 +92,8 @@ class ParcelAnalyzeView(APIView):
     Analyse automatique d'une parcelle (polygone GeoJSON ou zone administrative).
     NASA (NDVI, SMAP) + IA fertilité + vulnérabilité.
     """
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    # POST utilisé pour géométrie dessinée : doit rester utilisable sans compte (démonstration publique).
+    permission_classes = [AllowAny]
 
     def post(self, request):
         from .parcel_analysis import analyze_parcel
@@ -149,7 +150,7 @@ class ParcelZonesGeoJsonView(APIView):
 class ParcelLiveView(APIView):
     """Analyse parcelle en temps réel (léger par défaut : sans IA). GET zone_code ou POST geometry."""
 
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         from .parcel_analysis import analyze_parcel

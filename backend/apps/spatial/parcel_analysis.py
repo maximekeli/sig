@@ -17,6 +17,43 @@ from soils.models import AdministrativeZone, SoilPoint, SoilPointNasaSnapshot
 from . import services
 
 
+def _parcel_stac_summary(geom):
+    """Recherche STAC NASA (CMR) sur la bbox de la parcelle — désactivé pendant les tests."""
+    import os
+    from datetime import date, timedelta
+
+    if os.environ.get('DJANGO_TEST') == '1':
+        return {'skipped': True}
+    try:
+        extent = geom.extent
+        lon_w, lat_s, lon_e, lat_n = extent[0], extent[1], extent[2], extent[3]
+        if lon_e - lon_w > 4.5 or lat_n - lat_s > 4.5:
+            return {
+                'note': 'bbox_large',
+                'message': 'Zone très étendue : recherche STAC non lancée (affiner la parcelle).',
+            }
+        bbox = (lon_w, lat_s, lon_e, lat_n)
+        today = date.today()
+        start = today - timedelta(days=60)
+        from nasa.stac_client import search_granules
+
+        products = {}
+        for code in ('MOD13Q1', 'SMAP'):
+            items = search_granules(code, start, today, bbox, limit=5)
+            products[code] = {
+                'granules_found': len(items),
+                'sample': items[0] if items else None,
+            }
+        return {
+            'catalog': 'NASA CMR-STAC (public)',
+            'bbox_4326': bbox,
+            'window_days': 60,
+            'products': products,
+        }
+    except Exception as exc:
+        return {'error': str(exc)[:240]}
+
+
 def _geom_from_request(geometry=None, zone_code=None, zone_id=None):
     if zone_code:
         zone = AdministrativeZone.objects.filter(code=zone_code).first()
@@ -225,6 +262,7 @@ def analyze_parcel(*, geometry=None, zone_code=None, zone_id=None, use_ml=True):
             'smap_status': _smap_status(avg_smap),
             'by_product': nasa_by_product,
             'active_catalog_layers': active_layers,
+            'stac_parcel': _parcel_stac_summary(geom),
         },
         'vulnerability': vulnerability,
         'ml_prediction': ml_prediction,

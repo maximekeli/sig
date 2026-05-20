@@ -4,9 +4,18 @@ from .models import PedagogicalSheet, QuizQuestion, QuizSession, UserBadge
 
 
 class PedagogicalSheetSerializer(serializers.ModelSerializer):
+    pdf_url = serializers.SerializerMethodField()
+
     class Meta:
         model = PedagogicalSheet
-        fields = '__all__'
+        fields = ('id', 'title', 'theme', 'content_fr', 'pdf_url', 'video_url', 'order')
+
+    def get_pdf_url(self, obj):
+        request = self.context.get('request')
+        rel = f'/api/v1/education/sheets/{obj.pk}/pdf/'
+        if request:
+            return request.build_absolute_uri(rel)
+        return rel
 
 
 class QuizQuestionPublicSerializer(serializers.ModelSerializer):

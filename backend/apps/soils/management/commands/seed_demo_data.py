@@ -153,16 +153,47 @@ class Command(BaseCommand):
         from education.models import PedagogicalSheet, QuizQuestion
 
         sheets = [
-            ('Importance des sols', 'importance', 'Les sols soutiennent agriculture, eau et biodiversité.'),
-            ('Types de sols au Togo', 'types', 'Ferrugineux tropicaux, hydromorphes, littoraux sableux.'),
-            ('Bonnes pratiques', 'practices', 'Compostage, chaulage, rotation, agroforesterie.'),
-            ('Données NASA', 'nasa', 'NDVI, SMAP, GPM — produits libres via Earthdata.'),
-            ('Érosion', 'erosion', 'Causes, conséquences et solutions de conservation.'),
+            (
+                'Importance des sols',
+                'importance',
+                'Aperçu : fonctions des sols (production, filtration, carbone, biodiversité), indicateurs '
+                'simples au champ et liens avec la sécurité alimentaire. '
+                'Utilisez le bouton « Télécharger le PDF » pour le manuel complet (vingt pages et plus), '
+                'détaillé chapitre par chapitre.',
+            ),
+            (
+                'Types de sols au Togo',
+                'types',
+                'Aperçu : ferrugineux tropicaux, hydromorphes, matériaux sableux côtiers, contraintes '
+                'paillage / drainage / fertilisation. Le document PDF associé développe chaque grande '
+                'classe avec profils, textures et exemples d’aménagement.',
+            ),
+            (
+                'Bonnes pratiques agricoles',
+                'practices',
+                'Aperçu : rotations, couvertures, réduction du labour, compost, chaulage raisonné, gestion '
+                'de l’eau, agroforesterie. La version PDF regroupe plus de quarante micro-chapitres '
+                'opérationnels et des listes de contrôle pour le terrain.',
+            ),
+            (
+                'Comprendre les données NASA',
+                'nasa',
+                'Aperçu : NDVI (MODIS), humidité SMAP, précipitations GPM, catalogues STAC Earthdata, '
+                'bonnes pratiques de citation. Le PDF complet forme pas à pas à la chaîne '
+                '« produit satellite → extraction → interprétation agronomique ».',
+            ),
+            (
+                'Érosion et dégradation',
+                'erosion',
+                'Aperçu : facteurs hydrologiques, ruissellement, techniques de conservation des sols, '
+                'ouvrages et gouvernance locale. Le manuel PDF détaille diagnostics, seuils d’alerte '
+                'et plans pluriannuels.',
+            ),
         ]
-        for title, theme, content in sheets:
-            PedagogicalSheet.objects.get_or_create(
+        for order, (title, theme, content) in enumerate(sheets):
+            PedagogicalSheet.objects.update_or_create(
                 title=title,
-                defaults={'theme': theme, 'content_fr': content, 'order': len(sheets)},
+                defaults={'theme': theme, 'content_fr': content, 'order': order},
             )
 
         if QuizQuestion.objects.filter(difficulty='facile').count() >= 100:

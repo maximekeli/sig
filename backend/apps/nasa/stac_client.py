@@ -50,9 +50,6 @@ def search_granules(
         logger.warning('pystac-client not installed')
         return []
 
-    if os.environ.get('NASA_SKIP_NETWORK') == '1':
-        return []
-
     try:
         prev_timeout = socket.getdefaulttimeout()
         socket.setdefaulttimeout(15)

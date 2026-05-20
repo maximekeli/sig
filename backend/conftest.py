@@ -7,7 +7,6 @@ import pytest
 
 os.environ.setdefault('DJANGO_TEST', '1')
 os.environ.setdefault('CELERY_TASK_ALWAYS_EAGER', '1')
-os.environ.setdefault('NASA_SKIP_NETWORK', '1')
 
 _APPS = Path(__file__).resolve().parent / 'apps'
 if str(_APPS) not in sys.path:
