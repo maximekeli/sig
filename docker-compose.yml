@@ -31,7 +31,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     image: dusol_projet-web
-    container_name: dusol_web
     command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
     volumes:
       - ./backend:/app

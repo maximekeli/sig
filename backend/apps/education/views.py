@@ -24,7 +24,6 @@ from .serializers import (
 )
 from config.throttling import QuizUserThrottle
 
-from .pdf_build import build_pedagogical_pdf_bytes
 from .quiz_cache import get_cached_leaderboard, get_cached_quiz_stats, invalidate_quiz_stats
 from .services import award_badges
 from .tasks import refresh_leaderboard_cache
@@ -37,6 +36,7 @@ def pedagogical_sheet_pdf_response(request, pk):
     except PedagogicalSheet.DoesNotExist:
         return Response({'error': 'Fiche introuvable.'}, status=404)
     try:
+        from .pdf_build import build_pedagogical_pdf_bytes
         data = build_pedagogical_pdf_bytes(sheet)
     except Exception as exc:
         return Response(

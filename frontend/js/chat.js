@@ -79,8 +79,14 @@ function setStatus(text, isError = false) {
 }
 
 async function checkStatus() {
+  const api = window.SigSolsAPI;
+  if (!api?.api) {
+    available = false;
+    setStatus('API non chargée — rechargez la page.', true);
+    return;
+  }
   try {
-    const data = await SigSolsAPI.api('/assistant/status/');
+    const data = await api.api('/assistant/status/');
     available = Boolean(data.available);
     setStatus(
       available
@@ -88,9 +94,9 @@ async function checkStatus() {
         : 'Assistant indisponible (clé API non configurée)',
       !available,
     );
-  } catch {
+  } catch (e) {
     available = false;
-    setStatus('Impossible de joindre l’assistant.', true);
+    setStatus(`Impossible de joindre l’assistant : ${e.message}`, true);
   }
 }
 
@@ -98,9 +104,13 @@ async function sendMessage() {
   if (sending) return;
   const input = $('chat-input');
   const text = input?.value?.trim();
-  if (!text) return;
-  if (!available) {
-    setStatus('Assistant non disponible.', true);
+  if (!text) {
+    setStatus('Saisissez un message.', true);
+    return;
+  }
+  const api = window.SigSolsAPI;
+  if (!api?.api) {
+    setStatus('API non chargée — rechargez la page.', true);
     return;
   }
 
@@ -124,16 +134,19 @@ async function sendMessage() {
       history: history.slice(0, -1).slice(-10),
       context: buildContext(),
     };
-    const data = await SigSolsAPI.api('/assistant/chat/', {
+    const data = await api.api('/assistant/chat/', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
     history.push({ role: 'assistant', content: data.reply });
     trackActivity('chat_reply', {}, 'tool');
   } catch (e) {
+    const hint = /not found/i.test(e.message)
+      ? ' (le serveur backend doit être redémarré : make fix-web)'
+      : '';
     history.push({
       role: 'assistant',
-      content: `Désolé, une erreur s’est produite : ${e.message}`,
+      content: `Désolé, une erreur s’est produite : ${e.message}${hint}`,
     });
   } finally {
     sending = false;
@@ -170,7 +183,10 @@ export function initChatbot() {
 
   $('btn-chat-toggle')?.addEventListener('click', () => toggleChat());
   $('btn-chat-close')?.addEventListener('click', () => toggleChat(true));
-  $('btn-chat-send')?.addEventListener('click', sendMessage);
+  $('btn-chat-send')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    sendMessage();
+  });
   $('btn-chat-clear')?.addEventListener('click', () => {
     history = [];
     saveHistory();

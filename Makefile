@@ -46,7 +46,16 @@ restart:
 
 rebuild-web:
 	docker compose build web
-	docker compose up -d --force-recreate web
+	docker compose up -d --force-recreate web nginx
+
+fix-web:
+	@echo "Arrêt des anciens conteneurs web (sudo si besoin)…"
+	-docker rm -f dusol_web 2>/dev/null || true
+	docker compose build web
+	docker compose up -d --force-recreate --remove-orphans web nginx
+	@echo "Test API assistant :"
+	@sleep 3
+	@curl -sf http://localhost:8081/api/v1/assistant/status/ || echo "Échec — lancez: sudo docker rm -f dusol_web && make fix-web"
 
 logs-web:
 	docker compose logs -f web
