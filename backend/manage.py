@@ -4,8 +4,10 @@ import os
 import sys
 from pathlib import Path
 
-# Apps live in backend/apps/
-sys.path.insert(0, str(Path(__file__).resolve().parent / 'apps'))
+_ROOT = Path(__file__).resolve().parent
+# Projet Django (config.*) + apps métier (accounts.*, soils.*, …)
+sys.path.insert(0, str(_ROOT))
+sys.path.insert(0, str(_ROOT / 'apps'))
 
 
 def main():

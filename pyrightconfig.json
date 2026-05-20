@@ -9,7 +9,15 @@
   ],
   "venvPath": "backend",
   "venv": ".venv",
-  "extraPaths": ["backend/apps", "backend"],
+  "extraPaths": ["backend", "backend/apps"],
+  "executionEnvironments": [
+    {
+      "root": "backend",
+      "extraPaths": ["backend/apps"],
+      "pythonVersion": "3.11",
+      "pythonPlatform": "Linux"
+    }
+  ],
   "pythonVersion": "3.11",
   "pythonPlatform": "Linux",
   "typeCheckingMode": "off",
