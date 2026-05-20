@@ -94,6 +94,8 @@ def test_assistant_chat_live_gemini(api_client):
         'message': 'En une phrase : qu’est-ce que le pH du sol ?',
         'context': {'view': 'help'},
     }, format='json')
+    if r.status_code == 503 and '429' in r.content.decode():
+        pytest.skip('Quota API Gemini dépassé — réessayez plus tard ou activez la facturation.')
     assert r.status_code == 200, r.content
     reply = r.json().get('reply', '')
     assert len(reply) > 20

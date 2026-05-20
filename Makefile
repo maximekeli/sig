@@ -1,4 +1,4 @@
-.PHONY: up down build migrate seed test lint shell docs
+.PHONY: up down build migrate seed test test-assistant test-gemini-live lint shell docs
 
 up:
 	docker compose up -d --build
@@ -16,7 +16,16 @@ seed:
 	docker compose exec web python manage.py seed_demo_data
 
 test:
-	docker compose run --rm --no-deps --entrypoint "" web pytest -q --tb=short -m "not nasa_live"
+	docker compose run --rm --no-deps --entrypoint "" web pytest -q --tb=short -m "not nasa_live and not gemini_live"
+
+test-gemini-live:
+	docker compose run --rm --no-deps --entrypoint "" \
+		-e GEMINI_LIVE_TESTS=1 \
+		-e GEMINI_API_KEY=$$(grep '^GEMINI_API_KEY=' .env | cut -d= -f2-) \
+		web pytest apps/assistant/tests/test_chat.py::test_assistant_chat_live_gemini -v -m gemini_live
+
+test-assistant:
+	docker compose run --rm --no-deps --entrypoint "" web pytest apps/assistant/tests/ -v --tb=short
 
 test-nasa-live:
 	docker compose run --rm --no-deps --entrypoint "" -e NASA_LIVE_TESTS=1 web pytest -m nasa_live -v
