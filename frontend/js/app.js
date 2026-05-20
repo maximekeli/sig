@@ -21,7 +21,10 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
       SigSolsQuiz.loadBadges();
     }
     if (viewName === 'sheets') SigSolsQuiz.loadSheets();
+    if (viewName === 'videos') window.SigSolsVideos?.loadVideos?.();
+    if (viewName === 'shorts') window.SigSolsVideos?.loadShorts?.();
     if (viewName === 'admin') {
+      window.SigSolsVideos?.loadAdminPending?.();
       SigSolsFeatures.loadAdminDashboard();
       SigSolsFeatures.loadPendingValidation?.();
       window.SigSolsAdminAnalytics?.loadAdminAnalytics?.();

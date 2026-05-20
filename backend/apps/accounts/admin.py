@@ -1,14 +1,13 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from config.admin_large_table import LargeTableAdminMixin
-
+from .admin_large_table import LargeTableAdminMixin
 from .models import User, UserLocation
 
 
 @admin.register(User)
 class UserAdmin(LargeTableAdminMixin, BaseUserAdmin):
-    """Admin optimisé pour des millions d'utilisateurs (pagination sans COUNT global)."""
+    """Admin volumétrique : pagination sans COUNT(*) global."""
 
     ordering = ('-id',)
     list_display = (
@@ -22,7 +21,10 @@ class UserAdmin(LargeTableAdminMixin, BaseUserAdmin):
 
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        ('Informations personnelles', {'fields': ('first_name', 'last_name', 'email')}),
+        (
+            'Informations personnelles',
+            {'fields': ('first_name', 'last_name', 'email')},
+        ),
         ('SIG Sols', {
             'fields': (
                 'role', 'organization', 'phone', 'pseudonym',

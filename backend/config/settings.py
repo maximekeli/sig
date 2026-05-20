@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'education',
     'sig_platform',
     'assistant',
+    'videos',
 ]
 
 MIDDLEWARE = [
@@ -178,6 +179,9 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+VIDEO_MAX_UPLOAD_BYTES = int(
+    os.environ.get('VIDEO_MAX_UPLOAD_BYTES', str(48 * 1024 * 1024)),
+)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -214,6 +218,7 @@ REST_FRAMEWORK = {
         'location': os.environ.get('THROTTLE_LOCATION', '120/min'),
         'quiz': os.environ.get('THROTTLE_QUIZ', '60/min'),
         'assistant': os.environ.get('THROTTLE_ASSISTANT', '30/min'),
+        'video_upload': os.environ.get('THROTTLE_VIDEO_UPLOAD', '10/hour'),
     },
 }
 

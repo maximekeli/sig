@@ -33,6 +33,8 @@
       <button type="button" class="nav-btn" data-view="dashboard" data-i18n="nav.dashboard">Tableau de bord</button>
       <button type="button" class="nav-btn" data-view="quiz" data-i18n="nav.quiz">Quiz</button>
       <button type="button" class="nav-btn" data-view="sheets" data-i18n="nav.sheets">Fiches</button>
+      <button type="button" class="nav-btn" data-view="videos">Vidéos</button>
+      <button type="button" class="nav-btn" data-view="shorts">Shorts</button>
       <button type="button" class="nav-btn admin-only hidden" data-view="admin" data-i18n="nav.admin">Admin</button>
       <button type="button" class="nav-btn" data-view="help" data-i18n="nav.help">Aide</button>
     </nav>
@@ -297,6 +299,62 @@
     </div>
   </section>
 
+  <!-- VIDÉOS -->
+  <section id="view-videos" class="view">
+    <header class="view-hero view-hero--compact">
+      <h2 class="view-hero-title">Vidéos communauté</h2>
+      <p class="view-hero-sub">Partagez vos reportages sols, agriculture et SIG — modération admin</p>
+    </header>
+    <div class="videos-layout">
+      <aside class="videos-upload-panel auth-required hidden" id="videos-upload-panel">
+        <h3>Publier une vidéo</h3>
+        <form id="form-video-upload" class="video-upload-form">
+          <label>Titre <input type="text" id="video-title" required maxlength="200" /></label>
+          <label>Description <textarea id="video-desc" rows="3" maxlength="2000"></textarea></label>
+          <label>Durée (secondes, optionnel) <input type="number" id="video-duration" min="1" max="7200" /></label>
+          <label>Fichier vidéo (mp4, webm, mov — max 48 Mo)
+            <input type="file" id="video-file" accept="video/mp4,video/webm,video/quicktime,.mov,.mkv" required />
+          </label>
+          <label>Miniature (optionnel)
+            <input type="file" id="video-thumb" accept="image/jpeg,image/png,image/webp" />
+          </label>
+          <button type="submit" class="btn-auth-primary">Publier</button>
+          <p id="video-upload-msg" class="parcel-status" aria-live="polite"></p>
+        </form>
+      </aside>
+      <div class="videos-main">
+        <p id="videos-login-hint" class="panel-lead">Connectez-vous pour publier une vidéo.</p>
+        <div id="videos-pending-admin" class="videos-moderation admin-only hidden"></div>
+        <div id="videos-grid" class="videos-grid" role="list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHORTS -->
+  <section id="view-shorts" class="view">
+    <header class="view-hero view-hero--compact">
+      <h2 class="view-hero-title">Shorts</h2>
+      <p class="view-hero-sub">Format court (≤ 60 s) — découverte rapide</p>
+    </header>
+    <div class="shorts-layout">
+      <aside class="videos-upload-panel auth-required hidden" id="shorts-upload-panel">
+        <h3>Publier un short</h3>
+        <form id="form-short-upload" class="video-upload-form">
+          <label>Titre <input type="text" id="short-title" required maxlength="200" /></label>
+          <label>Description <textarea id="short-desc" rows="2" maxlength="1000"></textarea></label>
+          <label>Durée (s, max 60) <input type="number" id="short-duration" min="1" max="60" /></label>
+          <label>Vidéo courte
+            <input type="file" id="short-file" accept="video/mp4,video/webm,video/quicktime,.mov" required />
+          </label>
+          <button type="submit" class="btn-auth-primary">Publier le short</button>
+          <p id="short-upload-msg" class="parcel-status" aria-live="polite"></p>
+        </form>
+      </aside>
+      <div class="shorts-feed" id="shorts-feed" role="list"></div>
+    </div>
+    <p id="shorts-login-hint" class="panel-lead shorts-hint">Connectez-vous pour publier un short.</p>
+  </section>
+
   <!-- SHEETS -->
   <section id="view-sheets" class="view">
     <header class="view-hero view-hero--compact">
@@ -319,6 +377,8 @@
       </div>
       <h3>Validation en attente</h3>
       <ul id="adm-pending-list" class="compact-list"></ul>
+      <h3>Vidéos en attente</h3>
+      <ul id="adm-videos-pending" class="compact-list"></ul>
       <h3>Journal d'audit</h3>
       <ul id="adm-audit" class="compact-list audit-list"></ul>
       <h3>Rapport zone</h3>
@@ -522,6 +582,7 @@
   <script type="module" src="js/adminPanel.js"></script>
   <script type="module" src="js/adminAnalytics.js"></script>
   <script type="module" src="js/chat.js"></script>
+  <script type="module" src="js/videos.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

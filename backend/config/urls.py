@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/v1/education/', include('education.urls')),
     path('api/v1/platform/', include('sig_platform.urls')),
     path('api/v1/assistant/', include('assistant.urls')),
+    path('api/v1/videos/', include('videos.urls')),
 ]
 
 if settings.DEBUG:

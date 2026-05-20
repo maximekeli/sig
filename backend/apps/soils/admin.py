@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.gis.admin import GISModelAdmin
 
-from config.admin_large_table import LargeTableAdminMixin
+from accounts.admin_large_table import LargeTableAdminMixin
 
 from .models import AdministrativeZone, SoilPoint, SoilPointNasaSnapshot
 
