@@ -70,6 +70,18 @@ def test_pedagogical_sheet_pdf(api_client, db):
 
 
 @pytest.mark.django_db
+def test_quiz_start_unique_question_ids(auth_client, db):
+    from django.core.management import call_command
+    call_command('seed_quiz_questions', '--force')
+    r = auth_client.post('/api/v1/education/quiz/start/', {
+        'difficulty': 'facile', 'count': 20,
+    }, format='json')
+    assert r.status_code == 200
+    ids = [q['id'] for q in r.json()['questions']]
+    assert len(ids) == len(set(ids))
+
+
+@pytest.mark.django_db
 def test_quiz_stats_api(api_client, db):
     from django.core.management import call_command
     call_command('seed_quiz_questions', '--force')
