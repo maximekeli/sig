@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Redémarre le backend avec les routes assistant IA (corrige le 404 Not Found).
+# Redémarre le backend avec .env à jour (clé Gemini + modèle).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-
-echo "==> Arrêt des anciens conteneurs web…"
-docker rm -f dusol_web 2>/dev/null || sudo docker rm -f dusol_web 2>/dev/null || true
+echo "Modèle recommandé : gemini-2.5-flash-lite (quota gratuit)"
+grep -q '^GEMINI_MODEL=' .env || echo 'GEMINI_MODEL=gemini-2.5-flash-lite' >> .env
+echo "==> Arrêt des anciens conteneurs web (sudo si besoin)…"
+docker rm -f dusol_web dusol_projet-web-1 2963aa31d25b_dusol_web 2>/dev/null || true
+sudo docker rm -f dusol_web dusol_projet-web-1 2963aa31d25b_dusol_web 2>/dev/null || true
 docker compose down web 2>/dev/null || sudo docker compose down web 2>/dev/null || true
 
 echo "==> Reconstruction image web…"
