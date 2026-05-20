@@ -27,7 +27,7 @@ Tuiles NASA affichées sur la carte : **placeholder PNG** via l’API interne `/
 
 ## Fiches pédagogiques (PDF)
 
-Les fiches listées via l’API incluent un champ `pdf_url` pointant vers **GET** `/api/v1/education/sheets/<id>/pdf/` : PDF généré côté serveur (ReportLab), environ **20 à 30 pages** selon le thème, à partir des contenus `manuscript_fr.py`.
+Les fiches listées via l’API incluent un champ **`pdf_url`** (chemin relatif `/api/v1/education/sheets/<id>/pdf/`) : le site ouvre toujours le PDF avec l’origine du navigateur. **GET** sur cette URL renvoie le PDF (ReportLab, mise en page type article LaTeX : Times, page de titre, résumé encadré, sections numérotées, pieds de page).
 
 ## Non intégrés — utiles si vous voulez aller plus loin
 

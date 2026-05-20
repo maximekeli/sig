@@ -58,6 +58,8 @@ def test_pedagogical_sheets_api(api_client, db):
     payload = r.json()
     row = (payload.get('results') or payload)[0]
     assert 'pdf_url' in row
+    assert row['pdf_url'].startswith('/api/v1/education/sheets/')
+    assert row['pdf_url'].endswith('/pdf/')
 
 
 @pytest.mark.django_db

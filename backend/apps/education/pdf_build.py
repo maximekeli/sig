@@ -42,7 +42,7 @@ def build_pedagogical_pdf_bytes(sheet) -> bytes:
     intros = INTRO_PARAS.get(theme, INTRO_PARAS['importance'])
 
     buf = BytesIO()
-    w, h = A4
+    w, _h = A4
     doc = SimpleDocTemplate(
         buf,
         pagesize=A4,
