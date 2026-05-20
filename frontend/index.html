@@ -336,6 +336,43 @@
       <p id="adm-ml-status" class="parcel-status"></p>
       <button type="button" id="btn-adm-nasa-ingest" class="btn-parcel-clear">Ingestion NASA (admin)</button>
       <p id="adm-nasa-status" class="parcel-status">Nécessite NASA_EARTHDATA_* dans .env</p>
+      <hr />
+      <h3>Analytics &amp; activité utilisateurs</h3>
+      <p class="panel-lead">Suivi détaillé (zoom carte, navigation, quiz, API…) pour analyse et data science.</p>
+      <div class="dashboard-grid an-kpi-grid">
+        <article class="kpi-card"><h3>Événements (30 j.)</h3><p id="an-events-total">—</p></article>
+        <article class="kpi-card"><h3>Aujourd’hui</h3><p id="an-events-today">—</p></article>
+        <article class="kpi-card"><h3>Zooms carte</h3><p id="an-map-zoom">—</p></article>
+        <article class="kpi-card"><h3>Déplacements carte</h3><p id="an-map-pan">—</p></article>
+        <article class="kpi-card"><h3>Utilisateurs</h3><p id="an-users-total">—</p></article>
+      </div>
+      <div class="an-charts-row">
+        <div class="an-chart-box">
+          <h4>Événements par jour</h4>
+          <canvas id="chart-activity-canvas" height="200"></canvas>
+        </div>
+        <div class="an-side-panels">
+          <div class="an-panel">
+            <h4>Top utilisateurs</h4>
+            <table class="an-table"><thead><tr><th>Utilisateur</th><th>Événements</th></tr></thead><tbody id="an-top-users"></tbody></table>
+          </div>
+          <div class="an-panel">
+            <h4>Types d’événements</h4>
+            <ul id="an-event-types" class="compact-list an-stat-list"></ul>
+          </div>
+          <div class="an-panel">
+            <h4>Répartition par âge</h4>
+            <ul id="an-age-buckets" class="compact-list an-stat-list"></ul>
+          </div>
+        </div>
+      </div>
+      <div class="an-user-search">
+        <label>ID utilisateur <input type="number" id="an-user-id" min="1" placeholder="ex. 3" /></label>
+        <button type="button" id="btn-an-load-user" class="btn-auth-secondary">Voir l’activité</button>
+      </div>
+      <div id="an-user-detail" class="an-user-detail"></div>
+      <h4>Activité récente (site entier)</h4>
+      <ul id="an-recent-activity" class="compact-list an-timeline"></ul>
     </div>
   </section>
 
@@ -455,6 +492,7 @@
   <script type="module" src="js/quiz.js"></script>
   <script type="module" src="js/tools.js"></script>
   <script type="module" src="js/adminPanel.js"></script>
+  <script type="module" src="js/adminAnalytics.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

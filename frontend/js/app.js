@@ -7,21 +7,25 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
       v.style.animation = 'none';
     });
     btn.classList.add('active');
-    const target = document.getElementById('view-' + btn.dataset.view);
+    const viewName = btn.dataset.view;
+    const target = document.getElementById('view-' + viewName);
     target.classList.add('active');
     void target.offsetWidth;
     target.style.animation = '';
     document.getElementById('welcome-banner')?.classList.add('hidden');
-    if (btn.dataset.view === 'dashboard') SigSolsDashboard.loadDashboard();
-    if (btn.dataset.view === 'quiz') {
+    import('./core/activityTracker.js').then(({ trackNav }) => trackNav(viewName)).catch(() => {});
+    if (viewName === 'dashboard') SigSolsDashboard.loadDashboard();
+    if (viewName === 'quiz') {
       SigSolsQuiz.loadQuizStats?.();
       SigSolsQuiz.loadLeaderboard();
       SigSolsQuiz.loadBadges();
     }
-    if (btn.dataset.view === 'sheets') SigSolsQuiz.loadSheets();
-    if (btn.dataset.view === 'admin') {
+    if (viewName === 'sheets') SigSolsQuiz.loadSheets();
+    if (viewName === 'admin') {
       SigSolsFeatures.loadAdminDashboard();
       SigSolsFeatures.loadPendingValidation?.();
+      window.SigSolsAdminAnalytics?.loadAdminAnalytics?.();
+      window.SigSolsAdminAnalytics?.loadRecentActivity?.();
     }
   });
 });

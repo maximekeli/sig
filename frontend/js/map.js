@@ -50,27 +50,26 @@ function initMap() {
   mapReady = true;
   window.SigSolsFeatures?.initMapAdvanced(map, markersLayer);
   window.SigSolsParcel?.initParcelTools?.();
-  map.on('moveend', () => {
-    if (!bboxLoadEnabled) return;
-    clearTimeout(loadDebounce);
-    loadDebounce = setTimeout(() => loadSoilPoints(), 450);
-  });
   let lastZoomTrack = 0;
+  let lastPanTrack = 0;
+  map.on('moveend', () => {
+    if (bboxLoadEnabled) {
+      clearTimeout(loadDebounce);
+      loadDebounce = setTimeout(() => loadSoilPoints(), 450);
+    }
+    const now = Date.now();
+    if (now - lastPanTrack < 2000) return;
+    lastPanTrack = now;
+    import('./core/activityTracker.js').then(({ trackMapPan }) => {
+      trackMapPan(map.getCenter(), map.getZoom());
+    }).catch(() => {});
+  });
   map.on('zoomend', () => {
     const now = Date.now();
     if (now - lastZoomTrack < 800) return;
     lastZoomTrack = now;
     import('./core/activityTracker.js').then(({ trackMapZoom }) => {
       trackMapZoom(map.getZoom(), map.getCenter());
-    }).catch(() => {});
-  });
-  let lastPanTrack = 0;
-  map.on('moveend', () => {
-    const now = Date.now();
-    if (now - lastPanTrack < 2000) return;
-    lastPanTrack = now;
-    import('./core/activityTracker.js').then(({ trackMapPan }) => {
-      trackMapPan(map.getCenter(), map.getZoom());
     }).catch(() => {});
   });
   loadSoilPoints();

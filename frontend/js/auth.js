@@ -3,6 +3,7 @@
  */
 import { toast } from './core/toast.js';
 import { notifyError, notifySuccess } from './core/ui.js';
+import { trackAuth } from './core/activityTracker.js';
 
 const ROLE_LABELS = {
   admin: 'Administrateur',
@@ -85,6 +86,7 @@ async function handleLogin() {
     }
     renderAuthUI();
     notifySuccess('Connexion réussie.');
+    trackAuth('login', { username: $('login-user')?.value?.trim() });
     SigSolsMap.loadSoilPoints();
     SigSolsFeatures.loadAlerts();
     SigSolsFeatures.loadNotifications();
