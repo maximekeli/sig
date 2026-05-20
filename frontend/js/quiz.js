@@ -17,6 +17,28 @@ let quizTimer = null;
 let timeLeft = QUIZ_TIMER_SECONDS;
 let answerInFlight = false;
 
+/** URL PDF fiche : toujours depuis l’origine du site (évite les URLs internes Docker). */
+export function sheetPdfAbsoluteUrl(sheetId) {
+  return `${window.location.origin}/api/v1/education/sheets/${sheetId}/pdf/`;
+}
+
+export function openSheetPdfModal(sheet) {
+  const url = sheetPdfAbsoluteUrl(sheet.id);
+  const modal = document.getElementById('sheet-pdf-modal');
+  const titleEl = document.getElementById('sheet-pdf-modal-title');
+  const frame = document.getElementById('sheet-pdf-frame');
+  const dl = document.getElementById('sheet-pdf-download');
+  if (!modal || !frame || !dl) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  if (titleEl) titleEl.textContent = sheet.title || 'Fiche pédagogique';
+  dl.href = url;
+  dl.setAttribute('download', `sig-sols-${sheet.theme || 'fiche'}.pdf`);
+  frame.src = `${url}#view=FitH`;
+  modal.classList.remove('hidden');
+}
+
 function getQuizCount() {
   const el = document.getElementById('quiz-count');
   return el ? parseInt(el.value, 10) || 10 : 10;
@@ -156,24 +178,64 @@ async function loadBadges() {
 }
 
 async function loadSheets() {
-  const data = await SigSolsAPI.api('/education/sheets/');
   const list = document.getElementById('sheets-list');
-  list.innerHTML = '';
-  const rows = data.results || data;
-  rows.forEach((s, i) => {
-    const div = document.createElement('article');
-    div.className = 'sheet-card';
-    div.style.animationDelay = `${i * 0.08}s`;
-    const pdfHref = s.pdf_url || '';
-    const pdfBtn = pdfHref
-      ? `<p class="sheet-pdf-row"><a class="sheet-pdf-link" href="${pdfHref}" target="_blank" rel="noopener">Télécharger le PDF complet (≈ 20+ pages)</a></p>`
-      : '';
-    div.innerHTML = `
-      <h3>${s.title}</h3>
-      <p class="sheet-excerpt">${s.content_fr}</p>
-      ${pdfBtn}`;
-    list.appendChild(div);
-  });
+  if (!list) return;
+  list.innerHTML = '<p class="sheets-loading">Chargement des fiches…</p>';
+  try {
+    const data = await SigSolsAPI.api('/education/sheets/');
+    const rows = data.results || data;
+    if (!Array.isArray(rows) || !rows.length) {
+      list.innerHTML = '<p class="sheets-empty">Aucune fiche pour le moment. Lancez <code>seed_demo_data</code> côté serveur.</p>';
+      return;
+    }
+    list.innerHTML = '';
+    rows.forEach((s, i) => {
+      const article = document.createElement('article');
+      article.className = 'sheet-card sheet-card--interactive';
+      article.style.animationDelay = `${i * 0.08}s`;
+      const pdfUrl = sheetPdfAbsoluteUrl(s.id);
+
+      const head = document.createElement('div');
+      head.className = 'sheet-card-head';
+
+      const titleBtn = document.createElement('button');
+      titleBtn.type = 'button';
+      titleBtn.className = 'sheet-title-btn';
+      titleBtn.textContent = s.title;
+      titleBtn.title = 'Ouvrir le document PDF (lecture ou téléchargement)';
+      titleBtn.addEventListener('click', () => openSheetPdfModal(s));
+
+      head.appendChild(titleBtn);
+
+      const excerpt = document.createElement('p');
+      excerpt.className = 'sheet-excerpt';
+      excerpt.textContent = s.content_fr || '';
+
+      const actions = document.createElement('div');
+      actions.className = 'sheet-actions';
+
+      const readBtn = document.createElement('button');
+      readBtn.type = 'button';
+      readBtn.className = 'btn-sheet-read';
+      readBtn.textContent = 'Ouvrir le PDF';
+      readBtn.addEventListener('click', () => openSheetPdfModal(s));
+
+      const dl = document.createElement('a');
+      dl.className = 'btn-sheet-download';
+      dl.href = pdfUrl;
+      dl.download = `sig-sols-${s.theme || i}.pdf`;
+      dl.target = '_blank';
+      dl.rel = 'noopener noreferrer';
+      dl.textContent = 'Télécharger';
+
+      actions.append(readBtn, dl);
+      article.append(head, excerpt, actions);
+      list.appendChild(article);
+    });
+  } catch (e) {
+    list.innerHTML = '<p class="sheets-empty">Impossible de charger les fiches. Vérifiez la connexion au serveur.</p>';
+    notifyError(e);
+  }
 }
 
 window.SigSolsQuiz = {
@@ -183,4 +245,6 @@ window.SigSolsQuiz = {
   loadBadges,
   loadSheets,
   loadQuizStats,
+  openSheetPdfModal,
+  sheetPdfAbsoluteUrl,
 };

@@ -353,6 +353,21 @@
     <p>DISIA – Ministère de l'Agriculture, Togo · DUSOL</p>
   </footer>
 
+    <div id="sheet-pdf-modal" class="app-modal hidden" role="dialog" aria-labelledby="sheet-pdf-modal-title" aria-modal="true">
+    <div class="app-modal-backdrop" data-close-modal="sheet-pdf-modal"></div>
+    <div class="app-modal-panel sheet-pdf-panel">
+      <div class="sheet-pdf-toolbar">
+        <h2 id="sheet-pdf-modal-title" class="sheet-pdf-title">Fiche</h2>
+        <div class="sheet-pdf-actions">
+          <a id="sheet-pdf-download" class="btn-auth-primary" href="#" download>Télécharger PDF</a>
+          <button type="button" class="btn-auth-outline" data-close-modal="sheet-pdf-modal">Fermer</button>
+        </div>
+      </div>
+      <p class="sheet-pdf-hint">Lecture intégrée (navigateur). Si le PDF ne s’affiche pas, utilisez « Télécharger ».</p>
+      <iframe id="sheet-pdf-frame" class="sheet-pdf-frame" title="Document PDF fiche pédagogique"></iframe>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>

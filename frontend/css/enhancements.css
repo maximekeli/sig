@@ -270,6 +270,110 @@ body:not(.agent-mode) .agent-only { display: none !important; }
   line-height: 1.55;
 }
 
+.sheet-pdf-panel {
+  max-width: min(960px, 96vw);
+  width: 96%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.25rem;
+}
+.sheet-pdf-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+.sheet-pdf-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
+}
+.sheet-pdf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.sheet-pdf-hint {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  margin: 0 0 0.5rem 0;
+}
+.sheet-pdf-frame {
+  flex: 1;
+  min-height: 70vh;
+  width: 100%;
+  border: 1px solid var(--sand);
+  border-radius: var(--radius-sm);
+  background: #3d3d3d;
+}
+
+.sheet-card--interactive {
+  border: 1px solid var(--sand);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.sheet-card--interactive:hover {
+  border-color: var(--gold-500);
+  box-shadow: var(--shadow-md);
+}
+.sheet-card-head { margin-bottom: 0.5rem; }
+.sheet-title-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif);
+  color: var(--emerald-900, #134e2a);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+.sheet-title-btn:hover { color: var(--gold-600); }
+.sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  align-items: center;
+}
+.btn-sheet-read {
+  padding: 0.55rem 1rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--emerald-800, #166534);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-sheet-read:hover { filter: brightness(1.08); }
+.btn-sheet-download {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--emerald-800, #166534);
+  background: transparent;
+  color: var(--emerald-900, #134e2a);
+  font-weight: 600;
+  text-decoration: none;
+}
+.btn-sheet-download:hover { background: rgba(22, 101, 52, 0.08); }
+.sheets-loading,
+.sheets-empty {
+  padding: 1rem;
+  opacity: 0.9;
+}
+.sheets-empty code { font-size: 0.85em; }
+
 @media (max-width: 768px) {
   #btn-sidebar-toggle { display: block; }
   .sidebar {

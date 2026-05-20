@@ -11,11 +11,8 @@ class PedagogicalSheetSerializer(serializers.ModelSerializer):
         fields = ('id', 'title', 'theme', 'content_fr', 'pdf_url', 'video_url', 'order')
 
     def get_pdf_url(self, obj):
-        request = self.context.get('request')
-        rel = f'/api/v1/education/sheets/{obj.pk}/pdf/'
-        if request:
-            return request.build_absolute_uri(rel)
-        return rel
+        # Relatif : le navigateur utilise toujours le bon hôte (nginx, localhost, etc.)
+        return f'/api/v1/education/sheets/{obj.pk}/pdf/'
 
 
 class QuizQuestionPublicSerializer(serializers.ModelSerializer):

@@ -56,7 +56,13 @@ export function initModals() {
   document.querySelectorAll('[data-close-modal]').forEach((el) => {
     el.addEventListener('click', () => {
       const id = el.getAttribute('data-close-modal');
-      if (id) closeModal(id);
+      if (id) {
+        closeModal(id);
+        if (id === 'sheet-pdf-modal') {
+          const f = document.getElementById('sheet-pdf-frame');
+          if (f) f.src = 'about:blank';
+        }
+      }
     });
   });
 }
