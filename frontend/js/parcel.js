@@ -344,6 +344,21 @@ function formatTypesBreakdown(rows) {
     </ul>`;
 }
 
+function formatStacLine(nasa) {
+  const st = nasa?.stac_parcel;
+  if (!st || st.skipped) return '';
+  if (st.note === 'bbox_large') {
+    return `<p class="parcel-stac">${st.message || 'Zone trop étendue pour la recherche STAC.'}</p>`;
+  }
+  if (st.error) {
+    return `<p class="parcel-stac parcel-stac--warn">STAC NASA : ${st.error}</p>`;
+  }
+  const p = st.products || {};
+  const m = p.MOD13Q1?.granules_found ?? '—';
+  const s = p.SMAP?.granules_found ?? '—';
+  return `<p class="parcel-stac">Catalogue STAC (60 j.) : MODIS ~${m} · SMAP ~${s} granule(s) proches</p>`;
+}
+
 function formatLivePanelHtml(data, { loading = false } = {}) {
   if (loading) {
     return '<div class="parcel-live-skeleton"><div class="sk-line"></div><div class="sk-grid"></div></div>';
@@ -372,6 +387,7 @@ function formatLivePanelHtml(data, { loading = false } = {}) {
         <div><span>Humid.</span><strong>${sp.avg_humidity_pct ?? '—'}%</strong></div>
       </div>
       <p class="parcel-live-nasa">${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
+      ${formatStacLine(nasa)}
       ${formatTypesBreakdown(data.soil_types_breakdown)}
       ${ml?.predicted_class ? `<p class="parcel-live-ml">IA fertilité : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
       ${(data.recommendations || []).slice(0, 2).map((r) => `<p class="parcel-live-tip">• ${r}</p>`).join('')}

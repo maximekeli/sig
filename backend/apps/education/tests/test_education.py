@@ -55,6 +55,18 @@ def test_pedagogical_sheets_api(api_client, db):
     )
     r = api_client.get('/api/v1/education/sheets/')
     assert r.status_code == 200
+    payload = r.json()
+    row = (payload.get('results') or payload)[0]
+    assert 'pdf_url' in row
+
+
+@pytest.mark.django_db
+def test_pedagogical_sheet_pdf(api_client, db):
+    from education.models import PedagogicalSheet
+    s = PedagogicalSheet.objects.create(title='Fiche test', theme='nasa', content_fr='Aperçu', order=0)
+    r = api_client.get(f'/api/v1/education/sheets/{s.pk}/pdf/')
+    assert r.status_code == 200
+    assert r.content[:4] == b'%PDF'
 
 
 @pytest.mark.django_db

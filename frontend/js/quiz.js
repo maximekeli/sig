@@ -159,11 +159,19 @@ async function loadSheets() {
   const data = await SigSolsAPI.api('/education/sheets/');
   const list = document.getElementById('sheets-list');
   list.innerHTML = '';
-  (data.results || data).forEach((s, i) => {
+  const rows = data.results || data;
+  rows.forEach((s, i) => {
     const div = document.createElement('article');
     div.className = 'sheet-card';
     div.style.animationDelay = `${i * 0.08}s`;
-    div.innerHTML = `<h3>${s.title}</h3><p>${s.content_fr}</p>`;
+    const pdfHref = s.pdf_url || '';
+    const pdfBtn = pdfHref
+      ? `<p class="sheet-pdf-row"><a class="sheet-pdf-link" href="${pdfHref}" target="_blank" rel="noopener">Télécharger le PDF complet (≈ 20+ pages)</a></p>`
+      : '';
+    div.innerHTML = `
+      <h3>${s.title}</h3>
+      <p class="sheet-excerpt">${s.content_fr}</p>
+      ${pdfBtn}`;
     list.appendChild(div);
   });
 }
