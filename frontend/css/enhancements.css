@@ -259,6 +259,17 @@
 }
 body:not(.agent-mode) .agent-only { display: none !important; }
 
+.sheet-pdf-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary, #134e2a);
+  text-decoration: underline;
+}
+.sheet-excerpt {
+  line-height: 1.55;
+}
+
 @media (max-width: 768px) {
   #btn-sidebar-toggle { display: block; }
   .sidebar {

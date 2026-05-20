@@ -23,7 +23,7 @@ def api_schema(_request):
             '/api/v1/spatial/proximity/': {'get': {'summary': 'Proximité GPS'}},
             '/api/v1/ml/predict/': {'post': {'summary': 'Prédiction fertilité'}},
             '/api/v1/ml/train/': {'post': {'summary': 'Réentraînement IA (admin)'}},
-            '/api/v1/education/quiz/start/': {'post': {'summary': 'Démarrer quiz'}},
+            '/api/v1/education/sheets/{id}/pdf/': {'get': {'summary': 'PDF fiche pédagogique (long)'}},
             '/api/v1/platform/admin/dashboard/': {'get': {'summary': 'Dashboard admin'}},
             '/api/v1/dashboard/stats/': {'get': {'summary': 'KPIs sols'}},
         },

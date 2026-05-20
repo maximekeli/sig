@@ -2,6 +2,7 @@
 from io import BytesIO
 from xml.sax.saxutils import escape
 
+from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
@@ -36,7 +37,7 @@ def build_pedagogical_pdf_bytes(sheet) -> bytes:
         name='PdfBody', parent=styles['Normal'], fontSize=10, leading=14, spaceAfter=8,
     )
     small = ParagraphStyle(
-        name='PdfSmall', parent=styles['Normal'], fontSize=8, leading=11, textColor=0x404040,
+        name='PdfSmall', parent=styles['Normal'], fontSize=8, leading=11, textColor=HexColor('#404040'),
     )
 
     story = [
