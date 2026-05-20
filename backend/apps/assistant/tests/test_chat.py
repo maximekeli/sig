@@ -48,3 +48,53 @@ def test_assistant_chat_mocked(api_client, monkeypatch):
         }, format='json')
     assert r.status_code == 200
     assert 'assistant' in r.json()['reply'].lower() or 'SIG' in r.json()['reply']
+
+
+@pytest.mark.django_db
+def test_assistant_chat_with_history(api_client, monkeypatch):
+    with override_settings(GEMINI_API_KEY='fake-key'):
+        monkeypatch.setattr(
+            'assistant.views.chat_with_gemini',
+            lambda message, history=None, context=None: (
+                f'ok:{len(history or [])}:{message[:10]}',
+                None,
+            ),
+        )
+        r = api_client.post('/api/v1/assistant/chat/', {
+            'message': 'Suite',
+            'history': [
+                {'role': 'user', 'content': 'Première question'},
+                {'role': 'assistant', 'content': 'Première réponse'},
+            ],
+            'context': {'view': 'quiz'},
+        }, format='json')
+    assert r.status_code == 200
+    assert r.json()['reply'] == 'ok:2:Suite'
+
+
+@pytest.mark.django_db
+def test_assistant_chat_message_too_long(api_client):
+    r = api_client.post('/api/v1/assistant/chat/', {
+        'message': 'x' * 5000,
+    }, format='json')
+    assert r.status_code == 400
+
+
+@pytest.mark.gemini_live
+@pytest.mark.django_db
+def test_assistant_chat_live_gemini(api_client):
+    """Appel réel Gemini — exécuter avec GEMINI_LIVE_TESTS=1 et GEMINI_API_KEY valide."""
+    import os
+    if os.environ.get('GEMINI_LIVE_TESTS') != '1':
+        pytest.skip('GEMINI_LIVE_TESTS=1 requis')
+    from django.conf import settings
+    if not settings.GEMINI_API_KEY:
+        pytest.skip('GEMINI_API_KEY manquante')
+    r = api_client.post('/api/v1/assistant/chat/', {
+        'message': 'En une phrase : qu’est-ce que le pH du sol ?',
+        'context': {'view': 'help'},
+    }, format='json')
+    assert r.status_code == 200, r.content
+    reply = r.json().get('reply', '')
+    assert len(reply) > 20
+    assert 'pH' in reply or 'sol' in reply.lower()
