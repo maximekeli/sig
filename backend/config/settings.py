@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'ml_predict',
     'education',
     'sig_platform',
+    'assistant',
 ]
 
 MIDDLEWARE = [
@@ -212,8 +213,12 @@ REST_FRAMEWORK = {
         'auth': os.environ.get('THROTTLE_AUTH', '20/min'),
         'location': os.environ.get('THROTTLE_LOCATION', '120/min'),
         'quiz': os.environ.get('THROTTLE_QUIZ', '60/min'),
+        'assistant': os.environ.get('THROTTLE_ASSISTANT', '30/min'),
     },
 }
+
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash')
 
 JWT_ACCESS_MINUTES = int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', '60'))
 SIMPLE_JWT = {

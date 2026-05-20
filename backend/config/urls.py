@@ -18,6 +18,7 @@ urlpatterns = [
     path('api/v1/ml/', include('ml_predict.urls')),
     path('api/v1/education/', include('education.urls')),
     path('api/v1/platform/', include('sig_platform.urls')),
+    path('api/v1/assistant/', include('assistant.urls')),
 ]
 
 if settings.DEBUG:

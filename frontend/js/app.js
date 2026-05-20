@@ -102,4 +102,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   window.SigSolsTools?.initTools?.();
   window.SigSolsAdminPanel?.initAdminPanel?.();
+  const { initChatbot } = await import('./chat.js');
+  initChatbot();
 });

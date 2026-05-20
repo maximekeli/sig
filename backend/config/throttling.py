@@ -22,3 +22,11 @@ class LocationUserThrottle(UserRateThrottle):
 
 class QuizUserThrottle(UserRateThrottle):
     scope = 'quiz'
+
+
+class AssistantAnonThrottle(AnonRateThrottle):
+    scope = 'assistant'
+
+
+class AssistantUserThrottle(UserRateThrottle):
+    scope = 'assistant'

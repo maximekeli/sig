@@ -628,4 +628,5 @@ window.SigSolsParcel = {
   clearParcelSelection,
   selectParcelByCode,
   refreshLiveParcelInfo,
+  getLastParcelData: () => lastParcelData,
 };

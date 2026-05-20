@@ -33,7 +33,7 @@ Les fiches listées via l’API incluent un champ **`pdf_url`** (chemin relatif 
 
 | Service | Intérêt possible | Statut |
 |---------|------------------|--------|
-| **Google Gemini API** | Résumés en langage naturel des rapports parcelle, assistant pédagogique quiz | ❌ Non intégré — à ajouter via `GEMINI_API_KEY` si souhaité |
+| **Google Gemini API** | Assistant IA conversationnel (sols, parcelles, quiz, NASA) | ✅ Intégré via `GEMINI_API_KEY` — `POST /api/v1/assistant/chat/` |
 | **OpenAI / Anthropic** | Même usage que Gemini | ❌ Non intégré |
 | **Mapbox / MapTiler** | Fonds carte vectoriels haute qualité | ❌ Non intégré (OSM suffit pour le pilote) |
 | **Sentinel Hub** | NDVI temps réel haute résolution | ❌ Non intégré (NASA MODIS utilisé) |

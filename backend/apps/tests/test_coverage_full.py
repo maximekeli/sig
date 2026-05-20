@@ -33,18 +33,24 @@ class TestAccountsCoverage:
         from accounts.services import list_live_locations, upsert_user_location
 
         suffix = uuid.uuid4().hex[:8]
-        assert api_client.post('/api/v1/auth/register/', {
-            'username': f'u1_{suffix}', 'email': f'n1_{suffix}@t.local',
+        reg_base = {
             'password': 'pass12345', 'password_confirm': 'pass12345',
+            'first_name': 'Test', 'last_name': 'User', 'age': 30,
+            'consent_analytics': True,
+        }
+        assert api_client.post('/api/v1/auth/register/', {
+            **reg_base,
+            'username': f'u1_{suffix}', 'email': f'n1_{suffix}@t.local',
             'role': 'agent',
         }, format='json').status_code == 201
         assert api_client.post('/api/v1/auth/register/', {
+            **reg_base,
             'username': f'u2_{suffix}', 'email': f'u2_{suffix}@example.com',
-            'password': 'pass12345', 'password_confirm': 'pass12346',
+            'password_confirm': 'pass12346',
         }, format='json').status_code == 400
         r_admin = api_client.post('/api/v1/auth/register/', {
+            **reg_base,
             'username': f'u3_{suffix}', 'email': f'user_{suffix}@example.com',
-            'password': 'pass12345', 'password_confirm': 'pass12345',
             'role': 'admin',
         }, format='json')
         assert r_admin.status_code == 201, r_admin.content
