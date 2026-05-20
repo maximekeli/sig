@@ -53,16 +53,44 @@
           <button type="button" id="btn-login" class="btn-auth-primary">Se connecter</button>
           <button type="button" id="btn-forgot-pass" class="btn-link">Mot de passe oublié ?</button>
         </div>
-        <div id="auth-register-form" class="auth-form hidden">
-          <input type="text" id="reg-user" placeholder="Utilisateur" autocomplete="username" />
-          <input type="email" id="reg-email" placeholder="Email" />
-          <input type="password" id="reg-pass" placeholder="Mot de passe (8+)" autocomplete="new-password" />
-          <input type="password" id="reg-pass2" placeholder="Confirmer mot de passe" />
-          <select id="reg-role">
-            <option value="public">Public</option>
-            <option value="agent">Agent</option>
-          </select>
-          <input type="text" id="reg-org" placeholder="Organisation (optionnel)" />
+        <div id="auth-register-form" class="auth-form auth-register-extended hidden">
+          <div class="reg-grid">
+            <input type="text" id="reg-first" placeholder="Prénom *" autocomplete="given-name" />
+            <input type="text" id="reg-last" placeholder="Nom *" autocomplete="family-name" />
+            <input type="number" id="reg-age" placeholder="Âge *" min="13" max="120" />
+            <select id="reg-gender">
+              <option value="">Genre (optionnel)</option>
+              <option value="F">Féminin</option>
+              <option value="M">Masculin</option>
+              <option value="other">Autre</option>
+              <option value="na">Ne pas préciser</option>
+            </select>
+            <input type="email" id="reg-email" placeholder="Email *" autocomplete="email" />
+            <input type="tel" id="reg-phone" placeholder="Téléphone (optionnel)" autocomplete="tel" />
+            <input type="text" id="reg-user" placeholder="Identifiant *" autocomplete="username" />
+            <input type="password" id="reg-pass" placeholder="Mot de passe (8+) *" autocomplete="new-password" />
+            <input type="password" id="reg-pass2" placeholder="Confirmer mot de passe *" autocomplete="new-password" />
+            <input type="text" id="reg-city" placeholder="Ville" />
+            <input type="text" id="reg-region" placeholder="Région" value="Maritime" />
+            <input type="text" id="reg-profession" placeholder="Profession" />
+            <select id="reg-education">
+              <option value="">Niveau d'études</option>
+              <option value="primaire">Primaire</option>
+              <option value="secondaire">Secondaire</option>
+              <option value="bac">Baccalauréat</option>
+              <option value="licence">Licence</option>
+              <option value="master">Master / Doctorat</option>
+              <option value="pro">Formation professionnelle</option>
+            </select>
+            <select id="reg-role">
+              <option value="public">Public</option>
+              <option value="agent">Agent</option>
+            </select>
+            <input type="text" id="reg-org" placeholder="Organisation (optionnel)" />
+            <input type="text" id="reg-pseudo" placeholder="Pseudonyme quiz (optionnel)" />
+          </div>
+          <label class="reg-consent"><input type="checkbox" id="reg-consent" /> J’accepte le suivi statistique de mon activité sur la plateforme (zoom carte, navigation, quiz…) à des fins d’analyse admin et data science. *</label>
+          <textarea id="reg-motivation" rows="2" placeholder="Motivation / usage prévu (optionnel)"></textarea>
           <button type="button" id="btn-register" class="btn-auth-primary">Créer un compte</button>
         </div>
         <p id="auth-message" class="auth-message" aria-live="polite"></p>
