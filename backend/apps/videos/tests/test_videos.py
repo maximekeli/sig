@@ -93,3 +93,40 @@ class VideoPostAPITest(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         post.refresh_from_db()
         self.assertEqual(post.status, VideoPost.Status.PUBLISHED)
+
+    def test_comment_reply_and_likes(self):
+        post = VideoPost.objects.create(
+            author=self.admin,
+            kind=VideoPost.Kind.VIDEO,
+            title='Publiée',
+            file=SimpleUploadedFile('d.mp4', b'4', content_type='video/mp4'),
+            status=VideoPost.Status.PUBLISHED,
+        )
+        self.client.force_authenticate(self.public)
+        c1 = self.client.post(
+            self._url('video-post-comments', pk=post.pk),
+            {'text': 'Super vidéo !'},
+            format='json',
+        )
+        self.assertEqual(c1.status_code, status.HTTP_201_CREATED)
+        parent_id = c1.data['id']
+        c2 = self.client.post(
+            self._url('video-post-comments', pk=post.pk),
+            {'text': 'Merci !', 'parent_id': parent_id},
+            format='json',
+        )
+        self.assertEqual(c2.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(c2.data['parent_id'], parent_id)
+
+        like_post = self.client.post(
+            self._url('video-post-toggle-like', pk=post.pk),
+        )
+        self.assertEqual(like_post.status_code, status.HTTP_200_OK)
+        self.assertTrue(like_post.data['liked'])
+        self.assertEqual(like_post.data['like_count'], 1)
+
+        like_c = self.client.post(
+            f'/api/v1/videos/comments/{parent_id}/toggle_like/',
+        )
+        self.assertEqual(like_c.status_code, status.HTTP_200_OK)
+        self.assertTrue(like_c.data['liked'])
