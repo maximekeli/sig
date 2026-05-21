@@ -1,6 +1,6 @@
-import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
+import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -48,11 +48,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='videocomment',
-            index=models.Index(fields=['post', 'created_at'], name='videos_vide_post_id_6a8c2a_idx'),
+            index=models.Index(fields=['post', 'created_at'], name='videos_vide_post_id_cmt_idx'),
         ),
         migrations.AddIndex(
             model_name='videocomment',
-            index=models.Index(fields=['parent', 'created_at'], name='videos_vide_parent__b3f1e2_idx'),
+            index=models.Index(fields=['parent', 'created_at'], name='videos_vide_parent_cmt_idx'),
         ),
         migrations.AddConstraint(
             model_name='videopostlike',
