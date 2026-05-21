@@ -167,13 +167,14 @@ async function submitAnswer(selectedIndex) {
 
 async function finishQuiz() {
   const r = await SigSolsAPI.api(`/education/quiz/${quizSession}/finish/`, { method: 'POST', body: '{}' });
-  trackActivity('quiz_finish', { score: r.score, total: r.total_questions }, 'quiz');
+  const finalScore = r.final_score ?? r.score ?? 0;
+  trackActivity('quiz_finish', { score: finalScore, total: r.total_questions }, 'quiz');
   document.getElementById('quiz-feedback').textContent = formatFinishMessage(r);
   document.getElementById('quiz-feedback').className = 'quiz-feedback quiz-feedback--ok';
   document.getElementById('btn-quiz-start').disabled = false;
   document.getElementById('btn-quiz-finish').classList.add('hidden');
   const certBtn = document.getElementById('btn-quiz-certificate');
-  if (certBtn && quizSession && (r.score ?? 0) >= 10) {
+  if (certBtn && quizSession && finalScore >= 10) {
     certBtn.href = `/api/v1/education/quiz/${quizSession}/certificate/`;
     certBtn.classList.remove('hidden');
   } else if (certBtn) {

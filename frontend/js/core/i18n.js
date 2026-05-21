@@ -1,5 +1,15 @@
 /** Internationalisation FR / EN (clés data-i18n sur le DOM). */
 const STRINGS = {
+  ee: {
+    'nav.map': 'Map',
+    'nav.dashboard': 'Tablo',
+    'welcome.title': 'Woezo le SIG Sols Togo',
+  },
+  kab: {
+    'nav.map': 'Takarut',
+    'nav.dashboard': 'Asenfaru',
+    'welcome.title': 'Ansuf ɣer SIG Sols Togo',
+  },
   fr: {
     'nav.map': 'Carte',
     'nav.dashboard': 'Tableau de bord',
