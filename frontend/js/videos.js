@@ -397,6 +397,7 @@ async function loadVideos() {
   const grid = document.getElementById('videos-grid');
   const modBox = document.getElementById('videos-pending-admin');
   if (!grid) return;
+  window.SigSolsAnimations?.setLoadingState?.(grid, true);
   grid.innerHTML = '<p class="panel-lead">Chargement…</p>';
   try {
     const posts = await fetchPosts('video');
@@ -404,11 +405,14 @@ async function loadVideos() {
       grid.innerHTML = '<p class="panel-lead">Aucune vidéo publiée pour le moment.</p>';
     } else {
       grid.innerHTML = posts.map(renderVideoCard).join('');
+      grid.classList.add('animate-stagger');
+      window.SigSolsAnimations?.refreshStagger?.(grid);
       bindModeration(grid);
       bindEngagement();
       bindShareAndFav(grid);
       await loadAllComments(grid);
     }
+    window.SigSolsAnimations?.setLoadingState?.(grid, false);
     const user = API().getUser?.();
     if (user?.role === 'admin' && modBox) {
       const pending = await API().api('/videos/posts/pending/');
@@ -430,12 +434,15 @@ async function loadShorts() {
   updateAuthPanels();
   const feed = document.getElementById('shorts-feed');
   if (!feed) return;
+  window.SigSolsAnimations?.setLoadingState?.(feed, true);
   feed.innerHTML = '<p class="panel-lead">Chargement…</p>';
   try {
     const posts = await fetchPosts('short');
     feed.innerHTML = posts.length
       ? posts.map(renderShortCard).join('')
       : '<p class="panel-lead">Aucun short pour le moment.</p>';
+    feed.classList.add('animate-stagger');
+    window.SigSolsAnimations?.refreshStagger?.(feed);
     bindModeration(feed);
     bindEngagement();
     bindShareAndFav(feed);
