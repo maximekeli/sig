@@ -29,4 +29,6 @@ urlpatterns = [
     path('password/reset/', PasswordResetRequestView.as_view(), name='password-reset'),
     path('password/reset/confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
     path('reports/zone/<str:zone_code>/', ZoneReportView.as_view(), name='zone-report'),
+    path('admin/export/users.csv', AdminExportUsersCSVView.as_view(), name='admin-export-users'),
+    path('admin/export/activity.csv', AdminExportActivityCSVView.as_view(), name='admin-export-activity'),
 ]
