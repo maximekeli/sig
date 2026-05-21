@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 User = get_user_model()
 
@@ -50,6 +51,26 @@ def test_profile_authenticated(auth_client, agent_user):
     r = auth_client.get('/api/v1/auth/profile/')
     assert r.status_code == 200
     assert r.json()['username'] == 'test_agent'
+    assert 'profile_photo_url' in r.json()
+
+
+@pytest.mark.django_db
+def test_profile_photo_upload_and_delete(auth_client, agent_user):
+    img = SimpleUploadedFile(
+        'avatar.png',
+        b'\x89PNG\r\n\x1a\n',
+        content_type='image/png',
+    )
+    r = auth_client.post(
+        '/api/v1/auth/profile/photo/',
+        {'profile_photo': img},
+        format='multipart',
+    )
+    assert r.status_code == 200
+    assert r.json()['profile_photo_url']
+    r2 = auth_client.delete('/api/v1/auth/profile/photo/')
+    assert r2.status_code == 200
+    assert r2.json()['profile_photo_url'] is None
 
 
 @pytest.mark.django_db

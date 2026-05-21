@@ -915,3 +915,70 @@ body:not(.agent-mode) .agent-only { display: none !important; }
   color: var(--slate-600, #475569);
   margin: 0.25rem 0;
 }
+
+/* Photo de profil */
+.profile-photo-block {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.profile-avatar-wrap,
+.header-avatar-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--cream-2, #eef2ea);
+  border: 2px solid rgba(22, 101, 52, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-avatar-wrap {
+  width: 36px;
+  height: 36px;
+  border-width: 1px;
+}
+
+.profile-avatar-img,
+.header-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-avatar-placeholder,
+.header-avatar-placeholder {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--emerald-800, #14532d);
+}
+
+.header-avatar-placeholder {
+  font-size: 0.85rem;
+}
+
+.profile-photo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.profile-photo-label {
+  cursor: pointer;
+  text-align: center;
+}
+
+.profile-photo-label input.hidden {
+  display: none;
+}
+
+.auth-user {
+  align-items: center;
+  gap: 0.5rem;
+}
