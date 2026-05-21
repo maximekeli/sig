@@ -21,6 +21,7 @@ export function toast(message, type = 'info', duration = 4200) {
   requestAnimationFrame(() => el.classList.add('toast-visible'));
   const remove = () => {
     el.classList.remove('toast-visible');
+    el.classList.add('toast-exit');
     setTimeout(() => el.remove(), 320);
   };
   el.addEventListener('click', remove);

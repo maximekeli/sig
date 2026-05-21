@@ -8,8 +8,8 @@
   "theme_color": "#0d2818",
   "lang": "fr",
   "icons": [
-    { "src": "/frontend/icons/icon-192.png", "purpose": "any", "sizes": "192x192", "type": "image/png" },
-    { "src": "/frontend/icons/icon-512.png", "purpose": "any", "sizes": "512x512", "type": "image/png" }
+    { "src": "/frontend/images/logo-dusol.png", "purpose": "any", "sizes": "192x192", "type": "image/png" },
+    { "src": "/frontend/images/logo-sig-sol.png", "purpose": "any", "sizes": "512x512", "type": "image/png" }
   ],
   "shortcuts": [
     { "name": "Carte", "url": "/frontend/index.html", "description": "Carte des sols" },

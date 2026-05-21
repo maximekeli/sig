@@ -427,6 +427,7 @@ async function loadVideos() {
     }
   } catch (e) {
     grid.innerHTML = `<p class="parcel-status">${escapeHtml(e.message)}</p>`;
+    window.SigSolsAnimations?.setLoadingState?.(grid, false);
   }
 }
 
@@ -447,8 +448,10 @@ async function loadShorts() {
     bindEngagement();
     bindShareAndFav(feed);
     await loadAllComments(feed);
+    window.SigSolsAnimations?.setLoadingState?.(feed, false);
   } catch (e) {
     feed.innerHTML = `<p class="parcel-status">${escapeHtml(e.message)}</p>`;
+    window.SigSolsAnimations?.setLoadingState?.(feed, false);
   }
 }
 

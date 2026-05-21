@@ -116,6 +116,7 @@ async function loadFollowingFeed() {
     box.innerHTML = '<p class="panel-lead">Connectez-vous pour voir le fil de vos abonnements.</p>';
     return;
   }
+  window.SigSolsAnimations?.setLoadingState?.(box, true);
   box.innerHTML = '<p class="panel-lead">Chargement du fil…</p>';
   try {
     const data = await API().api('/auth/feed/');
@@ -123,7 +124,10 @@ async function loadFollowingFeed() {
     box.innerHTML = posts.length
       ? posts.map(renderFeedPost).join('')
       : '<p class="panel-lead">Aucune publication — suivez des membres via la recherche.</p>';
+    box.classList.add('animate-stagger');
+    window.SigSolsAnimations?.refreshStagger?.(box);
     bindCommunityActions(box);
+    window.SigSolsAnimations?.setLoadingState?.(box, false);
   } catch (e) {
     box.innerHTML = `<p class="parcel-status">${escapeHtml(e.message)}</p>`;
   }

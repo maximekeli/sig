@@ -278,6 +278,8 @@ async function loadSheets() {
       article.append(head, excerpt, actions);
       list.appendChild(article);
     });
+    list.classList.add('animate-stagger');
+    window.SigSolsAnimations?.refreshStagger?.(list);
   } catch (e) {
     list.innerHTML = '<p class="sheets-empty">Impossible de charger les fiches. Vérifiez la connexion au serveur.</p>';
     notifyError(e);

@@ -12,6 +12,9 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
     target.classList.add('active');
     void target.offsetWidth;
     target.style.animation = '';
+    target.querySelectorAll('.animate-stagger').forEach((grid) => {
+      window.SigSolsAnimations?.refreshStagger?.(grid);
+    });
     document.getElementById('welcome-banner')?.classList.add('hidden');
     import('./core/activityTracker.js').then(({ trackNav }) => trackNav(viewName)).catch(() => {});
     if (viewName === 'dashboard') SigSolsDashboard.loadDashboard();

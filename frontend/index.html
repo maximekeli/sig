@@ -10,6 +10,8 @@
   <meta property="og:title" content="SIG Sols Togo" />
   <meta property="og:description" content="Système d'information géographique des sols — Togo" />
   <meta property="og:type" content="website" />
+  <link rel="icon" href="images/logo-dusol.png" type="image/png" />
+  <link rel="apple-touch-icon" href="images/logo-dusol.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -26,8 +28,14 @@
   <div id="global-loading" class="hidden" aria-busy="false"><div class="spinner" aria-hidden="true"></div></div>
   <header class="app-header">
     <div class="brand">
-      <h1>SIG Sols Togo</h1>
-      <p class="subtitle">SIG-SOLS-TOGO-2026-01 · Région Maritime</p>
+      <div class="brand-logos" role="img" aria-label="DUSOL et SIG-SOL">
+        <img src="images/logo-dusol.png" alt="Logo DUSOL" class="brand-logo brand-logo--dusol" width="52" height="52" decoding="async" />
+        <img src="images/logo-sig-sol.png" alt="Logo SIG-SOL" class="brand-logo brand-logo--sig" width="52" height="52" decoding="async" />
+      </div>
+      <div class="brand-text">
+        <h1>SIG Sols Togo</h1>
+        <p class="subtitle">DUSOL · DISIA · Région Maritime</p>
+      </div>
     </div>
     <nav class="main-nav" aria-label="Navigation principale">
       <button type="button" class="nav-btn active" data-view="map" data-i18n="nav.map">Carte</button>
@@ -113,8 +121,12 @@
 
   <main id="main-content">
   <section id="welcome-banner" class="welcome-banner hidden" aria-label="Bienvenue">
+    <div class="welcome-logos">
+      <img src="images/logo-dusol.png" alt="DUSOL" width="72" height="72" />
+      <img src="images/logo-sig-sol.png" alt="SIG-SOL" width="72" height="72" />
+    </div>
     <h2 data-i18n="welcome.title">Bienvenue sur SIG Sols Togo</h2>
-    <p data-i18n="welcome.sub">Cartographie des sols, NASA, IA et quiz — Région Maritime.</p>
+    <p data-i18n="welcome.sub">Cartographie des sols, NASA, IA et quiz — DUSOL / DISIA, Région Maritime.</p>
   </section>
   <button type="button" id="btn-sidebar-toggle" aria-expanded="false" aria-controls="sidebar">☰ Filtres</button>
   <!-- MAP VIEW -->
@@ -341,7 +353,7 @@
       <div class="videos-main">
         <p id="videos-login-hint" class="panel-lead">Connectez-vous pour publier une vidéo.</p>
         <div id="videos-pending-admin" class="videos-moderation admin-only hidden"></div>
-        <div id="videos-grid" class="videos-grid" role="list"></div>
+        <div id="videos-grid" class="videos-grid animate-stagger" role="list"></div>
       </div>
     </div>
   </section>
@@ -366,7 +378,7 @@
           <p id="short-upload-msg" class="parcel-status" aria-live="polite"></p>
         </form>
       </aside>
-      <div class="shorts-feed" id="shorts-feed" role="list"></div>
+      <div class="shorts-feed animate-stagger" id="shorts-feed" role="list"></div>
     </div>
     <p id="shorts-login-hint" class="panel-lead shorts-hint">Connectez-vous pour publier un short.</p>
   </section>
@@ -378,7 +390,7 @@
       <p class="view-hero-sub">Abonnements, profils publics et favoris</p>
     </header>
     <div class="community-layout">
-      <aside class="community-sidebar">
+      <aside class="community-sidebar community-sidebar--animated">
         <h3>Rechercher un membre</h3>
         <div class="community-search-row">
           <input type="search" id="community-search-input" placeholder="Nom ou identifiant…" minlength="2" />
@@ -392,7 +404,7 @@
           <button type="button" class="community-tab" data-community-tab="favorites">Mes favoris</button>
         </nav>
         <div id="community-tab-feed" data-community-panel="feed">
-          <div id="community-feed" class="community-feed"></div>
+          <div id="community-feed" class="community-feed animate-stagger"></div>
         </div>
         <div id="community-tab-favorites" class="hidden" data-community-panel="favorites">
           <div id="community-favorites" class="community-favorites"></div>
@@ -408,7 +420,7 @@
       <h2 class="view-hero-title">Fiches pédagogiques</h2>
       <p class="view-hero-sub">Ressources éducatives sur les sols togolais</p>
     </header>
-    <div id="sheets-list" class="sheets-list"></div>
+    <div id="sheets-list" class="sheets-list animate-stagger"></div>
   </section>
 
   <section id="view-admin" class="view">
@@ -495,6 +507,16 @@
       <h2 class="view-hero-title" data-i18n="nav.help">Aide</h2>
       <p class="view-hero-sub">Guide rapide SIG Sols Togo</p>
     </header>
+    <div class="help-partners" aria-label="Partenaires">
+      <figure class="help-partner">
+        <img src="images/logo-dusol.png" alt="DUSOL — sols et environnement" width="80" height="80" />
+        <figcaption>DUSOL</figcaption>
+      </figure>
+      <figure class="help-partner">
+        <img src="images/logo-sig-sol.png" alt="SIG-SOL — système d'information géographique" width="80" height="80" />
+        <figcaption>SIG-SOL</figcaption>
+      </figure>
+    </div>
     <div class="help-panel">
       <article class="help-card">
         <h3>Carte</h3>
