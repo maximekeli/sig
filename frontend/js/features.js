@@ -188,6 +188,17 @@ export async function loadNotifications() {
   }
 }
 
+export function initAdminExports() {
+  document.getElementById('adm-export-users')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    SigSolsMap.exportWithAuth('/platform/admin/export/users.csv', 'utilisateurs.csv');
+  });
+  document.getElementById('adm-export-activity')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    SigSolsMap.exportWithAuth('/platform/admin/export/activity.csv?days=30', 'activite_30j.csv');
+  });
+}
+
 export async function loadPendingValidation() {
   const el = document.getElementById('adm-pending-list');
   if (!el) return;
@@ -329,6 +340,7 @@ window.SigSolsFeatures = {
   loadNotifications,
   loadAdminDashboard,
   loadPendingValidation,
+  initAdminExports,
   validatePoint,
   showTrajectory,
   connectWebSocket,

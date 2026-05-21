@@ -87,6 +87,7 @@ async function startQuiz() {
   quizIndex = 0;
   document.getElementById('quiz-area').classList.remove('hidden');
   document.getElementById('btn-quiz-finish').classList.add('hidden');
+  document.getElementById('btn-quiz-certificate')?.classList.add('hidden');
   document.getElementById('quiz-score').textContent = '0';
   document.getElementById('quiz-feedback').textContent = '';
   document.getElementById('quiz-total').textContent = String(quizQuestions.length);
@@ -167,6 +168,14 @@ async function finishQuiz() {
   document.getElementById('quiz-feedback').className = 'quiz-feedback quiz-feedback--ok';
   document.getElementById('btn-quiz-start').disabled = false;
   document.getElementById('btn-quiz-finish').classList.add('hidden');
+  const certBtn = document.getElementById('btn-quiz-certificate');
+  if (certBtn && quizSession && (r.score ?? 0) >= 10) {
+    certBtn.href = `/api/v1/education/quiz/${quizSession}/certificate/`;
+    certBtn.classList.remove('hidden');
+  } else if (certBtn) {
+    certBtn.classList.add('hidden');
+    certBtn.removeAttribute('href');
+  }
   loadLeaderboard();
   loadBadges();
 }
@@ -247,7 +256,25 @@ async function loadSheets() {
       dl.rel = 'noopener noreferrer';
       dl.textContent = 'Télécharger';
 
-      actions.append(readBtn, dl);
+      const favBtn = document.createElement('button');
+      favBtn.type = 'button';
+      favBtn.className = 'btn-sheet-fav';
+      favBtn.textContent = '☆ Favori';
+      favBtn.addEventListener('click', async () => {
+        if (!SigSolsAPI.isAuthenticated()) {
+          alert('Connectez-vous pour enregistrer un favori.');
+          return;
+        }
+        try {
+          await window.SigSolsCommunity?.toggleFavorite?.('sheet', s.id);
+          favBtn.textContent = '★ Favori';
+          window.SigSolsFeatures?.notifySuccess?.('Fiche ajoutée aux favoris.');
+        } catch (e) {
+          notifyError(e);
+        }
+      });
+
+      actions.append(readBtn, dl, favBtn);
       article.append(head, excerpt, actions);
       list.appendChild(article);
     });

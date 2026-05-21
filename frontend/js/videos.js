@@ -168,17 +168,22 @@ function renderVideoCard(post) {
   const src = mediaUrl(post.file_url);
   const thumb = post.thumbnail_url ? mediaUrl(post.thumbnail_url) : '';
   const poster = thumb ? ` poster="${thumb}"` : '';
+  const cat = CATEGORY_LABELS[post.category] || '';
+  const authorLink = post.author_username
+    ? `<button type="button" class="btn-link community-author-link" data-username="${escapeHtml(post.author_username)}">${escapeHtml(post.author_display)}</button>`
+    : escapeHtml(post.author_display);
   return `
     <article class="video-card" role="listitem" data-id="${post.id}">
       <div class="video-card-media">
         <video controls preload="metadata" src="${src}"${poster}></video>
         ${post.is_featured ? '<span class="video-badge">À la une</span>' : ''}
+        ${cat ? `<span class="video-cat-badge">${escapeHtml(cat)}</span>` : ''}
       </div>
       <div class="video-card-body">
         <h3>${escapeHtml(post.title)}</h3>
         <p class="video-meta video-meta--author">
           ${authorAvatarHtml(post.author_profile_photo_url, post.author_display)}
-          <span>${escapeHtml(post.author_display)} · ${post.view_count} vues</span>
+          <span>${authorLink} · ${post.view_count} vues</span>
         </p>
         <span class="${statusClass(post.status)}">${statusLabel(post.status)}</span>
         ${post.description ? `<p class="video-desc">${escapeHtml(post.description)}</p>` : ''}
@@ -257,7 +262,36 @@ async function submitComment(postId, text, parentId = null) {
 }
 
 function isEngagementView(el) {
-  return el?.closest('#view-videos, #view-shorts');
+  return el?.closest('#view-videos, #view-shorts, #view-community');
+}
+
+function bindShareAndFav(container) {
+  container?.querySelectorAll('[data-share-video]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.shareVideo;
+      const url = `${ORIGIN()}/?view=videos&video=${id}`;
+      navigator.clipboard?.writeText(url).then(
+        () => window.SigSolsFeatures?.notifySuccess?.('Lien copié.'),
+        () => prompt('Copiez ce lien :', url),
+      );
+    });
+  });
+  container?.querySelectorAll('[data-fav-video]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        await window.SigSolsCommunity?.toggleFavorite?.('video', parseInt(btn.dataset.favVideo, 10));
+        btn.textContent = '★ Favori';
+        window.SigSolsFeatures?.notifySuccess?.('Ajouté aux favoris.');
+      } catch (e) {
+        alert(e.message || 'Erreur');
+      }
+    });
+  });
+  container?.querySelectorAll('.community-author-link').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      window.SigSolsCommunity?.openPublicProfile?.(btn.dataset.username);
+    });
+  });
 }
 
 let engagementDelegationReady = false;
@@ -372,6 +406,7 @@ async function loadVideos() {
       grid.innerHTML = posts.map(renderVideoCard).join('');
       bindModeration(grid);
       bindEngagement();
+      bindShareAndFav(grid);
       await loadAllComments(grid);
     }
     const user = API().getUser?.();
@@ -403,6 +438,7 @@ async function loadShorts() {
       : '<p class="panel-lead">Aucun short pour le moment.</p>';
     bindModeration(feed);
     bindEngagement();
+    bindShareAndFav(feed);
     await loadAllComments(feed);
   } catch (e) {
     feed.innerHTML = `<p class="parcel-status">${escapeHtml(e.message)}</p>`;
@@ -440,6 +476,35 @@ async function loadAdminPending() {
   }
 }
 
+async function captureThumbnailFromVideo(file) {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'auto';
+    video.muted = true;
+    const url = URL.createObjectURL(file);
+    video.onloadeddata = () => {
+      video.currentTime = Math.min(1, (video.duration || 2) * 0.1);
+    };
+    video.onseeked = () => {
+      const canvas = document.createElement('canvas');
+      const w = 320;
+      const h = Math.max(1, Math.round(w * (video.videoHeight / video.videoWidth) || 0.5625));
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d')?.drawImage(video, 0, 0, w, h);
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(url);
+        resolve(blob ? new File([blob], 'thumb.jpg', { type: 'image/jpeg' }) : null);
+      }, 'image/jpeg', 0.85);
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    video.src = url;
+  });
+}
+
 function handleUpload(form, kind, msgEl) {
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -450,6 +515,8 @@ function handleUpload(form, kind, msgEl) {
     const fd = new FormData();
     fd.append('kind', kind);
     fd.append('title', form.querySelector('[id$="-title"]')?.value?.trim() || 'Sans titre');
+    const cat = document.getElementById('video-category')?.value;
+    if (cat && kind === 'video') fd.append('category', cat);
     const desc = form.querySelector('[id$="-desc"]')?.value?.trim();
     if (desc) fd.append('description', desc);
     const dur = form.querySelector('[id$="-duration"]')?.value;
@@ -460,8 +527,15 @@ function handleUpload(form, kind, msgEl) {
       msgEl.textContent = 'Choisissez un fichier vidéo.';
       return;
     }
-    fd.append('file', fileInput.files[0]);
-    if (thumbInput?.files?.[0]) fd.append('thumbnail', thumbInput.files[0]);
+    const videoFile = fileInput.files[0];
+    fd.append('file', videoFile);
+    if (thumbInput?.files?.[0]) {
+      fd.append('thumbnail', thumbInput.files[0]);
+    } else if (kind === 'video') {
+      msgEl.textContent = 'Génération miniature…';
+      const autoThumb = await captureThumbnailFromVideo(videoFile);
+      if (autoThumb) fd.append('thumbnail', autoThumb);
+    }
     msgEl.textContent = 'Envoi en cours…';
     try {
       const res = await API().upload('/videos/posts/', fd);
@@ -497,10 +571,31 @@ document.addEventListener('DOMContentLoaded', () => {
   updateAuthPanels();
 });
 
+async function loadCommentsModeration() {
+  const ul = document.getElementById('adm-comments-moderation');
+  if (!ul || API().getUser?.()?.role !== 'admin') return;
+  try {
+    const list = await API().api('/videos/comments/moderation/');
+    ul.innerHTML = (list || []).slice(0, 30).map((c) => `
+      <li>#${c.id} — ${escapeHtml(c.author_display)} : ${escapeHtml((c.text || '').slice(0, 80))}
+        <button type="button" class="btn-sm" data-hide-comment="${c.id}">Masquer</button></li>`).join('')
+      || '<li>Aucun commentaire récent</li>';
+    ul.querySelectorAll('[data-hide-comment]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await API().api(`/videos/comments/${btn.dataset.hideComment}/hide/`, { method: 'POST' });
+        loadCommentsModeration();
+      });
+    });
+  } catch {
+    ul.innerHTML = '<li>Modération commentaires indisponible</li>';
+  }
+}
+
 window.SigSolsVideos = {
   loadVideos,
   loadShorts,
   loadAdminPending,
+  loadCommentsModeration,
   updateAuthPanels,
   buildCommentTree,
   likeApiPath,

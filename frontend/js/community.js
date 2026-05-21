@@ -343,6 +343,13 @@ export function loadCommunity() {
   else loadFollowingFeed();
 }
 
+document.addEventListener('click', (e) => {
+  const mapLink = e.target.closest('.map-profile-link');
+  if (mapLink?.dataset.username) {
+    openPublicProfile(mapLink.dataset.username);
+  }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   initCommunityTabs();
   document.getElementById('btn-community-search')?.addEventListener('click', () => {
