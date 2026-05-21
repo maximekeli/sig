@@ -1,8 +1,10 @@
-const CACHE = 'sig-sols-v3';
+const CACHE = 'sig-sols-v4';
 const ASSETS = [
   '/frontend/index.html',
   '/frontend/css/style.css',
   '/frontend/css/enhancements.css',
+  '/frontend/css/animations.css',
+  '/frontend/css/features-extended.css',
   '/frontend/js/init.js',
   '/frontend/js/api.js',
   '/frontend/js/auth.js',
@@ -13,6 +15,10 @@ const ASSETS = [
   '/frontend/js/quiz.js',
   '/frontend/js/tools.js',
   '/frontend/js/chat.js',
+  '/frontend/js/videos.js',
+  '/frontend/js/community.js',
+  '/frontend/js/featuresHub.js',
+  '/frontend/js/animations.js',
   '/frontend/js/app.js',
   '/frontend/js/core/toast.js',
   '/frontend/js/core/i18n.js',

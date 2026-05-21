@@ -69,15 +69,18 @@ export function t(key) {
   return STRINGS[lang]?.[key] ?? STRINGS.fr[key] ?? key;
 }
 
+const LANG_CYCLE = ['fr', 'en', 'ee', 'kab'];
+
 export function setLang(next) {
-  lang = next === 'en' ? 'en' : 'fr';
+  lang = LANG_CYCLE.includes(next) ? next : 'fr';
   localStorage.setItem('sig_sols_lang', lang);
   applyI18n();
-  document.documentElement.lang = lang;
+  document.documentElement.lang = lang === 'ee' ? 'ee' : lang === 'kab' ? 'kab' : lang;
 }
 
 export function toggleLang() {
-  setLang(lang === 'fr' ? 'en' : 'fr');
+  const i = LANG_CYCLE.indexOf(lang);
+  setLang(LANG_CYCLE[(i + 1) % LANG_CYCLE.length]);
 }
 
 export function applyI18n() {
