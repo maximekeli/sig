@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .export_views import AdminExportActivityCSVView, AdminExportUsersCSVView
 from .views import (
     ActivityIngestView,
     ActivityListView,
