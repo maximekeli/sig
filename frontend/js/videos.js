@@ -38,8 +38,8 @@ function statusClass(status) {
   return `video-status video-status--${status}`;
 }
 
-async function fetchPosts(kind) {
-  const params = new URLSearchParams({ kind, ordering: '-created_at' });
+async function fetchPosts(kind, extraParams = {}) {
+  const params = new URLSearchParams({ kind, ordering: '-created_at', ...extraParams });
   const data = await API().api(`/videos/posts/?${params}`);
   return data.results ?? data;
 }
@@ -400,7 +400,7 @@ async function loadVideos() {
   window.SigSolsAnimations?.setLoadingState?.(grid, true);
   grid.innerHTML = '<p class="panel-lead">Chargement…</p>';
   try {
-    const posts = await fetchPosts('video');
+    const posts = await fetchPosts('video', getVideoFilterParams());
     if (!posts.length) {
       grid.innerHTML = '<p class="panel-lead">Aucune vidéo publiée pour le moment.</p>';
     } else {
@@ -527,6 +527,8 @@ function handleUpload(form, kind, msgEl) {
     fd.append('title', form.querySelector('[id$="-title"]')?.value?.trim() || 'Sans titre');
     const cat = document.getElementById('video-category')?.value;
     if (cat && kind === 'video') fd.append('category', cat);
+    const tags = document.getElementById('video-tags')?.value?.trim();
+    if (tags) fd.append('tags', tags);
     const desc = form.querySelector('[id$="-desc"]')?.value?.trim();
     if (desc) fd.append('description', desc);
     const dur = form.querySelector('[id$="-duration"]')?.value;
@@ -561,7 +563,17 @@ function handleUpload(form, kind, msgEl) {
   });
 }
 
+function getVideoFilterParams() {
+  const p = {};
+  const cat = document.getElementById('video-filter-category')?.value;
+  const tag = document.getElementById('video-filter-tag')?.value?.trim().replace(/^#/, '');
+  if (cat) p.category = cat;
+  if (tag) p.tag = tag;
+  return p;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btn-video-filter')?.addEventListener('click', () => loadVideos());
   initEngagementDelegation();
   handleUpload(
     document.getElementById('form-video-upload'),

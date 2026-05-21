@@ -115,6 +115,7 @@ function renderAuthUI() {
     window.SigSolsFeatures?.connectWebSocket();
     window.SigSolsFeatures?.loadAlerts();
     window.SigSolsFeatures?.loadNotifications();
+    window.SigSolsFeaturesHub?.refreshNotificationBadge?.();
     window.dispatchEvent(new Event('sig-auth-changed'));
     window.SigSolsVideos?.updateAuthPanels?.();
   } else {

@@ -27,9 +27,22 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
     if (viewName === 'videos') window.SigSolsVideos?.loadVideos?.();
     if (viewName === 'shorts') window.SigSolsVideos?.loadShorts?.();
     if (viewName === 'community') window.SigSolsCommunity?.loadCommunity?.();
+    if (viewName === 'my-dashboard') window.SigSolsFeaturesHub?.loadPersonalDashboard?.();
+    if (viewName === 'quiz') {
+      SigSolsQuiz.loadQuizStats?.();
+      SigSolsQuiz.loadLeaderboard();
+      SigSolsQuiz.loadBadges();
+      window.SigSolsFeaturesHub?.loadLearningPath?.();
+      window.SigSolsFeaturesHub?.loadWeeklyChallenge?.();
+    }
+    if (viewName === 'shorts') {
+      window.SigSolsVideos?.loadShorts?.();
+      window.SigSolsFeaturesHub?.loadStories?.();
+    }
     if (viewName === 'admin') {
       window.SigSolsVideos?.loadAdminPending?.();
       window.SigSolsVideos?.loadCommentsModeration?.();
+      window.SigSolsFeaturesHub?.loadModerationJournal?.();
       SigSolsFeatures.loadAdminDashboard();
       SigSolsFeatures.loadPendingValidation?.();
       SigSolsFeatures.initAdminExports?.();

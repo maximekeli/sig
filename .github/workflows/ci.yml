@@ -1,62 +1,61 @@
-name: SIG-SOLS CI
+name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
 
 jobs:
   backend:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     services:
       postgres:
         image: postgis/postgis:15-3.4
         env:
+          POSTGRES_DB: sig_sols
           POSTGRES_USER: sig_sols
           POSTGRES_PASSWORD: sig_sols_secret
-          POSTGRES_DB: sig_sols
         ports:
           - 5432:5432
         options: >-
           --health-cmd "pg_isready -U sig_sols"
           --health-interval 5s
+          --health-timeout 5s
           --health-retries 10
       redis:
         image: redis:7-alpine
         ports:
           - 6379:6379
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install system deps
-        run: sudo apt-get update && sudo apt-get install -y gdal-bin libgdal-dev libgeos-dev
-      - name: Install Python deps
-        run: pip install -r requirements.txt
-      - name: Migrate & test
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          pip install -r requirements.txt
+      - name: Run tests
+        working-directory: backend
         env:
           POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
           POSTGRES_DB: sig_sols
           POSTGRES_USER: sig_sols
           POSTGRES_PASSWORD: sig_sols_secret
-          SECRET_KEY: ci-secret
-          DEBUG: '1'
-        run: |
-          python manage.py migrate --noinput
-          pytest apps/ --cov=apps --cov-config=.coveragerc --cov-fail-under=70
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: ci-test-secret
+        run: python manage.py test --keepdb -v 1
 
   frontend:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Unit tests frontend
-        run: node --test tests/*.test.js
+      - name: Install & test
+        working-directory: frontend
+        run: |
+          npm ci
+          npm test

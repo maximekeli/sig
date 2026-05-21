@@ -78,10 +78,14 @@ async function startQuiz() {
   const difficulty = document.getElementById('quiz-difficulty').value;
   const count = getQuizCount();
   trackActivity('quiz_start', { difficulty, count }, 'quiz');
+  const examMode = document.getElementById('quiz-exam-mode')?.checked ?? false;
   const data = await SigSolsAPI.api('/education/quiz/start/', {
     method: 'POST',
-    body: JSON.stringify({ difficulty, count }),
+    body: JSON.stringify({ difficulty, count, exam_mode: examMode }),
   });
+  if (data.timer_seconds) {
+    timeLeft = data.timer_seconds;
+  }
   quizSession = data.session_id;
   quizQuestions = data.questions;
   quizIndex = 0;

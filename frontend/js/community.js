@@ -329,6 +329,7 @@ function initCommunityTabs() {
       });
       if (name === 'feed') loadFollowingFeed();
       if (name === 'favorites') loadFavoritesList();
+      if (name === 'messages') window.SigSolsFeaturesHub?.loadDirectMessages?.();
       document.getElementById('community-public-profile')?.classList.add('hidden');
     });
   });

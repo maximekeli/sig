@@ -209,6 +209,17 @@ export function initFeaturesHub() {
     document.getElementById('dm-text').value = '';
     loadDirectMessages();
   });
+  document.getElementById('btn-nasa-timeseries')?.addEventListener('click', async () => {
+    const id = document.getElementById('nasa-ts-point-id')?.value;
+    const out = document.getElementById('nasa-timeseries-out');
+    if (!id || !out) return;
+    try {
+      const d = await API().api(`/spatial/ndvi-timeseries/${id}/`);
+      out.textContent = JSON.stringify(d, null, 2);
+    } catch (e) {
+      out.textContent = e.message || 'Erreur';
+    }
+  });
   initShortsVertical();
   if (API()?.isAuthenticated?.()) {
     refreshNotificationBadge();

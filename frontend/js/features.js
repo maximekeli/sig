@@ -321,8 +321,12 @@ export function applyPublicMode() {
   const user = SigSolsAPI.getUser();
   const isPublic = user?.role === 'public';
   const isAgent = user?.role === 'agent' || user?.role === 'admin';
+  const authed = SigSolsAPI.isAuthenticated();
   document.body.classList.toggle('public-mode', isPublic);
   document.body.classList.toggle('agent-mode', isAgent);
+  document.querySelectorAll('.auth-user-only').forEach((el) => {
+    el.classList.toggle('hidden', !authed);
+  });
 }
 
 export { notifyError, notifySuccess };
