@@ -191,10 +191,12 @@ class Command(BaseCommand):
                 'et plans pluriannuels.',
             ),
         ]
-        for title, theme, order, content in EXTRA_PEDAGOGICAL_SHEETS:
-            sheets.append((title, theme, content))
-
         for order, (title, theme, content) in enumerate(sheets):
+            PedagogicalSheet.objects.update_or_create(
+                title=title,
+                defaults={'theme': theme, 'content_fr': content, 'order': order},
+            )
+        for title, theme, order, content in EXTRA_PEDAGOGICAL_SHEETS:
             PedagogicalSheet.objects.update_or_create(
                 title=title,
                 defaults={'theme': theme, 'content_fr': content, 'order': order},
