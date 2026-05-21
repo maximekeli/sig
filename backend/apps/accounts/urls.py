@@ -7,6 +7,7 @@ from .views import (
     UserTrajectoryView,
     LogoutView,
     MyLocationView,
+    ProfilePhotoView,
     ProfileView,
     RegisterView,
     TokenObtainView,
