@@ -140,15 +140,21 @@ class UserLocationSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     display_name = serializers.CharField(source='user.display_name', read_only=True)
     role = serializers.CharField(source='user.role', read_only=True)
+    profile_photo_url = serializers.SerializerMethodField()
     lat = serializers.SerializerMethodField()
     lon = serializers.SerializerMethodField()
 
     class Meta:
         model = UserLocation
         fields = (
-            'user_id', 'username', 'display_name', 'role',
+            'user_id', 'username', 'display_name', 'role', 'profile_photo_url',
             'lat', 'lon', 'accuracy_m', 'heading', 'is_sharing', 'updated_at',
         )
+
+    def get_profile_photo_url(self, obj):
+        if obj.user.profile_photo:
+            return obj.user.profile_photo.url
+        return None
 
     def get_lat(self, obj):
         return obj.location.y
