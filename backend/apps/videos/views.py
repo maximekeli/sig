@@ -1,7 +1,6 @@
 from django.db.models import F, Q
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework import status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -32,7 +31,7 @@ class VideoPostViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
     filterset_fields = ['kind', 'status', 'is_featured']
     search_fields = ['title', 'description']
-    ordering_fields = ['created_at', 'view_count', 'like_count']
+    ordering_fields = ['created_at', 'view_count']
     ordering = ['-created_at']
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
@@ -95,19 +94,25 @@ class VideoPostViewSet(viewsets.ModelViewSet):
             return Response(ser.data)
 
         ser = VideoCommentSerializer(
-            data={**request.data, 'post': post.pk},
+            data=request.data,
             context={'request': request},
         )
         ser.is_valid(raise_exception=True)
-        ser.save(post=post)
-        out = VideoCommentSerializer(
-            annotate_comment_engagement(
-                VideoComment.objects.filter(pk=ser.instance.pk),
-                request.user,
-            ).first(),
-            context={'request': request},
+        parent = ser.validated_data.get('parent')
+        comment = VideoComment.objects.create(
+            post=post,
+            author=request.user,
+            parent=parent,
+            text=ser.validated_data['text'],
         )
-        return Response(out.data, status=status.HTTP_201_CREATED)
+        out = annotate_comment_engagement(
+            VideoComment.objects.filter(pk=comment.pk).select_related('author'),
+            request.user,
+        ).first()
+        return Response(
+            VideoCommentSerializer(out, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
@@ -122,7 +127,8 @@ class VideoPostViewSet(viewsets.ModelViewSet):
                 'moderated_at', 'updated_at',
             ],
         )
-        return Response(self.get_serializer(post).data)
+        refreshed = self.get_queryset().filter(pk=post.pk).first()
+        return Response(self.get_serializer(refreshed).data)
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
@@ -138,14 +144,16 @@ class VideoPostViewSet(viewsets.ModelViewSet):
                 'moderated_at', 'updated_at',
             ],
         )
-        return Response(self.get_serializer(post).data)
+        refreshed = self.get_queryset().filter(pk=post.pk).first()
+        return Response(self.get_serializer(refreshed).data)
 
     @action(detail=True, methods=['post'])
     def feature(self, request, pk=None):
         post = self.get_object()
         post.is_featured = bool(request.data.get('featured', True))
         post.save(update_fields=['is_featured', 'updated_at'])
-        return Response(self.get_serializer(post).data)
+        refreshed = self.get_queryset().filter(pk=post.pk).first()
+        return Response(self.get_serializer(refreshed).data)
 
     @action(detail=False, methods=['get'], url_path='pending')
     def pending_list(self, request):
@@ -157,9 +165,9 @@ class VideoPostViewSet(viewsets.ModelViewSet):
         qs = annotate_post_engagement(
             VideoPost.objects.filter(
                 status=VideoPost.Status.PENDING,
-            ).select_related('author'),
+            ).select_related('author').order_by('-created_at'),
             request.user,
-        ).order_by('-created_at')
+        )
         page = self.paginate_queryset(qs)
         ser = VideoPostSerializer(
             page if page is not None else qs,
@@ -171,36 +179,25 @@ class VideoPostViewSet(viewsets.ModelViewSet):
         return Response(ser.data)
 
 
-class VideoCommentViewSet(viewsets.GenericViewSet):
-    """Suppression et like sur un commentaire."""
+class VideoCommentViewSet(
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """Suppression et like sur commentaires."""
 
     permission_classes = [VideoCommentPermission]
     serializer_class = VideoCommentSerializer
-    queryset = VideoComment.objects.select_related('post', 'author', 'parent')
+    queryset = VideoComment.objects.select_related('post', 'author')
 
     def get_queryset(self):
-        qs = annotate_comment_engagement(self.queryset, self.request.user)
-        post_id = self.request.query_params.get('post')
-        if post_id:
-            qs = qs.filter(post_id=post_id)
-        return qs
-
-    def destroy(self, request, pk=None):
-        comment = self.get_object()
-        if comment.author_id != request.user.pk and not request.user.is_administrator:
-            return Response({'detail': 'Non autorisé.'}, status=403)
-        comment.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return annotate_comment_engagement(
+            super().get_queryset(),
+            self.request.user,
+        )
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def toggle_like(self, request, pk=None):
-        comment = get_object_or_404(
-            annotate_comment_engagement(
-                VideoComment.objects.select_related('post'),
-                request.user,
-            ),
-            pk=pk,
-        )
+        comment = self.get_object()
         if not user_can_view_post(comment.post, request.user):
             return Response({'detail': 'Publication inaccessible.'}, status=403)
         liked, count = toggle_comment_like(comment, request.user)

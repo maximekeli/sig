@@ -44,10 +44,10 @@ class VideoPostAdmin(LargeTableAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(VideoComment)
-class VideoCommentAdmin(admin.ModelAdmin):
+class VideoCommentAdmin(LargeTableAdminMixin, admin.ModelAdmin):
     list_display = ('id', 'post', 'author', 'parent', 'created_at')
-    search_fields = ('text', 'author__username')
     raw_id_fields = ('post', 'author', 'parent')
+    search_fields = ('text', 'author__username')
 
 
 @admin.register(VideoPostLike)
