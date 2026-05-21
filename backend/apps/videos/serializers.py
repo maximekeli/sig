@@ -13,9 +13,16 @@ def _ext(name):
     return os.path.splitext(name or '')[1].lower()
 
 
+def _author_photo_url(author):
+    if author and author.profile_photo:
+        return author.profile_photo.url
+    return None
+
+
 class VideoPostSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     author_display = serializers.SerializerMethodField()
+    author_profile_photo_url = serializers.SerializerMethodField()
     file_url = serializers.SerializerMethodField()
     thumbnail_url = serializers.SerializerMethodField()
     can_moderate = serializers.SerializerMethodField()
@@ -30,6 +37,7 @@ class VideoPostSerializer(serializers.ModelSerializer):
             'duration_seconds', 'view_count', 'is_featured',
             'like_count', 'comment_count', 'liked_by_me',
             'author', 'author_username', 'author_display',
+            'author_profile_photo_url',
             'file_url', 'thumbnail_url', 'rejection_reason',
             'created_at', 'updated_at', 'can_moderate',
         )
@@ -42,6 +50,9 @@ class VideoPostSerializer(serializers.ModelSerializer):
 
     def get_author_display(self, obj):
         return obj.author.get_full_name() or obj.author.username
+
+    def get_author_profile_photo_url(self, obj):
+        return _author_photo_url(obj.author)
 
     def get_file_url(self, obj):
         return obj.file.url if obj.file else None
@@ -125,6 +136,7 @@ class VideoPostCreateSerializer(serializers.ModelSerializer):
 class VideoCommentSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
     author_display = serializers.SerializerMethodField()
+    author_profile_photo_url = serializers.SerializerMethodField()
     like_count = serializers.IntegerField(read_only=True, default=0)
     reply_count = serializers.IntegerField(read_only=True, default=0)
     liked_by_me = serializers.BooleanField(read_only=True, default=False)
@@ -140,6 +152,7 @@ class VideoCommentSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'post', 'parent_id', 'text',
             'author', 'author_username', 'author_display',
+            'author_profile_photo_url',
             'like_count', 'reply_count', 'liked_by_me',
             'created_at', 'updated_at',
         )
@@ -151,6 +164,9 @@ class VideoCommentSerializer(serializers.ModelSerializer):
 
     def get_author_display(self, obj):
         return obj.author.get_full_name() or obj.author.username
+
+    def get_author_profile_photo_url(self, obj):
+        return _author_photo_url(obj.author)
 
     def validate_text(self, value):
         text = (value or '').strip()

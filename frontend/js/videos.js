@@ -83,6 +83,15 @@ function updateLikeButton(btn, liked, count) {
   if (countEl) countEl.textContent = String(Number(count) || 0);
 }
 
+function authorAvatarHtml(photoUrl, displayName) {
+  const initial = (displayName?.[0] || '?').toUpperCase();
+  const src = photoUrl ? mediaUrl(photoUrl) : '';
+  if (src) {
+    return `<img class="comment-avatar" src="${src}" alt="" width="32" height="32" />`;
+  }
+  return `<span class="comment-avatar comment-avatar--ph">${escapeHtml(initial)}</span>`;
+}
+
 function renderCommentItem(c, postId, depth = 0) {
   const canReply = depth === 0;
   const replyForm = canReply && API().isAuthenticated()
@@ -96,8 +105,11 @@ function renderCommentItem(c, postId, depth = 0) {
     .join('');
   return `
     <div class="video-comment ${depth > 0 ? 'video-comment--reply' : ''}" data-comment-id="${c.id}">
-      <p class="video-comment-author"><strong>${escapeHtml(c.author_display)}</strong>
-        <time>${new Date(c.created_at).toLocaleString('fr-FR')}</time></p>
+      <div class="video-comment-head">
+        ${authorAvatarHtml(c.author_profile_photo_url, c.author_display)}
+        <p class="video-comment-author"><strong>${escapeHtml(c.author_display)}</strong>
+          <time>${new Date(c.created_at).toLocaleString('fr-FR')}</time></p>
+      </div>
       <p class="video-comment-text">${escapeHtml(c.text)}</p>
       <div class="video-comment-actions">
         ${likeBtnHtml(c.liked_by_me, c.like_count, 'comment', c.id)}
@@ -151,7 +163,10 @@ function renderVideoCard(post) {
       </div>
       <div class="video-card-body">
         <h3>${escapeHtml(post.title)}</h3>
-        <p class="video-meta">${escapeHtml(post.author_display)} · ${post.view_count} vues</p>
+        <p class="video-meta video-meta--author">
+          ${authorAvatarHtml(post.author_profile_photo_url, post.author_display)}
+          <span>${escapeHtml(post.author_display)} · ${post.view_count} vues</span>
+        </p>
         <span class="${statusClass(post.status)}">${statusLabel(post.status)}</span>
         ${post.description ? `<p class="video-desc">${escapeHtml(post.description)}</p>` : ''}
         ${post.rejection_reason && post.status === 'rejected'

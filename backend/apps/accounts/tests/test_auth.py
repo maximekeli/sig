@@ -1,6 +1,13 @@
+import base64
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+
+# PNG 1×1 valide
+_TINY_PNG = base64.b64decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+)
 
 User = get_user_model()
 
@@ -52,13 +59,15 @@ def test_profile_authenticated(auth_client, agent_user):
     assert r.status_code == 200
     assert r.json()['username'] == 'test_agent'
     assert 'profile_photo_url' in r.json()
+    assert 'bio' in r.json()
+    assert 'profile_stats' in r.json()
 
 
 @pytest.mark.django_db
 def test_profile_photo_upload_and_delete(auth_client, agent_user):
     img = SimpleUploadedFile(
         'avatar.png',
-        b'\x89PNG\r\n\x1a\n',
+        _TINY_PNG,
         content_type='image/png',
     )
     r = auth_client.post(

@@ -982,3 +982,46 @@ body:not(.agent-mode) .agent-only { display: none !important; }
   align-items: center;
   gap: 0.5rem;
 }
+
+.profile-stats {
+  font-size: 0.82rem;
+  color: var(--slate-600, #475569);
+  margin: 0 0 0.75rem;
+  padding: 0.4rem 0.55rem;
+  background: rgba(22, 101, 52, 0.06);
+  border-radius: var(--radius-sm);
+}
+
+.video-meta--author {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.comment-avatar--ph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream-2, #eef2ea);
+  color: var(--emerald-800, #14532d);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.video-comment-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.video-comment-head .video-comment-author {
+  margin: 0;
+}

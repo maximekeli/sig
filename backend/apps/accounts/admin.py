@@ -23,7 +23,7 @@ class UserAdmin(LargeTableAdminMixin, BaseUserAdmin):
         (None, {'fields': ('username', 'password')}),
         (
             'Informations personnelles',
-            {'fields': ('first_name', 'last_name', 'email', 'profile_photo')},
+            {'fields': ('first_name', 'last_name', 'email', 'profile_photo', 'bio')},
         ),
         ('SIG Sols', {
             'fields': (

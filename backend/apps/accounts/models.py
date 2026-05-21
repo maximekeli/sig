@@ -40,6 +40,12 @@ class User(AbstractUser):
         blank=True,
         verbose_name='Photo de profil',
     )
+    bio = models.CharField(
+        max_length=300,
+        blank=True,
+        verbose_name='À propos',
+        help_text='Courte présentation visible sur le profil et les commentaires',
+    )
 
     class Meta:
         verbose_name = 'Utilisateur'

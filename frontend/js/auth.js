@@ -21,6 +21,24 @@ function profilePhotoUrl(path) {
   return `${window.location.origin}${path.startsWith('/') ? '' : '/'}${path}`;
 }
 
+function renderProfileStats(user) {
+  const el = $('prof-stats');
+  if (!el) return;
+  const s = user?.profile_stats;
+  if (!s) {
+    el.textContent = '';
+    return;
+  }
+  const parts = [
+    `${s.videos ?? 0} vidéo(s) publiée(s)`,
+    `${s.shorts ?? 0} short(s)`,
+  ];
+  if (s.pending > 0) {
+    parts.push(`${s.pending} en attente de validation`);
+  }
+  el.textContent = parts.join(' · ');
+}
+
 function renderProfileAvatar(user) {
   const img = $('prof-avatar-img');
   const ph = $('prof-avatar-placeholder');
@@ -221,6 +239,10 @@ function openProfileModal() {
   $('prof-org').value = user.organization || '';
   $('prof-phone').value = user.phone || '';
   $('prof-pseudo').value = user.pseudonym || '';
+  $('prof-bio').value = user.bio || '';
+  $('prof-photo-file').value = '';
+  renderProfileAvatar(user);
+  renderProfileStats(user);
   $('profile-message').textContent = '';
   $('auth-profile-modal')?.classList.remove('hidden');
 }
@@ -235,12 +257,62 @@ async function saveProfile() {
       organization: $('prof-org').value,
       phone: $('prof-phone').value,
       pseudonym: $('prof-pseudo').value,
+      bio: $('prof-bio').value?.trim().slice(0, 300),
     });
     if (msg) {
       msg.textContent = 'Profil enregistré.';
       msg.className = 'auth-message success';
     }
+    renderProfileStats(SigSolsAPI.getUser());
     renderAuthUI();
+  } catch (e) {
+    if (msg) {
+      msg.textContent = e.message;
+      msg.className = 'auth-message error';
+    }
+  }
+}
+
+async function uploadProfilePhoto() {
+  const msg = $('profile-message');
+  const file = $('prof-photo-file')?.files?.[0];
+  if (!file) {
+    if (msg) {
+      msg.textContent = 'Choisissez une image (jpg, png, webp, gif — max 5 Mo).';
+      msg.className = 'auth-message error';
+    }
+    return;
+  }
+  try {
+    const user = await SigSolsAPI.uploadProfilePhoto(file);
+    renderProfileAvatar(user);
+    renderProfileStats(user);
+    renderAuthUI();
+    if (msg) {
+      msg.textContent = 'Photo enregistrée.';
+      msg.className = 'auth-message success';
+    }
+    notifySuccess('Photo de profil mise à jour.');
+  } catch (e) {
+    if (msg) {
+      msg.textContent = e.message;
+      msg.className = 'auth-message error';
+    }
+    notifyError(e.message);
+  }
+}
+
+async function removeProfilePhoto() {
+  const msg = $('profile-message');
+  try {
+    const user = await SigSolsAPI.removeProfilePhoto();
+    $('prof-photo-file').value = '';
+    renderProfileAvatar(user);
+    renderAuthUI();
+    if (msg) {
+      msg.textContent = 'Photo supprimée.';
+      msg.className = 'auth-message success';
+    }
   } catch (e) {
     if (msg) {
       msg.textContent = e.message;

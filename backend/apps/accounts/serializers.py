@@ -11,6 +11,7 @@ PROFILE_PHOTO_MAX_BYTES = 5 * 1024 * 1024
 
 class UserSerializer(serializers.ModelSerializer):
     profile_photo_url = serializers.SerializerMethodField()
+    profile_stats = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -19,14 +20,30 @@ class UserSerializer(serializers.ModelSerializer):
             'role', 'organization', 'phone', 'pseudonym',
             'age', 'gender', 'city', 'region', 'profession',
             'education_level', 'motivation', 'consent_analytics',
-            'profile_photo_url', 'date_joined',
+            'bio', 'profile_photo_url', 'profile_stats', 'date_joined',
         )
-        read_only_fields = ('id', 'date_joined', 'role', 'profile_photo_url')
+        read_only_fields = ('id', 'date_joined', 'role', 'profile_photo_url', 'profile_stats')
 
     def get_profile_photo_url(self, obj):
         if obj.profile_photo:
             return obj.profile_photo.url
         return None
+
+    def get_profile_stats(self, obj):
+        from videos.models import VideoPost
+
+        published = VideoPost.objects.filter(
+            author=obj,
+            status=VideoPost.Status.PUBLISHED,
+        )
+        return {
+            'videos': published.filter(kind=VideoPost.Kind.VIDEO).count(),
+            'shorts': published.filter(kind=VideoPost.Kind.SHORT).count(),
+            'pending': VideoPost.objects.filter(
+                author=obj,
+                status=VideoPost.Status.PENDING,
+            ).count(),
+        }
 
 
 class ProfilePhotoSerializer(serializers.Serializer):
