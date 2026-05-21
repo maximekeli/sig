@@ -203,13 +203,13 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
     return api('/auth/location/', { method: 'DELETE' });
   }
 
-  async function upload(path, formData) {
+  async function upload(path, formData, retried = false) {
     const headers = {};
     if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     const res = await fetchFn(`${baseUrl}${path}`, { method: 'POST', headers, body: formData });
-    if (res.status === 401 && refreshToken) {
+    if (res.status === 401 && refreshToken && !retried) {
       await refreshAccessToken();
-      return upload(path, formData);
+      return upload(path, formData, true);
     }
     if (!res.ok) throw new Error(await parseError(res));
     return res.json();

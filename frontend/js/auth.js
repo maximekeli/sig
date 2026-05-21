@@ -284,7 +284,35 @@ async function uploadProfilePhoto() {
     }
     return;
   }
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  const okExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+  if (!okExt.includes(ext)) {
+    const err = 'Format non supporté. Utilisez JPG, PNG, WebP ou GIF.';
+    if (msg) {
+      msg.textContent = err;
+      msg.className = 'auth-message error';
+    }
+    notifyError(err);
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    const err = 'Image trop volumineuse (max 5 Mo).';
+    if (msg) {
+      msg.textContent = err;
+      msg.className = 'auth-message error';
+    }
+    notifyError(err);
+    return;
+  }
+  if (typeof SigSolsAPI.uploadProfilePhoto !== 'function') {
+    notifyError('Fonction upload indisponible — rechargez la page (Ctrl+F5).');
+    return;
+  }
   try {
+    if (msg) {
+      msg.textContent = 'Envoi en cours…';
+      msg.className = 'auth-message';
+    }
     const user = await SigSolsAPI.uploadProfilePhoto(file);
     renderProfileAvatar(user);
     renderProfileStats(user);

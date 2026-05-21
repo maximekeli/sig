@@ -25,4 +25,6 @@ window.SigSolsAPI = {
   clearLocation: client.clearLocation,
   download: client.download,
   upload: client.upload,
+  uploadProfilePhoto: client.uploadProfilePhoto,
+  removeProfilePhoto: client.removeProfilePhoto,
 };
