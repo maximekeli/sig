@@ -6,6 +6,7 @@ from .views import (
     MyBadgesView,
     PedagogicalSheetPdfView,
     PedagogicalSheetViewSet,
+    QuizCertificateView,
     QuizFinishView,
     QuizShareView,
     QuizStartView,
@@ -26,4 +27,9 @@ urlpatterns = [
     path('quiz/leaderboard/', LeaderboardView.as_view(), name='quiz-leaderboard'),
     path('quiz/badges/', MyBadgesView.as_view(), name='quiz-badges'),
     path('quiz/<int:session_id>/share/', QuizShareView.as_view(), name='quiz-share'),
+    path(
+        'quiz/<int:session_id>/certificate/',
+        QuizCertificateView.as_view(),
+        name='quiz-certificate',
+    ),
 ]

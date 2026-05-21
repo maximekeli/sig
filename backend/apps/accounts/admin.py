@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .admin_large_table import LargeTableAdminMixin
 from .models import User, UserLocation
+from .social_models import UserFavorite, UserFollow
 
 
 @admin.register(User)
@@ -65,3 +66,15 @@ class UserLocationAdmin(LargeTableAdminMixin, admin.ModelAdmin):
     raw_id_fields = ('user',)
     readonly_fields = ('updated_at',)
     search_fields = ('=user__pk', '=user__username')
+
+
+@admin.register(UserFollow)
+class UserFollowAdmin(admin.ModelAdmin):
+    list_display = ('follower', 'following', 'created_at')
+    raw_id_fields = ('follower', 'following')
+
+
+@admin.register(UserFavorite)
+class UserFavoriteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'target_type', 'target_id', 'created_at')
+    raw_id_fields = ('user',)

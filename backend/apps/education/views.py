@@ -208,3 +208,35 @@ class MyBadgesView(APIView):
     def get(self, request):
         badges = UserBadge.objects.filter(user=request.user)
         return Response(UserBadgeSerializer(badges, many=True).data)
+
+
+class QuizCertificateView(APIView):
+    """PDF certificat pour une session de quiz terminée."""
+
+    permission_classes = [IsAuthenticated]
+
+    @xframe_options_sameorigin
+    def get(self, request, session_id):
+        try:
+            session = QuizSession.objects.get(
+                pk=session_id,
+                user=request.user,
+                completed=True,
+            )
+        except QuizSession.DoesNotExist:
+            return Response({'error': 'Session introuvable ou non terminée.'}, status=404)
+        if session.score < 10:
+            return Response(
+                {'error': 'Score insuffisant pour un certificat (min. 10 pts).'},
+                status=400,
+            )
+        try:
+            from .certificate_pdf import build_quiz_certificate_bytes
+            data = build_quiz_certificate_bytes(session, request.user)
+        except Exception as exc:
+            return Response({'error': str(exc)}, status=500)
+        resp = HttpResponse(data, content_type='application/pdf')
+        resp['Content-Disposition'] = (
+            f'inline; filename="certificat-quiz-{session_id}.pdf"'
+        )
+        return resp
