@@ -1,6 +1,13 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from .social_views import (
+    FavoritesView,
+    FollowUserView,
+    FollowingFeedView,
+    PublicProfileView,
+    UserSearchView,
+)
 from .views import (
     ChangePasswordView,
     LiveLocationsView,
@@ -23,6 +30,11 @@ urlpatterns = [
     path('profile/photo/', ProfilePhotoView.as_view(), name='auth-profile-photo'),
     path('password/change/', ChangePasswordView.as_view(), name='auth-password-change'),
     path('users/', UserListView.as_view(), name='auth-users'),
+    path('users/search/', UserSearchView.as_view(), name='auth-users-search'),
+    path('users/<str:username>/public/', PublicProfileView.as_view(), name='auth-user-public'),
+    path('users/<str:username>/follow/', FollowUserView.as_view(), name='auth-user-follow'),
+    path('feed/', FollowingFeedView.as_view(), name='auth-feed'),
+    path('favorites/', FavoritesView.as_view(), name='auth-favorites'),
     path('location/', MyLocationView.as_view(), name='auth-location'),
     path('locations/live/', LiveLocationsView.as_view(), name='auth-locations-live'),
     path('trajectory/', UserTrajectoryView.as_view(), name='auth-trajectory-self'),

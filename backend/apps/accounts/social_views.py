@@ -45,7 +45,7 @@ def _public_user_payload(user, request):
             'following': following_count,
         },
         'is_following': is_following,
-        'is_self': me.pk == user.pk if me else False,
+        'is_self': bool(me and me.pk == user.pk),
     }
 
 

@@ -15,6 +15,8 @@ from .serializers import (
     VideoPostCreateSerializer,
     VideoPostSerializer,
 )
+from sig_platform.notify import notify_user
+
 from .services import (
     annotate_comment_engagement,
     annotate_post_engagement,
@@ -29,7 +31,7 @@ class VideoPostViewSet(viewsets.ModelViewSet):
 
     permission_classes = [VideoPostPermission]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
-    filterset_fields = ['kind', 'status', 'is_featured']
+    filterset_fields = ['kind', 'status', 'is_featured', 'category']
     search_fields = ['title', 'description']
     ordering_fields = ['created_at', 'view_count']
     ordering = ['-created_at']
@@ -73,6 +75,13 @@ class VideoPostViewSet(viewsets.ModelViewSet):
         if not user_can_view_post(post, request.user):
             return Response({'detail': 'Publication inaccessible.'}, status=403)
         liked, count = toggle_post_like(post, request.user)
+        if liked and post.author_id != request.user.pk:
+            notify_user(
+                post.author,
+                'Nouveau like',
+                f'{request.user.username} a aimé « {post.title} ».',
+                link='/?view=videos',
+            )
         return Response({'liked': liked, 'like_count': count})
 
     @action(detail=True, methods=['get', 'post'], url_path='comments')
@@ -83,9 +92,10 @@ class VideoPostViewSet(viewsets.ModelViewSet):
 
         if request.method == 'GET':
             qs = annotate_comment_engagement(
-                VideoComment.objects.filter(post=post).select_related(
-                    'author', 'parent',
-                ),
+                VideoComment.objects.filter(
+                    post=post,
+                    is_hidden=False,
+                ).select_related('author', 'parent'),
                 request.user,
             )
             ser = VideoCommentSerializer(
