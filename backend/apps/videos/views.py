@@ -115,6 +115,23 @@ class VideoPostViewSet(viewsets.ModelViewSet):
             parent=parent,
             text=ser.validated_data['text'],
         )
+        if post.author_id != request.user.pk:
+            notify_user(
+                post.author,
+                'Nouveau commentaire',
+                f'{request.user.username} a commenté « {post.title} ».',
+                link='/?view=videos',
+            )
+        if parent and parent.author_id not in (
+            request.user.pk,
+            post.author_id,
+        ):
+            notify_user(
+                parent.author,
+                'Réponse à votre commentaire',
+                f'{request.user.username} a répondu sur « {post.title} ».',
+                link='/?view=videos',
+            )
         out = annotate_comment_engagement(
             VideoComment.objects.filter(pk=comment.pk).select_related('author'),
             request.user,
@@ -136,6 +153,13 @@ class VideoPostViewSet(viewsets.ModelViewSet):
                 'status', 'rejection_reason', 'moderated_by',
                 'moderated_at', 'updated_at',
             ],
+        )
+        notify_user(
+            post.author,
+            'Vidéo publiée',
+            f'Votre vidéo « {post.title} » est en ligne.',
+            link='/?view=videos',
+            level='info',
         )
         refreshed = self.get_queryset().filter(pk=post.pk).first()
         return Response(self.get_serializer(refreshed).data)
@@ -193,7 +217,7 @@ class VideoCommentViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    """Suppression et like sur commentaires."""
+    """Suppression, like et modération des commentaires."""
 
     permission_classes = [VideoCommentPermission]
     serializer_class = VideoCommentSerializer
@@ -211,4 +235,27 @@ class VideoCommentViewSet(
         if not user_can_view_post(comment.post, request.user):
             return Response({'detail': 'Publication inaccessible.'}, status=403)
         liked, count = toggle_comment_like(comment, request.user)
+        if liked and comment.author_id != request.user.pk:
+            notify_user(
+                comment.author,
+                'Like sur commentaire',
+                f'{request.user.username} a aimé votre commentaire.',
+                link='/?view=videos',
+            )
         return Response({'liked': liked, 'like_count': count})
+
+    @action(detail=True, methods=['post'])
+    def hide(self, request, pk=None):
+        if not request.user.is_administrator:
+            return Response({'detail': 'Admin requis.'}, status=403)
+        comment = self.get_object()
+        comment.is_hidden = True
+        comment.save(update_fields=['is_hidden'])
+        return Response({'hidden': True})
+
+    @action(detail=False, methods=['get'], url_path='moderation')
+    def moderation_list(self, request):
+        if not request.user.is_administrator:
+            return Response({'detail': 'Admin requis.'}, status=403)
+        qs = self.get_queryset().filter(is_hidden=False).order_by('-created_at')[:100]
+        return Response(VideoCommentSerializer(qs, many=True).data)
