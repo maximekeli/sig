@@ -1,6 +1,7 @@
 import random
 
 from django.http import HttpResponse
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from rest_framework import viewsets
