@@ -1,6 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from .messaging_views import DirectMessageListView
 from .social_views import (
     FavoritesView,
     FollowUserView,
@@ -22,6 +23,9 @@ from .views import (
 )
 
 urlpatterns = [
+    path('feed/', FollowingFeedView.as_view(), name='auth-feed'),
+    path('favorites/', FavoritesView.as_view(), name='auth-favorites'),
+    path('messages/', DirectMessageListView.as_view(), name='auth-messages'),
     path('register/', RegisterView.as_view(), name='auth-register'),
     path('token/', TokenObtainView.as_view(), name='token-obtain'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
@@ -33,8 +37,6 @@ urlpatterns = [
     path('users/search/', UserSearchView.as_view(), name='auth-users-search'),
     path('users/<str:username>/public/', PublicProfileView.as_view(), name='auth-user-public'),
     path('users/<str:username>/follow/', FollowUserView.as_view(), name='auth-user-follow'),
-    path('feed/', FollowingFeedView.as_view(), name='auth-feed'),
-    path('favorites/', FavoritesView.as_view(), name='auth-favorites'),
     path('location/', MyLocationView.as_view(), name='auth-location'),
     path('locations/live/', LiveLocationsView.as_view(), name='auth-locations-live'),
     path('trajectory/', UserTrajectoryView.as_view(), name='auth-trajectory-self'),

@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.gis.db import models as gis_models
 from django.db import models
 
+from .messaging_models import DirectMessage  # noqa: F401
 from .social_models import UserFavorite, UserFollow  # noqa: F401
 
 

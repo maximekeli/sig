@@ -100,10 +100,17 @@ class QuizStartView(APIView):
         chosen = random.sample(pks, count) if pks else []
         selected = list(QuizQuestion.objects.filter(pk__in=chosen))
         selected.sort(key=lambda q: chosen.index(q.pk))
-        session = QuizSession.objects.create(user=request.user, difficulty=difficulty)
+        exam_mode = bool(request.data.get('exam_mode', False))
+        session = QuizSession.objects.create(
+            user=request.user,
+            difficulty=difficulty,
+            exam_mode=exam_mode,
+        )
+        timer = 120 if exam_mode else 20
         return Response({
             'session_id': session.id,
-            'timer_seconds': 20,
+            'exam_mode': exam_mode,
+            'timer_seconds': timer,
             'questions': QuizQuestionPublicSerializer(selected, many=True).data,
             'question_count': len(selected),
             'available_in_pool': available,

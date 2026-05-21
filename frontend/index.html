@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/enhancements.css" />
   <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/features-extended.css" />
 </head>
 <body>
   <a href="#main-content" class="skip-link">Aller au contenu</a>
@@ -48,7 +49,19 @@
       <button type="button" class="nav-btn admin-only hidden" data-view="admin" data-i18n="nav.admin">Admin</button>
       <button type="button" class="nav-btn" data-view="help" data-i18n="nav.help">Aide</button>
     </nav>
+    <div class="header-search-wrap auth-user-only hidden">
+      <input type="search" id="global-search-input" placeholder="Rechercher…" aria-label="Recherche globale" autocomplete="off" />
+      <div id="global-search-results" class="global-search-results hidden"></div>
+    </div>
     <div class="header-tools">
+      <div class="notif-wrap auth-user-only hidden">
+        <button type="button" id="btn-notif-toggle" class="btn-icon" title="Notifications" aria-label="Notifications">🔔</button>
+        <span id="notif-badge" class="notif-badge hidden">0</span>
+        <div id="notif-panel" class="notif-panel hidden">
+          <button type="button" id="btn-notif-mark-all" class="btn-link btn-sm">Tout marquer lu</button>
+          <ul id="notif-panel-list" class="compact-list"></ul>
+        </div>
+      </div>
       <button type="button" id="btn-theme" class="btn-icon" aria-pressed="false" title="Thème clair/sombre">☀</button>
       <button type="button" id="btn-lang" class="btn-icon" title="Langue">EN</button>
       <button type="button" id="btn-help-tour" class="btn-icon" data-i18n="help.tour" title="Visite guidée">?</button>
@@ -284,6 +297,9 @@
             <option value="mixte">Mixte — toutes les questions</option>
           </select>
         </label>
+        <label class="quiz-field quiz-exam-check">
+          <input type="checkbox" id="quiz-exam-mode" /> Mode examen (120 s / question, pas de retour)
+        </label>
         <label class="quiz-field">Nombre par session
           <select id="quiz-count">
             <option value="5">5 questions</option>
@@ -311,11 +327,24 @@
         <button type="button" id="btn-quiz-finish" class="hidden">Terminer</button>
         <a id="btn-quiz-certificate" class="btn-auth-outline hidden" href="#" target="_blank" rel="noopener">Télécharger le certificat PDF</a>
       </div>
+      <h3>Parcours pédagogique</h3>
+      <p>Progression : <strong id="learning-path-progress">0%</strong></p>
+      <ol id="learning-path-steps" class="learning-path-list"></ol>
+      <h3>Défi de la semaine</h3>
+      <div id="weekly-challenge-box" class="weekly-challenge-box"></div>
       <h3>Classement hebdomadaire</h3>
       <ol id="leaderboard"></ol>
       <h3>Mes badges</h3>
       <ul id="my-badges"></ul>
     </div>
+  </section>
+
+  <section id="view-my-dashboard" class="view">
+    <header class="view-hero view-hero--compact">
+      <h2 class="view-hero-title">Mon espace</h2>
+      <p class="view-hero-sub">Vos statistiques et activité</p>
+    </header>
+    <div id="my-dashboard-content" class="my-dashboard-content"></div>
   </section>
 
   <!-- VIDÉOS -->
@@ -324,6 +353,19 @@
       <h2 class="view-hero-title">Vidéos communauté</h2>
       <p class="view-hero-sub">Partagez vos reportages sols, agriculture et SIG — modération admin</p>
     </header>
+    <div class="videos-filters">
+      <label>Catégorie
+        <select id="video-filter-category">
+          <option value="">Toutes</option>
+          <option value="sols">Sols</option>
+          <option value="nasa">NASA</option>
+          <option value="sig">SIG</option>
+          <option value="formation">Formation</option>
+        </select>
+      </label>
+      <label>Hashtag <input type="text" id="video-filter-tag" placeholder="#sols" /></label>
+      <button type="button" id="btn-video-filter" class="btn-auth-outline btn-sm">Filtrer</button>
+    </div>
     <div class="videos-layout">
       <aside class="videos-upload-panel auth-required hidden" id="videos-upload-panel">
         <h3>Publier une vidéo</h3>
@@ -338,6 +380,7 @@
               <option value="autre">Autre</option>
             </select>
           </label>
+          <label>Hashtags <input type="text" id="video-tags" placeholder="sols, nasa, sig" maxlength="200" /></label>
           <label>Description <textarea id="video-desc" rows="3" maxlength="2000"></textarea></label>
           <label>Durée (secondes, optionnel) <input type="number" id="video-duration" min="1" max="7200" /></label>
           <label>Fichier vidéo (mp4, webm, mov — max 48 Mo)
@@ -362,8 +405,14 @@
   <section id="view-shorts" class="view">
     <header class="view-hero view-hero--compact">
       <h2 class="view-hero-title">Shorts</h2>
-      <p class="view-hero-sub">Format court (≤ 60 s) — découverte rapide</p>
+      <p class="view-hero-sub">Format court (≤ 60 s) — défilement vertical</p>
     </header>
+    <div id="stories-strip" class="stories-strip auth-required hidden"></div>
+    <form id="form-story-upload" class="story-upload auth-required hidden">
+      <label>Story (24 h) <input type="file" name="media" accept="image/*,video/mp4" required /></label>
+      <input type="text" name="caption" placeholder="Légende" maxlength="200" />
+      <button type="submit" class="btn-sm btn-auth-primary">Publier story</button>
+    </form>
     <div class="shorts-layout">
       <aside class="videos-upload-panel auth-required hidden" id="shorts-upload-panel">
         <h3>Publier un short</h3>

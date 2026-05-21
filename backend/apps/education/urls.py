@@ -1,6 +1,11 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
+from .extended_views import (
+    CertificateVerifyView,
+    LearningPathView,
+    WeeklyChallengeView,
+)
 from .views import (
     LeaderboardView,
     MyBadgesView,
@@ -20,6 +25,9 @@ router.register('sheets', PedagogicalSheetViewSet, basename='pedagogical-sheets'
 urlpatterns = [
     path('sheets/<int:pk>/pdf/', PedagogicalSheetPdfView.as_view(), name='pedagogical-sheet-pdf'),
     path('', include(router.urls)),
+    path('quiz/verify/<str:token>/', CertificateVerifyView.as_view(), name='quiz-verify'),
+    path('quiz/learning-path/', LearningPathView.as_view(), name='quiz-learning-path'),
+    path('quiz/weekly-challenge/', WeeklyChallengeView.as_view(), name='quiz-weekly-challenge'),
     path('quiz/stats/', QuizStatsView.as_view(), name='quiz-stats'),
     path('quiz/start/', QuizStartView.as_view(), name='quiz-start'),
     path('quiz/<int:session_id>/answer/', QuizSubmitAnswerView.as_view(), name='quiz-answer'),

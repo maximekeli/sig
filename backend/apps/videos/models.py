@@ -42,6 +42,11 @@ class VideoPost(models.Model):
         db_index=True,
     )
     title = models.CharField(max_length=200)
+    tags = models.CharField(
+        max_length=500,
+        blank=True,
+        help_text='Hashtags séparés par des virgules (ex: sols,nasa)',
+    )
     description = models.TextField(blank=True)
     file = models.FileField(upload_to=video_upload_to)
     thumbnail = models.ImageField(
@@ -172,3 +177,20 @@ class VideoCommentLike(models.Model):
                 name='videos_unique_comment_like',
             ),
         ]
+
+
+class StoryPost(models.Model):
+    """Story éphémère (24 h) — image ou courte vidéo."""
+
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='stories',
+    )
+    media = models.FileField(upload_to='stories/%Y/%m/')
+    caption = models.CharField(max_length=500, blank=True)
+    expires_at = models.DateTimeField(db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']

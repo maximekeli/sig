@@ -1,4 +1,5 @@
 """Certificat PDF après quiz réussi."""
+import hashlib
 from io import BytesIO
 from datetime import date
 
@@ -31,6 +32,12 @@ def build_quiz_certificate_bytes(session, user) -> bytes:
         w / 2, h - 10.2 * cm,
         f'Questions répondues : {session.questions_answered}',
     )
+    token = certificate_verify_token(session)
+    c.setFont('Helvetica', 9)
+    c.drawCentredString(
+        w / 2, h - 11.2 * cm,
+        f'Vérification : token {token}',
+    )
     c.setFont('Helvetica-Oblique', 10)
     c.drawCentredString(
         w / 2, 2.5 * cm,
@@ -39,3 +46,10 @@ def build_quiz_certificate_bytes(session, user) -> bytes:
     c.showPage()
     c.save()
     return buf.getvalue()
+
+
+def certificate_verify_token(session) -> str:
+    digest = hashlib.sha256(
+        f'{session.id}-{session.user_id}-{session.score}'.encode(),
+    ).hexdigest()[:16]
+    return f'{session.id}-{digest}'

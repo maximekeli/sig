@@ -54,6 +54,12 @@ class VideoPostViewSet(viewsets.ModelViewSet):
                 )
         else:
             base = qs.filter(status=VideoPost.Status.PUBLISHED)
+        tag = self.request.query_params.get('tag', '').strip().lstrip('#')
+        if tag:
+            base = base.filter(tags__icontains=tag)
+        category = self.request.query_params.get('category', '').strip()
+        if category:
+            base = base.filter(category=category)
         return annotate_post_engagement(base, user)
 
     def perform_create(self, serializer):
@@ -243,6 +249,14 @@ class VideoCommentViewSet(
                 link='/?view=videos',
             )
         return Response({'liked': liked, 'like_count': count})
+
+    @action(detail=True, methods=['post'], url_path='ai-check')
+    def ai_check(self, request, pk=None):
+        if not request.user.is_administrator:
+            return Response({'detail': 'Admin requis.'}, status=403)
+        from .extended_views import ai_moderation_hint
+        comment = self.get_object()
+        return Response(ai_moderation_hint(comment.text))
 
     @action(detail=True, methods=['post'])
     def hide(self, request, pk=None):

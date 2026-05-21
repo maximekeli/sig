@@ -52,6 +52,10 @@ class QuizQuestion(models.Model):
 class QuizSession(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     difficulty = models.CharField(max_length=20)
+    exam_mode = models.BooleanField(
+        default=False,
+        help_text='Mode examen : pas de retour, timer global',
+    )
     score = models.PositiveIntegerField(default=0)
     questions_answered = models.PositiveIntegerField(default=0)
     completed = models.BooleanField(default=False)

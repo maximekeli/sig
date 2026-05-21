@@ -33,7 +33,7 @@ class VideoPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = VideoPost
         fields = (
-            'id', 'kind', 'category', 'title', 'description', 'status',
+            'id', 'kind', 'category', 'title', 'tags', 'description', 'status',
             'duration_seconds', 'view_count', 'is_featured',
             'like_count', 'comment_count', 'liked_by_me',
             'author', 'author_username', 'author_display',
@@ -78,7 +78,7 @@ class VideoPostCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = VideoPost
         fields = (
-            'id', 'kind', 'category', 'title', 'description', 'file', 'thumbnail',
+            'id', 'kind', 'category', 'title', 'tags', 'description', 'file', 'thumbnail',
             'duration_seconds', 'status',
         )
         read_only_fields = ('id', 'status')
