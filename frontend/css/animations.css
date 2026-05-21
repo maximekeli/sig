@@ -96,7 +96,8 @@ body::before {
 #view-videos.active,
 #view-shorts.active,
 #view-community.active,
-#view-help.active {
+#view-help.active,
+#view-my-dashboard.active {
   display: block;
   overflow-y: auto;
   height: calc(100vh - 130px);
