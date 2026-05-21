@@ -285,6 +285,20 @@ async function initAuth() {
   $('btn-profile-close')?.addEventListener('click', closeProfile);
   $('btn-profile-close-footer')?.addEventListener('click', closeProfile);
   $('btn-profile-save')?.addEventListener('click', saveProfile);
+  $('btn-profile-photo-upload')?.addEventListener('click', uploadProfilePhoto);
+  $('btn-profile-photo-remove')?.addEventListener('click', removeProfilePhoto);
+  $('prof-photo-file')?.addEventListener('change', () => {
+    const file = $('prof-photo-file')?.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = $('prof-avatar-img');
+    const ph = $('prof-avatar-placeholder');
+    if (img) {
+      img.src = url;
+      img.classList.remove('hidden');
+      ph?.classList.add('hidden');
+    }
+  });
   $('btn-password-save')?.addEventListener('click', savePassword);
   $('login-pass')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') handleLogin();
