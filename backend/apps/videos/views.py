@@ -2,7 +2,7 @@ from django.db.models import F, Q
 from django.utils import timezone
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -28,7 +28,7 @@ class VideoPostViewSet(viewsets.ModelViewSet):
     """Publications vidéo et shorts — upload, lecture, likes, commentaires."""
 
     permission_classes = [VideoPostPermission]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     filterset_fields = ['kind', 'status', 'is_featured']
     search_fields = ['title', 'description']
     ordering_fields = ['created_at', 'view_count']
