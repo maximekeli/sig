@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from accounts.admin_large_table import LargeTableAdminMixin
 
-from .models import VideoPost
+from .models import VideoComment, VideoCommentLike, VideoPost, VideoPostLike
 
 
 @admin.register(VideoPost)
@@ -41,3 +41,22 @@ class VideoPostAdmin(LargeTableAdminMixin, admin.ModelAdmin):
             moderated_by=request.user,
             moderated_at=timezone.now(),
         )
+
+
+@admin.register(VideoComment)
+class VideoCommentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'post', 'author', 'parent', 'created_at')
+    search_fields = ('text', 'author__username')
+    raw_id_fields = ('post', 'author', 'parent')
+
+
+@admin.register(VideoPostLike)
+class VideoPostLikeAdmin(admin.ModelAdmin):
+    list_display = ('post', 'user', 'created_at')
+    raw_id_fields = ('post', 'user')
+
+
+@admin.register(VideoCommentLike)
+class VideoCommentLikeAdmin(admin.ModelAdmin):
+    list_display = ('comment', 'user', 'created_at')
+    raw_id_fields = ('comment', 'user')

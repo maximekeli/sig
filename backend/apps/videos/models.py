@@ -74,3 +74,84 @@ class VideoPost(models.Model):
 
     def __str__(self):
         return f'{self.get_kind_display()}: {self.title}'
+
+
+class VideoComment(models.Model):
+    """Commentaire ou réponse sur une vidéo / short."""
+
+    post = models.ForeignKey(
+        VideoPost,
+        on_delete=models.CASCADE,
+        related_name='comments',
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='video_comments',
+    )
+    parent = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='replies',
+    )
+    text = models.TextField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = 'Commentaire vidéo'
+        verbose_name_plural = 'Commentaires vidéo'
+        indexes = [
+            models.Index(fields=['post', 'created_at']),
+            models.Index(fields=['parent', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f'Commentaire #{self.pk} sur {self.post_id}'
+
+
+class VideoPostLike(models.Model):
+    post = models.ForeignKey(
+        VideoPost,
+        on_delete=models.CASCADE,
+        related_name='post_likes',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='video_post_likes',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['post', 'user'],
+                name='videos_unique_post_like',
+            ),
+        ]
+
+
+class VideoCommentLike(models.Model):
+    comment = models.ForeignKey(
+        VideoComment,
+        on_delete=models.CASCADE,
+        related_name='comment_likes',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='video_comment_likes',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['comment', 'user'],
+                name='videos_unique_comment_like',
+            ),
+        ]

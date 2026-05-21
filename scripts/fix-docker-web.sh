@@ -22,3 +22,9 @@ curl -sf http://localhost:8081/api/v1/assistant/status/ && echo || {
   echo "ERREUR: l'API assistant ne répond pas."
   exit 1
 }
+
+echo "==> Test /api/v1/videos/posts/"
+curl -sf "http://localhost:8081/api/v1/videos/posts/?kind=video" | head -c 120 && echo || {
+  echo "ERREUR: l'API vidéos renvoie 404 — redémarrer le conteneur web (voir ci-dessus)."
+  exit 1
+}
