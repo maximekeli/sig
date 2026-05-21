@@ -66,7 +66,7 @@ function likeBtnHtml(liked, count, target, id, label = 'J’aime') {
 function renderCommentItem(c, postId, depth = 0) {
   const canReply = depth === 0;
   const replyForm = canReply && API().isAuthenticated()
-    ? `<form class="video-reply-form" data-post-id="${postId}" data-parent-id="${c.id}">
+    ? `<form class="video-reply-form hidden" data-post-id="${postId}" data-parent-id="${c.id}">
         <input type="text" name="text" placeholder="Répondre…" maxlength="2000" required />
         <button type="submit" class="btn-sm btn-auth-primary">Répondre</button>
       </form>`
