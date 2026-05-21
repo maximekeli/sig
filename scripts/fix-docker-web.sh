@@ -28,3 +28,9 @@ curl -sf "http://localhost:8081/api/v1/videos/posts/?kind=video" | head -c 120 &
   echo "ERREUR: l'API vidéos renvoie 404 — redémarrer le conteneur web (voir ci-dessus)."
   exit 1
 }
+CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:8081/api/v1/videos/posts/1/toggle_like/")
+if [ "$CODE" = "404" ]; then
+  echo "ERREUR: toggle_like introuvable (404) — le backend n'a pas rechargé le code."
+  exit 1
+fi
+echo "OK routes likes/commentaires (toggle_like → HTTP $CODE)"

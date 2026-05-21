@@ -35,6 +35,11 @@ class User(AbstractUser):
         default=False,
         help_text='Accepte le suivi d’activité à des fins statistiques (admin / data science)',
     )
+    profile_photo = models.ImageField(
+        upload_to='profile_photos/%Y/%m/',
+        blank=True,
+        verbose_name='Photo de profil',
+    )
 
     class Meta:
         verbose_name = 'Utilisateur'

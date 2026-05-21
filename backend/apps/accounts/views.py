@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import generics, status
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,6 +10,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .permissions import IsAdministrator
 from .serializers import (
     ChangePasswordSerializer,
+    ProfilePhotoSerializer,
     UserLocationSerializer,
     UserLocationUpdateSerializer,
     UserRegistrationSerializer,
@@ -44,9 +46,31 @@ class RegisterView(generics.CreateAPIView):
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get_object(self):
         return self.request.user
+
+
+class ProfilePhotoView(APIView):
+    """Téléverser ou supprimer la photo de profil."""
+
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        ser = ProfilePhotoSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        ser.save(request.user)
+        return Response(UserSerializer(request.user).data)
+
+    def delete(self, request):
+        user = request.user
+        if user.profile_photo:
+            user.profile_photo.delete(save=False)
+            user.profile_photo = None
+            user.save(update_fields=['profile_photo'])
+        return Response(UserSerializer(user).data)
 
 
 class UserListView(generics.ListAPIView):

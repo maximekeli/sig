@@ -56,11 +56,31 @@ function buildCommentTree(comments) {
   return roots;
 }
 
+export function likeApiPath(target, id) {
+  return target === 'post'
+    ? `/videos/posts/${id}/toggle_like/`
+    : `/videos/comments/${id}/toggle_like/`;
+}
+
+export { buildCommentTree };
+
 function likeBtnHtml(liked, count, target, id, label = 'J’aime') {
   const cls = liked ? 'video-like-btn is-liked' : 'video-like-btn';
-  return `<button type="button" class="${cls}" data-like-target="${target}" data-like-id="${id}" aria-pressed="${liked}">
-    ${liked ? '♥' : '♡'} ${label} <span class="video-like-count">${count}</span>
+  const n = Number(count) || 0;
+  const on = Boolean(liked);
+  return `<button type="button" class="${cls}" data-like-target="${target}" data-like-id="${id}" aria-pressed="${on}">
+    <span class="video-like-icon" aria-hidden="true">${on ? '♥' : '♡'}</span> ${label}
+    <span class="video-like-count">${n}</span>
   </button>`;
+}
+
+function updateLikeButton(btn, liked, count) {
+  btn.classList.toggle('is-liked', liked);
+  btn.setAttribute('aria-pressed', String(Boolean(liked)));
+  const icon = btn.querySelector('.video-like-icon');
+  if (icon) icon.textContent = liked ? '♥' : '♡';
+  const countEl = btn.querySelector('.video-like-count');
+  if (countEl) countEl.textContent = String(Number(count) || 0);
 }
 
 function renderCommentItem(c, postId, depth = 0) {
@@ -100,7 +120,7 @@ function renderEngagementBlock(post) {
   return `
     <div class="video-engagement" data-post-id="${post.id}">
       <div class="video-engagement-bar">
-        ${likeBtnHtml(post.liked_by_me, post.like_count, 'post', post.id)}
+        ${likeBtnHtml(post.liked_by_me, post.like_count ?? 0, 'post', post.id)}
         <span class="video-comment-total">💬 ${post.comment_count ?? 0} commentaire(s)</span>
       </div>
       ${commentForm}
@@ -183,9 +203,7 @@ async function toggleLike(target, id, btn) {
     alert('Connectez-vous pour aimer.');
     return;
   }
-  const path = target === 'post'
-    ? `/videos/posts/${id}/toggle_like/`
-    : `/videos/comments/${id}/toggle_like/`;
+  const path = likeApiPath(target, id);
   const res = await API().api(path, { method: 'POST' });
   btn.classList.toggle('is-liked', res.liked);
   btn.setAttribute('aria-pressed', String(res.liked));
@@ -210,57 +228,72 @@ async function submitComment(postId, text, parentId = null) {
   }
 }
 
-function bindEngagement(container) {
-  container.querySelectorAll('[data-like-target]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      try {
-        await toggleLike(btn.dataset.likeTarget, btn.dataset.likeId, btn);
-      } catch (e) {
-        alert(e.message || 'Erreur');
-      }
-    });
-  });
+function isEngagementView(el) {
+  return el?.closest('#view-videos, #view-shorts');
+}
 
-  container.querySelectorAll('.video-comment-form').forEach((form) => {
-    form.addEventListener('submit', async (e) => {
+let engagementDelegationReady = false;
+
+function initEngagementDelegation() {
+  if (engagementDelegationReady) return;
+  engagementDelegationReady = true;
+
+  document.addEventListener('click', async (e) => {
+    const likeBtn = e.target.closest('[data-like-target]');
+    if (likeBtn && isEngagementView(likeBtn)) {
       e.preventDefault();
-      const postId = form.dataset.postId;
-      const text = form.querySelector('[name="text"]')?.value?.trim();
-      if (!text) return;
       try {
-        await submitComment(postId, text);
-        form.reset();
+        await toggleLike(likeBtn.dataset.likeTarget, likeBtn.dataset.likeId, likeBtn);
       } catch (err) {
-        alert(err.message || 'Erreur commentaire');
+        const msg = err.message || 'Erreur';
+        if (/not found|404/i.test(msg)) {
+          alert('API indisponible — exécutez : ./scripts/reload-web.sh');
+        } else {
+          alert(msg);
+        }
       }
-    });
-  });
-
-  container.querySelectorAll('.video-reply-form').forEach((form) => {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const postId = form.dataset.postId;
-      const parentId = parseInt(form.dataset.parentId, 10);
-      const text = form.querySelector('[name="text"]')?.value?.trim();
-      if (!text) return;
-      try {
-        await submitComment(postId, text, parentId);
-        form.reset();
-        form.classList.add('hidden');
-      } catch (err) {
-        alert(err.message || 'Erreur réponse');
-      }
-    });
-  });
-
-  container.querySelectorAll('.btn-reply-toggle').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const comment = btn.closest('.video-comment');
+      return;
+    }
+    const replyBtn = e.target.closest('.btn-reply-toggle');
+    if (replyBtn && isEngagementView(replyBtn)) {
+      const comment = replyBtn.closest('.video-comment');
       const form = comment?.querySelector('.video-reply-form');
       form?.classList.toggle('hidden');
       form?.querySelector('input')?.focus();
-    });
+    }
   });
+
+  document.addEventListener('submit', async (e) => {
+    const form = e.target.closest('.video-comment-form, .video-reply-form');
+    if (!form || !isEngagementView(form)) return;
+    e.preventDefault();
+    const postId = form.dataset.postId;
+    const text = form.querySelector('[name="text"]')?.value?.trim();
+    if (!text) return;
+    const parentId = form.classList.contains('video-reply-form')
+      ? parseInt(form.dataset.parentId, 10)
+      : null;
+    try {
+      await submitComment(postId, text, parentId || null);
+      form.reset();
+      if (form.classList.contains('video-reply-form')) {
+        form.classList.add('hidden');
+      }
+    } catch (err) {
+      const msg = err.message || 'Erreur';
+      if (/not found|404/i.test(msg)) {
+        alert('Commentaires indisponibles — redémarrez le serveur web.');
+      } else if (/401|session/i.test(msg)) {
+        alert('Connectez-vous pour commenter.');
+      } else {
+        alert(msg);
+      }
+    }
+  });
+}
+
+function bindEngagement() {
+  initEngagementDelegation();
 }
 
 function bindModeration(container) {
@@ -310,7 +343,7 @@ async function loadVideos() {
     } else {
       grid.innerHTML = posts.map(renderVideoCard).join('');
       bindModeration(grid);
-      bindEngagement(grid);
+      bindEngagement();
       await loadAllComments(grid);
     }
     const user = API().getUser?.();
@@ -341,7 +374,7 @@ async function loadShorts() {
       ? posts.map(renderShortCard).join('')
       : '<p class="panel-lead">Aucun short pour le moment.</p>';
     bindModeration(feed);
-    bindEngagement(feed);
+    bindEngagement();
     await loadAllComments(feed);
   } catch (e) {
     feed.innerHTML = `<p class="parcel-status">${escapeHtml(e.message)}</p>`;
@@ -417,6 +450,7 @@ function handleUpload(form, kind, msgEl) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initEngagementDelegation();
   handleUpload(
     document.getElementById('form-video-upload'),
     'video',
@@ -440,4 +474,6 @@ window.SigSolsVideos = {
   loadShorts,
   loadAdminPending,
   updateAuthPanels,
+  buildCommentTree,
+  likeApiPath,
 };

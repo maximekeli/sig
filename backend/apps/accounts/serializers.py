@@ -1,10 +1,17 @@
+import os
+
 from rest_framework import serializers
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from .models import User, UserLocation
 
+PROFILE_PHOTO_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.gif'}
+PROFILE_PHOTO_MAX_BYTES = 5 * 1024 * 1024
+
 
 class UserSerializer(serializers.ModelSerializer):
+    profile_photo_url = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
@@ -12,9 +19,36 @@ class UserSerializer(serializers.ModelSerializer):
             'role', 'organization', 'phone', 'pseudonym',
             'age', 'gender', 'city', 'region', 'profession',
             'education_level', 'motivation', 'consent_analytics',
-            'date_joined',
+            'profile_photo_url', 'date_joined',
         )
-        read_only_fields = ('id', 'date_joined', 'role')
+        read_only_fields = ('id', 'date_joined', 'role', 'profile_photo_url')
+
+    def get_profile_photo_url(self, obj):
+        if obj.profile_photo:
+            return obj.profile_photo.url
+        return None
+
+
+class ProfilePhotoSerializer(serializers.Serializer):
+    profile_photo = serializers.ImageField()
+
+    def validate_profile_photo(self, file_obj):
+        ext = os.path.splitext(file_obj.name or '')[1].lower()
+        if ext not in PROFILE_PHOTO_EXTENSIONS:
+            raise serializers.ValidationError(
+                'Formats acceptés : jpg, png, webp, gif.',
+            )
+        if file_obj.size > PROFILE_PHOTO_MAX_BYTES:
+            raise serializers.ValidationError('Image trop volumineuse (max 5 Mo).')
+        return file_obj
+
+    def save(self, user):
+        photo = self.validated_data['profile_photo']
+        if user.profile_photo:
+            user.profile_photo.delete(save=False)
+        user.profile_photo = photo
+        user.save(update_fields=['profile_photo'])
+        return user
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

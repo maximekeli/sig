@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
-from videos.models import VideoComment, VideoPost
+from videos.models import VideoComment, VideoPost, VideoPostLike
 
 
 class VideoEngagementAPITest(APITestCase):
@@ -62,3 +62,23 @@ class VideoEngagementAPITest(APITestCase):
             reverse('video-post-comments', kwargs={'pk': self.post.pk}),
         )
         self.assertEqual(len(list_res.data), 2)
+
+    def test_list_includes_engagement_fields(self):
+        VideoPostLike.objects.create(post=self.post, user=self.user)
+        VideoComment.objects.create(
+            post=self.post,
+            author=self.user,
+            text='Un commentaire',
+        )
+        res = self.client.get(reverse('video-post-list'), {'kind': 'video'})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        row = res.data['results'][0]
+        self.assertEqual(row['like_count'], 1)
+        self.assertEqual(row['comment_count'], 1)
+        self.assertFalse(row['liked_by_me'])
+
+    def test_toggle_like_requires_auth(self):
+        res = self.client.post(
+            reverse('video-post-toggle-like', kwargs={'pk': self.post.pk}),
+        )
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
