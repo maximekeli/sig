@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.gis.db import models as gis_models
 from django.db import models
 
+from .social_models import UserFavorite, UserFollow  # noqa: F401
+
 
 class User(AbstractUser):
     """Three roles per ToR: Administrateur, Agent, Public."""

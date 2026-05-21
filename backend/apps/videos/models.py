@@ -22,12 +22,25 @@ class VideoPost(models.Model):
         PUBLISHED = 'published', 'Publié'
         REJECTED = 'rejected', 'Refusé'
 
+    class Category(models.TextChoices):
+        SOLS = 'sols', 'Sols & agriculture'
+        NASA = 'nasa', 'NASA & satellite'
+        SIG = 'sig', 'SIG & cartographie'
+        FORMATION = 'formation', 'Formation'
+        AUTRE = 'autre', 'Autre'
+
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='video_posts',
     )
     kind = models.CharField(max_length=10, choices=Kind.choices, db_index=True)
+    category = models.CharField(
+        max_length=20,
+        choices=Category.choices,
+        default=Category.SOLS,
+        db_index=True,
+    )
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     file = models.FileField(upload_to=video_upload_to)
@@ -97,6 +110,10 @@ class VideoComment(models.Model):
         related_name='replies',
     )
     text = models.TextField(max_length=2000)
+    is_hidden = models.BooleanField(
+        default=False,
+        help_text='Masqué par modération admin',
+    )
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
