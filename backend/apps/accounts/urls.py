@@ -20,6 +20,7 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('logout/', LogoutView.as_view(), name='auth-logout'),
     path('profile/', ProfileView.as_view(), name='auth-profile'),
+    path('profile/photo/', ProfilePhotoView.as_view(), name='auth-profile-photo'),
     path('password/change/', ChangePasswordView.as_view(), name='auth-password-change'),
     path('users/', UserListView.as_view(), name='auth-users'),
     path('location/', MyLocationView.as_view(), name='auth-location'),
