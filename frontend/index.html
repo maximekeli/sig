@@ -503,6 +503,20 @@
     <div class="auth-modal-backdrop" id="btn-profile-close"></div>
     <div class="auth-modal-panel">
       <h2 id="profile-title">Mon profil</h2>
+      <div class="profile-photo-block">
+        <div id="prof-avatar-wrap" class="profile-avatar-wrap">
+          <img id="prof-avatar-img" class="profile-avatar-img hidden" alt="Photo de profil" />
+          <span id="prof-avatar-placeholder" class="profile-avatar-placeholder" aria-hidden="true">?</span>
+        </div>
+        <div class="profile-photo-actions">
+          <label class="btn-auth-secondary profile-photo-label">
+            Choisir une photo
+            <input type="file" id="prof-photo-file" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" />
+          </label>
+          <button type="button" id="btn-profile-photo-upload" class="btn-auth-primary">Enregistrer la photo</button>
+          <button type="button" id="btn-profile-photo-remove" class="btn-auth-outline">Supprimer</button>
+        </div>
+      </div>
       <label>Email <input type="email" id="prof-email" /></label>
       <label>Prénom <input type="text" id="prof-first" /></label>
       <label>Nom <input type="text" id="prof-last" /></label>

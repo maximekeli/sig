@@ -142,6 +142,31 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
     return user;
   }
 
+  async function uploadProfilePhoto(file) {
+    const fd = new FormData();
+    fd.append('profile_photo', file);
+    const user = await upload('/auth/profile/photo/', fd);
+    setUser(user);
+    return user;
+  }
+
+  async function removeProfilePhoto() {
+    const headers = {};
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+    const res = await fetchFn(`${baseUrl}/auth/profile/photo/`, {
+      method: 'DELETE',
+      headers,
+    });
+    if (res.status === 401 && refreshToken) {
+      await refreshAccessToken();
+      return removeProfilePhoto();
+    }
+    if (!res.ok) throw new Error(await parseError(res));
+    const user = await res.json();
+    setUser(user);
+    return user;
+  }
+
   async function changePassword(oldPassword, newPassword, newPasswordConfirm) {
     return api('/auth/password/change/', {
       method: 'POST',
@@ -215,6 +240,8 @@ export function createApiClient({ baseUrl, storage, fetchFn = fetch }) {
     logout,
     fetchProfile,
     updateProfile,
+    uploadProfilePhoto,
+    removeProfilePhoto,
     changePassword,
     refreshAccessToken,
     getToken,

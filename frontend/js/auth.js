@@ -15,6 +15,57 @@ function $(id) {
   return document.getElementById(id);
 }
 
+function profilePhotoUrl(path) {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `${window.location.origin}${path.startsWith('/') ? '' : '/'}${path}`;
+}
+
+function renderProfileAvatar(user) {
+  const img = $('prof-avatar-img');
+  const ph = $('prof-avatar-placeholder');
+  const headerImg = $('header-avatar-img');
+  const headerPh = $('header-avatar-placeholder');
+  const url = user?.profile_photo_url ? profilePhotoUrl(user.profile_photo_url) : '';
+  const initial = (user?.first_name?.[0] || user?.username?.[0] || '?').toUpperCase();
+
+  if (img) {
+    if (url) {
+      img.src = url;
+      img.classList.remove('hidden');
+      ph?.classList.add('hidden');
+    } else {
+      img.classList.add('hidden');
+      img.removeAttribute('src');
+      if (ph) {
+        ph.textContent = initial;
+        ph.classList.remove('hidden');
+      }
+    }
+  } else if (ph) {
+    ph.textContent = initial;
+    ph.classList.remove('hidden');
+  }
+
+  if (headerImg) {
+    if (url) {
+      headerImg.src = url;
+      headerImg.classList.remove('hidden');
+      headerPh?.classList.add('hidden');
+    } else {
+      headerImg.classList.add('hidden');
+      headerImg.removeAttribute('src');
+      if (headerPh) {
+        headerPh.textContent = initial;
+        headerPh.classList.remove('hidden');
+      }
+    }
+  } else if (headerPh) {
+    headerPh.textContent = initial;
+    headerPh.classList.remove('hidden');
+  }
+}
+
 function showAuthTab(tab) {
   const loginForm = $('auth-login-form');
   const registerForm = $('auth-register-form');
@@ -40,6 +91,7 @@ function renderAuthUI() {
     if (label) {
       label.textContent = `${user.username} · ${ROLE_LABELS[user.role] || user.role}`;
     }
+    renderProfileAvatar(user);
     adminNav?.classList.toggle('hidden', user.role !== 'admin');
     window.SigSolsFeatures?.applyPublicMode();
     window.SigSolsFeatures?.connectWebSocket();
