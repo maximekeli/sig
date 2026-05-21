@@ -219,6 +219,13 @@
       <h3>Alertes & notifications</h3>
       <ul id="alerts-list" class="compact-list"></ul>
       <ul id="notifications-list" class="compact-list"></ul>
+      <h4>Alertes près de moi</h4>
+      <ul id="alerts-near-me" class="compact-list"></ul>
+      <hr />
+      <h3>NDVI — comparaison temporelle</h3>
+      <label>Point ID <input type="number" id="nasa-ts-point-id" min="1" placeholder="ID point" /></label>
+      <button type="button" id="btn-nasa-timeseries" class="btn-sm">Charger série NDVI</button>
+      <pre id="nasa-timeseries-out" class="nasa-ts-out"></pre>
       <hr />
       <h3>Localisation temps réel</h3>
       <label class="location-share">
@@ -451,12 +458,21 @@
         <nav class="community-tabs" aria-label="Sections communauté">
           <button type="button" class="community-tab active" data-community-tab="feed">Fil d’abonnements</button>
           <button type="button" class="community-tab" data-community-tab="favorites">Mes favoris</button>
+          <button type="button" class="community-tab" data-community-tab="messages">Messages</button>
         </nav>
         <div id="community-tab-feed" data-community-panel="feed">
           <div id="community-feed" class="community-feed animate-stagger"></div>
         </div>
         <div id="community-tab-favorites" class="hidden" data-community-panel="favorites">
           <div id="community-favorites" class="community-favorites"></div>
+        </div>
+        <div id="community-tab-messages" class="hidden" data-community-panel="messages">
+          <form id="form-dm-send" class="dm-form">
+            <label>À <input type="text" id="dm-to" placeholder="identifiant" required /></label>
+            <label>Message <input type="text" id="dm-text" required maxlength="2000" /></label>
+            <button type="submit" class="btn-auth-primary btn-sm">Envoyer</button>
+          </form>
+          <ul id="dm-thread" class="dm-thread"></ul>
         </div>
         <div id="community-public-profile" class="community-public-profile hidden"></div>
       </div>
@@ -489,6 +505,13 @@
       <ul id="adm-videos-pending" class="compact-list"></ul>
       <h3>Modération commentaires</h3>
       <ul id="adm-comments-moderation" class="compact-list"></ul>
+      <h3>Journal modération unifié</h3>
+      <ul id="adm-mod-journal" class="compact-list"></ul>
+      <h3>Import utilisateurs (CSV)</h3>
+      <p class="panel-lead">Colonnes : username, password, email, role, first_name, last_name, region</p>
+      <input type="file" id="btn-import-users" accept=".csv,text/csv" />
+      <h3>Rapport ministère</h3>
+      <button type="button" id="btn-ministry-report" class="btn-auth-primary btn-sm">Rapport HTML (30 j.)</button>
       <h3>Exports CSV</h3>
       <p class="panel-lead">
         <a href="/api/v1/platform/admin/export/users.csv" class="btn-auth-outline btn-sm" id="adm-export-users">Utilisateurs</a>
@@ -728,6 +751,7 @@
   <script type="module" src="js/videos.js"></script>
   <script type="module" src="js/community.js"></script>
   <script type="module" src="js/animations.js"></script>
+  <script type="module" src="js/featuresHub.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
