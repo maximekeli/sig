@@ -35,6 +35,7 @@
       <button type="button" class="nav-btn" data-view="sheets" data-i18n="nav.sheets">Fiches</button>
       <button type="button" class="nav-btn" data-view="videos">Vidéos</button>
       <button type="button" class="nav-btn" data-view="shorts">Shorts</button>
+      <button type="button" class="nav-btn" data-view="community">Communauté</button>
       <button type="button" class="nav-btn admin-only hidden" data-view="admin" data-i18n="nav.admin">Admin</button>
       <button type="button" class="nav-btn" data-view="help" data-i18n="nav.help">Aide</button>
     </nav>
@@ -295,6 +296,7 @@
         <p id="quiz-feedback"></p>
         <p>Score session : <strong id="quiz-score">0</strong></p>
         <button type="button" id="btn-quiz-finish" class="hidden">Terminer</button>
+        <a id="btn-quiz-certificate" class="btn-auth-outline hidden" href="#" target="_blank" rel="noopener">Télécharger le certificat PDF</a>
       </div>
       <h3>Classement hebdomadaire</h3>
       <ol id="leaderboard"></ol>
@@ -314,6 +316,15 @@
         <h3>Publier une vidéo</h3>
         <form id="form-video-upload" class="video-upload-form">
           <label>Titre <input type="text" id="video-title" required maxlength="200" /></label>
+          <label>Catégorie
+            <select id="video-category">
+              <option value="sols">Sols &amp; agriculture</option>
+              <option value="nasa">NASA &amp; satellite</option>
+              <option value="sig">SIG &amp; cartographie</option>
+              <option value="formation">Formation</option>
+              <option value="autre">Autre</option>
+            </select>
+          </label>
           <label>Description <textarea id="video-desc" rows="3" maxlength="2000"></textarea></label>
           <label>Durée (secondes, optionnel) <input type="number" id="video-duration" min="1" max="7200" /></label>
           <label>Fichier vidéo (mp4, webm, mov — max 48 Mo)
@@ -359,6 +370,37 @@
     <p id="shorts-login-hint" class="panel-lead shorts-hint">Connectez-vous pour publier un short.</p>
   </section>
 
+  <!-- COMMUNAUTÉ -->
+  <section id="view-community" class="view">
+    <header class="view-hero view-hero--compact">
+      <h2 class="view-hero-title">Communauté</h2>
+      <p class="view-hero-sub">Abonnements, profils publics et favoris</p>
+    </header>
+    <div class="community-layout">
+      <aside class="community-sidebar">
+        <h3>Rechercher un membre</h3>
+        <div class="community-search-row">
+          <input type="search" id="community-search-input" placeholder="Nom ou identifiant…" minlength="2" />
+          <button type="button" id="btn-community-search" class="btn-auth-primary btn-sm">Chercher</button>
+        </div>
+        <div id="community-search-results" class="community-search-results"></div>
+      </aside>
+      <div class="community-main">
+        <nav class="community-tabs" aria-label="Sections communauté">
+          <button type="button" class="community-tab active" data-community-tab="feed">Fil d’abonnements</button>
+          <button type="button" class="community-tab" data-community-tab="favorites">Mes favoris</button>
+        </nav>
+        <div id="community-tab-feed" data-community-panel="feed">
+          <div id="community-feed" class="community-feed"></div>
+        </div>
+        <div id="community-tab-favorites" class="hidden" data-community-panel="favorites">
+          <div id="community-favorites" class="community-favorites"></div>
+        </div>
+        <div id="community-public-profile" class="community-public-profile hidden"></div>
+      </div>
+    </div>
+  </section>
+
   <!-- SHEETS -->
   <section id="view-sheets" class="view">
     <header class="view-hero view-hero--compact">
@@ -383,6 +425,13 @@
       <ul id="adm-pending-list" class="compact-list"></ul>
       <h3>Vidéos en attente</h3>
       <ul id="adm-videos-pending" class="compact-list"></ul>
+      <h3>Modération commentaires</h3>
+      <ul id="adm-comments-moderation" class="compact-list"></ul>
+      <h3>Exports CSV</h3>
+      <p class="panel-lead">
+        <a href="/api/v1/platform/admin/export/users.csv" class="btn-auth-outline btn-sm" id="adm-export-users">Utilisateurs</a>
+        <a href="/api/v1/platform/admin/export/activity.csv?days=30" class="btn-auth-outline btn-sm" id="adm-export-activity">Activité (30 j.)</a>
+      </p>
       <h3>Journal d'audit</h3>
       <ul id="adm-audit" class="compact-list audit-list"></ul>
       <h3>Rapport zone</h3>
@@ -605,6 +654,7 @@
   <script type="module" src="js/adminAnalytics.js"></script>
   <script type="module" src="js/chat.js"></script>
   <script type="module" src="js/videos.js"></script>
+  <script type="module" src="js/community.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

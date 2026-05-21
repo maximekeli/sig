@@ -29,6 +29,7 @@ export function parseLiveUsers(data) {
     username: u.username,
     displayName: u.display_name || u.username,
     role: u.role,
+    profilePhotoUrl: u.profile_photo_url || null,
     lat: u.lat,
     lon: u.lon,
     accuracy_m: u.accuracy_m,

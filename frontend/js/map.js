@@ -99,6 +99,27 @@ function updateSelfMarker(lat, lon, accuracy_m) {
   }
 }
 
+function peerMarkerIcon(u) {
+  const color = u.role === 'admin' ? '#b45309' : '#059669';
+  const photo = u.profilePhotoUrl
+    ? (u.profilePhotoUrl.startsWith('http') ? u.profilePhotoUrl : `${window.location.origin}${u.profilePhotoUrl}`)
+    : '';
+  if (photo) {
+    return L.divIcon({
+      className: 'peer-marker-icon',
+      html: `<img src="${photo}" alt="" width="32" height="32" style="border-radius:50%;border:2px solid ${color};object-fit:cover" />`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
+  }
+  return L.divIcon({
+    className: 'peer-marker-icon',
+    html: `<span style="display:block;width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff"></span>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+  });
+}
+
 function renderPeerMarkers(users) {
   if (!usersLayer) return;
   const seen = new Set();
@@ -107,12 +128,16 @@ function renderPeerMarkers(users) {
     const latlng = [u.lat, u.lon];
     let marker = peerMarkers.get(u.id);
     if (!marker) {
-      marker = L.circleMarker(latlng, peerLocationStyle(u.role));
-      marker.bindPopup(`<strong>${u.displayName}</strong><br/>Rôle: ${u.role}`);
+      marker = L.marker(latlng, { icon: peerMarkerIcon(u) });
+      const profileBtn = u.username
+        ? `<br/><button type="button" class="btn-link map-profile-link" data-username="${u.username}">Voir profil</button>`
+        : '';
+      marker.bindPopup(`<strong>${u.displayName}</strong><br/>Rôle: ${u.role}${profileBtn}`);
       marker.addTo(usersLayer);
       peerMarkers.set(u.id, marker);
     } else {
       marker.setLatLng(latlng);
+      marker.setIcon(peerMarkerIcon(u));
     }
   });
   peerMarkers.forEach((marker, id) => {

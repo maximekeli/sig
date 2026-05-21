@@ -23,10 +23,13 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
     if (viewName === 'sheets') SigSolsQuiz.loadSheets();
     if (viewName === 'videos') window.SigSolsVideos?.loadVideos?.();
     if (viewName === 'shorts') window.SigSolsVideos?.loadShorts?.();
+    if (viewName === 'community') window.SigSolsCommunity?.loadCommunity?.();
     if (viewName === 'admin') {
       window.SigSolsVideos?.loadAdminPending?.();
+      window.SigSolsVideos?.loadCommentsModeration?.();
       SigSolsFeatures.loadAdminDashboard();
       SigSolsFeatures.loadPendingValidation?.();
+      SigSolsFeatures.initAdminExports?.();
       window.SigSolsAdminAnalytics?.loadAdminAnalytics?.();
       window.SigSolsAdminAnalytics?.loadRecentActivity?.();
     }
@@ -107,4 +110,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.SigSolsAdminPanel?.initAdminPanel?.();
   const { initChatbot } = await import('./chat.js');
   initChatbot();
+  const params = new URLSearchParams(window.location.search);
+  const deepView = params.get('view');
+  if (deepView) {
+    document.querySelector(`.nav-btn[data-view="${deepView}"]`)?.click();
+    const user = params.get('user');
+    if (deepView === 'community' && user) {
+      setTimeout(() => window.SigSolsCommunity?.loadPublicProfile?.(user), 400);
+    }
+    const videoId = params.get('video');
+    if (deepView === 'videos' && videoId) {
+      setTimeout(() => {
+        document.querySelector(`.video-card[data-id="${videoId}"]`)?.scrollIntoView({ behavior: 'smooth' });
+      }, 600);
+    }
+  }
 });

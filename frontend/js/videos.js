@@ -5,6 +5,14 @@
 const API = () => window.SigSolsAPI;
 const ORIGIN = () => window.location.origin;
 
+const CATEGORY_LABELS = {
+  sols: 'Sols & agriculture',
+  nasa: 'NASA & satellite',
+  sig: 'SIG & cartographie',
+  formation: 'Formation',
+  autre: 'Autre',
+};
+
 function mediaUrl(path) {
   if (!path) return '';
   if (path.startsWith('http')) return path;
@@ -129,11 +137,16 @@ function renderEngagementBlock(post) {
       </form>`
     : '<p class="video-login-hint">Connectez-vous pour commenter ou aimer.</p>';
 
+  const shareFav = authed
+    ? `<button type="button" class="btn-link btn-sm" data-share-video="${post.id}">Partager</button>
+       <button type="button" class="btn-link btn-sm" data-fav-video="${post.id}">☆ Favori</button>`
+    : '';
   return `
     <div class="video-engagement" data-post-id="${post.id}">
       <div class="video-engagement-bar">
         ${likeBtnHtml(post.liked_by_me, post.like_count ?? 0, 'post', post.id)}
         <span class="video-comment-total">💬 ${post.comment_count ?? 0} commentaire(s)</span>
+        ${shareFav}
       </div>
       ${commentForm}
       <div class="video-comments-list" id="comments-${post.id}">
