@@ -11,6 +11,8 @@ class PedagogicalSheet(models.Model):
         BEST_PRACTICES = 'practices', 'Bonnes pratiques'
         NASA_DATA = 'nasa', 'Comprendre les données NASA'
         EROSION = 'erosion', 'Érosion et dégradation'
+        GEOMATICS = 'geomatics', 'Géomatique'
+        SIG = 'sig', 'SIG & cartographie'
 
     title = models.CharField(max_length=200)
     theme = models.CharField(max_length=30, choices=Theme.choices)

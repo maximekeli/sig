@@ -45,6 +45,23 @@ INTRO_PARAS = {
         'combinent les facteurs de risque : les chapitres suivants détaillent comment réduire l’énergie '
         'des ruissellements et protéger le sol nu des gouttes de pluie.',
     ),
+    'geomatics': (
+        'La géomatique regroupe les sciences et techniques qui mesurent, représentent et analysent '
+        'la surface terrestre et son occupation. Elle nourrit la cartographie, l’aménagement du territoire, '
+        'la gestion des risques et le suivi environnemental ; au Togo, elle soutient l’agriculture, '
+        'l’hydraulique rurale et la planification communale.',
+        'Ce document explique pourquoi des coordonnées fiables, des modèles numériques de terrain '
+        'et des images aériennes ou satellitaires ne sont pas un luxe mais un outil de dialogue entre '
+        'techniciens, décideurs et habitants.',
+    ),
+    'sig': (
+        'Un système d’information géographique (SIG) organise des données géolocalisées en couches '
+        'consultables, interrogeables et partageables. Il permet de superposer sols, parcelles, routes, '
+        'hydrographie et indicateurs satellites pour comprendre un territoire dans son ensemble.',
+        'Ce guide développe les concepts de base (couches, attributs, échelle, projection) et montre '
+        'comment les SIG renforcent la gestion des sols, la vulgarisation et la redevabilité des projets '
+        'publics en région Maritime.',
+    ),
 }
 
 CHAPTER_TITLES = {

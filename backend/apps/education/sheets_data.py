@@ -48,3 +48,48 @@ EXTRA_PEDAGOGICAL_SHEETS = [
         'et plans d’action communautaires sur cinq à dix ans.',
     ),
 ]
+
+GEOMATIC_SIG_SHEETS = [
+    (
+        'Introduction à la géomatique',
+        'geomatics',
+        10,
+        'Aperçu : définition de la géomatique (mesure, modélisation et analyse de la Terre), '
+        'liens avec la topographie, la géodésie, la photogrammétrie et les SIG. Le PDF '
+        'présente le vocabulaire, les métiers associés et des exemples d’application en '
+        'Afrique de l’Ouest et au Togo.',
+    ),
+    (
+        'Importance de la géomatique pour le territoire',
+        'geomatics',
+        11,
+        'Aperçu : pourquoi mesurer et modéliser l’espace (planification, risques, '
+        'inventaires, suivi des changements), enjeux pour l’agriculture, l’eau et '
+        'l’aménagement rural. Le document PDF développe les bénéfices pour les collectivités, '
+        'les ministères et les communautés de la région Maritime.',
+    ),
+    (
+        'Les SIG : systèmes d’information géographique',
+        'sig',
+        12,
+        'Aperçu : objet géographique, couche, attribut, échelle, projection, '
+        'raster/vecteur, requêtes spatiales simples. Le manuel PDF guide la lecture '
+        'd’une carte, la symbologie et les bonnes pratiques de qualité des données.',
+    ),
+    (
+        'Importance des SIG pour les sols et l’agriculture',
+        'sig',
+        13,
+        'Aperçu : inventaire des parcelles, suivi de la fertilité et de l’érosion, '
+        'aide à la décision (où investir, quoi planter), partage entre agents et public. '
+        'Le PDF relie SIG, observations terrain et indicateurs satellites (NDVI, humidité).',
+    ),
+    (
+        'Géomatique, SIG et plateforme SIG Sols Togo',
+        'sig',
+        14,
+        'Aperçu : chaîne complète « terrain → base de données → carte web → rapport », '
+        'rôles des agents, export GeoJSON/CSV, couches NASA. Le document PDF forme pas à pas '
+        'à l’usage de la plateforme DUSOL pour cartographier et communiquer sur les sols.',
+    ),
+]
