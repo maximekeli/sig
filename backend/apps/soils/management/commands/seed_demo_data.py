@@ -151,7 +151,7 @@ class Command(BaseCommand):
 
     def _education(self):
         from education.models import PedagogicalSheet, QuizQuestion
-        from education.sheets_data import EXTRA_PEDAGOGICAL_SHEETS
+        from education.sheets_data import EXTRA_PEDAGOGICAL_SHEETS, GEOMATIC_SIG_SHEETS
 
         sheets = [
             (
@@ -196,7 +196,7 @@ class Command(BaseCommand):
                 title=title,
                 defaults={'theme': theme, 'content_fr': content, 'order': order},
             )
-        for title, theme, order, content in EXTRA_PEDAGOGICAL_SHEETS:
+        for title, theme, order, content in list(EXTRA_PEDAGOGICAL_SHEETS) + list(GEOMATIC_SIG_SHEETS):
             PedagogicalSheet.objects.update_or_create(
                 title=title,
                 defaults={'theme': theme, 'content_fr': content, 'order': order},

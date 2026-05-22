@@ -1,17 +1,18 @@
-"""Ajoute les 5 fiches pédagogiques supplémentaires (sans réinitialiser la base)."""
+"""Ajoute les fiches pédagogiques supplémentaires (sols + géomatique/SIG)."""
 from django.core.management.base import BaseCommand
 
 from education.models import PedagogicalSheet
-from education.sheets_data import EXTRA_PEDAGOGICAL_SHEETS
+from education.sheets_data import EXTRA_PEDAGOGICAL_SHEETS, GEOMATIC_SIG_SHEETS
 
 
 class Command(BaseCommand):
-    help = 'Crée ou met à jour 5 fiches pédagogiques supplémentaires.'
+    help = 'Crée ou met à jour les fiches pédagogiques supplémentaires (sols, géomatique, SIG).'
 
     def handle(self, *args, **options):
         created = 0
         updated = 0
-        for title, theme, order, content in EXTRA_PEDAGOGICAL_SHEETS:
+        all_sheets = list(EXTRA_PEDAGOGICAL_SHEETS) + list(GEOMATIC_SIG_SHEETS)
+        for title, theme, order, content in all_sheets:
             obj, was_created = PedagogicalSheet.objects.update_or_create(
                 title=title,
                 defaults={'theme': theme, 'content_fr': content, 'order': order},
