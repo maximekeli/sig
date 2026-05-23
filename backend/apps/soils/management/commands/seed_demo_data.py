@@ -16,23 +16,49 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--noinput', action='store_true')
+        parser.add_argument(
+            '--education-only',
+            action='store_true',
+            help='Met à jour uniquement fiches pédagogiques et quiz (sans points/zones/NASA/ML).',
+        )
 
     def handle(self, *args, **options):
-        from nasa.ingestion import ingest_all
+        if options['education_only']:
+            self._education()
+            self.stdout.write(self.style.SUCCESS('Fiches pédagogiques à jour.'))
+            return
 
         if SoilPoint.objects.count() >= 150:
-            self.stdout.write('Données déjà présentes — seed ignoré.')
+            self.stdout.write(
+                'Points sol déjà présents (≥150) — seed spatial/NASA/ML ignoré. '
+                'Mise à jour des fiches pédagogiques…'
+            )
+            self._education()
+            self.stdout.write(self.style.SUCCESS('Seed complete (fiches mises à jour).'))
             return
 
         self._users()
         zones = self._zones()
         self._soil_points(zones)
-        ingest_all()
+        self._ingest_nasa_safe()
         self._nasa_snapshots()
         self._education()
-        from ml_predict.pipeline import train_and_save
-        train_and_save()
+        self._train_ml_safe()
         self.stdout.write(self.style.SUCCESS('Seed complete.'))
+
+    def _ingest_nasa_safe(self):
+        try:
+            from nasa.ingestion import ingest_all
+            ingest_all()
+        except Exception as exc:
+            self.stderr.write(self.style.WARNING(f'NASA ingest ignoré ({exc})'))
+
+    def _train_ml_safe(self):
+        try:
+            from ml_predict.pipeline import train_and_save
+            train_and_save()
+        except Exception as exc:
+            self.stderr.write(self.style.WARNING(f'Entraînement ML ignoré ({exc})'))
 
     def _users(self):
         defaults = [
@@ -100,8 +126,6 @@ class Command(BaseCommand):
         return zones
 
     def _soil_points(self, zones):
-        from soils.models import SoilPoint
-
         rng = random.Random(42)
         soil_types = ['argileux', 'sableux', 'limoneux', 'tourbeux', 'calcaire']
         fert_classes = ['faible', 'moyenne', 'elevee']

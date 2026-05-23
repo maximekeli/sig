@@ -43,7 +43,7 @@ class VideoPostAPITest(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.data['status'], 'pending')
 
-    def test_admin_upload_published(self):
+    def test_admin_upload_pending(self):
         self.client.force_authenticate(self.admin)
         res = self.client.post(
             self._url('video-post-list'),
@@ -58,7 +58,28 @@ class VideoPostAPITest(APITestCase):
             format='multipart',
         )
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(res.data['status'], 'published')
+        self.assertEqual(res.data['status'], 'pending')
+
+    def test_agent_upload_pending(self):
+        agent = User.objects.create_user(
+            username='vid_agent',
+            password='pass12345',
+            role=User.Role.AGENT,
+        )
+        self.client.force_authenticate(agent)
+        res = self.client.post(
+            self._url('video-post-list'),
+            {
+                'kind': 'video',
+                'title': 'Terrain agent',
+                'file': SimpleUploadedFile(
+                    'agent.mp4', b'x', content_type='video/mp4',
+                ),
+            },
+            format='multipart',
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['status'], 'pending')
 
     def test_anon_lists_only_published(self):
         VideoPost.objects.create(

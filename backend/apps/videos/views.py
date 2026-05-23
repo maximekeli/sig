@@ -63,7 +63,19 @@ class VideoPostViewSet(viewsets.ModelViewSet):
         return annotate_post_engagement(base, user)
 
     def perform_create(self, serializer):
-        serializer.save()
+        post = serializer.save()
+        if post.status == VideoPost.Status.PENDING:
+            self._notify_admins_pending(post)
+
+    def _notify_admins_pending(self, post):
+        link = '/?view=admin'
+        title = 'Vidéo à modérer'
+        message = (
+            f'{post.author.username} a envoyé « {post.title} » '
+            f'({post.get_kind_display()}).'
+        )
+        for admin in User.objects.filter(role=User.Role.ADMIN, is_active=True):
+            notify_user(admin, title, message, link=link, level='warning')
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -183,6 +195,13 @@ class VideoPostViewSet(viewsets.ModelViewSet):
                 'status', 'rejection_reason', 'moderated_by',
                 'moderated_at', 'updated_at',
             ],
+        )
+        notify_user(
+            post.author,
+            'Vidéo refusée',
+            f'« {post.title} » : {post.rejection_reason}',
+            link='/?view=videos',
+            level='warning',
         )
         refreshed = self.get_queryset().filter(pk=post.pk).first()
         return Response(self.get_serializer(refreshed).data)

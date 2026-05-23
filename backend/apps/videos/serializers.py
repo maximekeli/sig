@@ -122,14 +122,9 @@ class VideoPostCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request = self.context['request']
-        user = request.user
-        auto_publish = user.is_administrator or user.is_agent
-        validated_data['author'] = user
-        validated_data['status'] = (
-            VideoPost.Status.PUBLISHED
-            if auto_publish
-            else VideoPost.Status.PENDING
-        )
+        validated_data['author'] = request.user
+        # Toute publication doit être validée par un administrateur.
+        validated_data['status'] = VideoPost.Status.PENDING
         return super().create(validated_data)
 
 
