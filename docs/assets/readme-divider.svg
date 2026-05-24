@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 24" width="800" height="24">
+  <defs>
+    <linearGradient id="g" x1="0%" x2="100%">
+      <stop offset="0%" stop-color="transparent"/>
+      <stop offset="20%" stop-color="#c9a962"/>
+      <stop offset="50%" stop-color="#f5e6c8"/>
+      <stop offset="80%" stop-color="#c9a962"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="10" width="800" height="2" fill="url(#g)" opacity="0.6">
+    <animate attributeName="opacity" values="0.3;0.9;0.3" dur="2s" repeatCount="indefinite"/>
+  </rect>
+  <circle cx="400" cy="11" r="5" fill="#0d2818" stroke="#c9a962" stroke-width="2">
+    <animate attributeName="r" values="4;6;4" dur="1.8s" repeatCount="indefinite"/>
+  </circle>
+  <polygon points="400,4 403,9 397,9" fill="#c9a962" opacity="0.8">
+    <animateTransform attributeName="transform" type="rotate" from="0 400 11" to="360 400 11" dur="8s" repeatCount="indefinite"/>
+  </polygon>
+</svg>

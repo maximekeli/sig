@@ -1,59 +1,88 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 220" role="img" aria-label="SIG Sols Togo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 300" role="img" aria-label="SIG Sols Togo">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#061a12"/>
-      <stop offset="45%" stop-color="#0d2818"/>
-      <stop offset="100%" stop-color="#1a3d2e"/>
+      <stop offset="0%" stop-color="#030f0a"/>
+      <stop offset="30%" stop-color="#0d2818"/>
+      <stop offset="70%" stop-color="#134e2a"/>
+      <stop offset="100%" stop-color="#061a12"/>
     </linearGradient>
     <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#8b6914"/>
-      <stop offset="35%" stop-color="#e8d5a3"/>
-      <stop offset="50%" stop-color="#f5e6c8"/>
-      <stop offset="65%" stop-color="#c9a962"/>
-      <stop offset="100%" stop-color="#6b5218"/>
+      <stop offset="0%" stop-color="#5c4510"/>
+      <stop offset="25%" stop-color="#f5e6c8"/>
+      <stop offset="50%" stop-color="#fff8e7"/>
+      <stop offset="75%" stop-color="#c9a962"/>
+      <stop offset="100%" stop-color="#4a3812"/>
     </linearGradient>
-    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="0%">
+    <linearGradient id="aurora" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="transparent"/>
-      <stop offset="45%" stop-color="rgba(255,255,255,0.35)"/>
-      <stop offset="55%" stop-color="transparent"/>
+      <stop offset="50%" stop-color="rgba(74,222,128,0.15)"/>
+      <stop offset="100%" stop-color="transparent"/>
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="3" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
+    <radialGradient id="halo" cx="50%" cy="45%" r="45%">
+      <stop offset="0%" stop-color="rgba(201,169,98,0.25)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="4"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="1.5"/></filter>
   </defs>
-  <rect width="900" height="220" rx="18" fill="url(#bg)"/>
-  <rect width="900" height="220" rx="18" fill="url(#shine)" opacity="0.4">
-    <animate attributeName="x" from="-900" to="900" dur="4s" repeatCount="indefinite"/>
+  <rect width="920" height="300" rx="22" fill="url(#bg)"/>
+  <rect width="920" height="300" rx="22" fill="url(#halo)"/>
+  <rect width="920" height="80" y="0" fill="url(#aurora)" opacity="0.8">
+    <animate attributeName="opacity" values="0.3;0.9;0.3" dur="5s" repeatCount="indefinite"/>
   </rect>
-  <!-- Particules flottantes -->
-  <circle cx="120" cy="60" r="3" fill="#c9a962" opacity="0.7">
-    <animate attributeName="cy" values="60;48;60" dur="3s" repeatCount="indefinite"/>
-    <animate attributeName="opacity" values="0.4;0.9;0.4" dur="3s" repeatCount="indefinite"/>
-  </circle>
-  <circle cx="780" cy="140" r="2.5" fill="#4ade80" opacity="0.6">
-    <animate attributeName="cy" values="140;125;140" dur="2.5s" repeatCount="indefinite"/>
-  </circle>
-  <circle cx="650" cy="45" r="2" fill="#c9a962" opacity="0.5">
-    <animate attributeName="cx" values="650;660;650" dur="4s" repeatCount="indefinite"/>
-  </circle>
-  <circle cx="280" cy="170" r="2" fill="#86efac" opacity="0.55">
-    <animate attributeName="cy" values="170;158;170" dur="3.5s" repeatCount="indefinite"/>
-  </circle>
-  <!-- Ligne carte stylisée -->
-  <path d="M60 160 Q200 120 350 150 T620 130 T820 155" fill="none" stroke="#2d8a52" stroke-width="2" opacity="0.5">
-    <animate attributeName="stroke-dashoffset" from="400" to="0" dur="2s" repeatCount="indefinite"/>
-    <animate attributeName="stroke-dasharray" values="8 12" dur="0.01s" fill="freeze"/>
+  <!-- Étoiles scintillantes -->
+  <g fill="#f5e6c8" filter="url(#soft)">
+    <circle cx="85" cy="42" r="1.5"><animate attributeName="opacity" values="0.2;1;0.2" dur="2.2s" repeatCount="indefinite"/></circle>
+    <circle cx="180" cy="28" r="1"><animate attributeName="opacity" values="0.1;0.8;0.1" dur="3.1s" repeatCount="indefinite"/></circle>
+    <circle cx="740" cy="35" r="1.8"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.8s" repeatCount="indefinite"/></circle>
+    <circle cx="830" cy="55" r="1.2"><animate attributeName="opacity" values="0.2;0.9;0.2" dur="2.7s" repeatCount="indefinite"/></circle>
+    <circle cx="620" cy="22" r="1"><animate attributeName="opacity" values="0.15;0.7;0.15" dur="4s" repeatCount="indefinite"/></circle>
+    <circle cx="320" cy="18" r="1.4"><animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" repeatCount="indefinite"/></circle>
+    <circle cx="500" cy="240" r="1"><animate attributeName="opacity" values="0.2;0.85;0.2" dur="3.3s" repeatCount="indefinite"/></circle>
+    <circle cx="150" cy="220" r="1.6"><animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/></circle>
+  </g>
+  <!-- Particules or & vert -->
+  <circle cx="70" cy="120" r="4" fill="#c9a962"><animate attributeName="cy" values="120;95;120" dur="4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.3;0.95;0.3" dur="4s" repeatCount="indefinite"/></circle>
+  <circle cx="850" cy="180" r="3.5" fill="#4ade80"><animate attributeName="cy" values="180;160;180" dur="3.2s" repeatCount="indefinite"/></circle>
+  <circle cx="720" cy="90" r="2.5" fill="#c9a962"><animate attributeName="cx" values="720;735;720" dur="5s" repeatCount="indefinite"/></circle>
+  <circle cx="200" cy="250" r="2" fill="#86efac"><animate attributeName="cy" values="250;230;250" dur="3.8s" repeatCount="indefinite"/></circle>
+  <circle cx="480" cy="270" r="2.5" fill="#fde68a"><animate attributeName="opacity" values="0.4;1;0.4" dur="2.2s" repeatCount="indefinite"/></circle>
+  <circle cx="600" cy="250" r="2" fill="#c9a962"><animate attributeName="cy" values="250;265;250" dur="2.8s" repeatCount="indefinite"/></circle>
+  <!-- Shine sweep -->
+  <rect x="-200" y="0" width="200" height="300" fill="rgba(255,255,255,0.08)" transform="skewX(-12)">
+    <animate attributeName="x" from="-300" to="1100" dur="5s" repeatCount="indefinite"/>
+  </rect>
+  <!-- Courbes carte -->
+  <path d="M40 200 Q220 150 400 185 T700 165 T880 195" fill="none" stroke="#2d8a52" stroke-width="2.5" opacity="0.45" stroke-dasharray="10 14">
+    <animate attributeName="stroke-dashoffset" from="200" to="0" dur="3s" repeatCount="indefinite"/>
   </path>
-  <text x="450" y="88" text-anchor="middle" font-family="Georgia, serif" font-size="42" font-weight="700" fill="url(#gold)" filter="url(#glow)">SIG Sols Togo</text>
-  <text x="450" y="118" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" letter-spacing="6" fill="#a7c4b5">DUSOL · DISIA · RÉGION MARITIME</text>
-  <text x="450" y="148" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#6ee7b7" opacity="0.85">
-    <tspan>PostGIS</tspan><tspan fill="#c9a962"> Æ </tspan><tspan>NASA</tspan><tspan fill="#c9a962"> Æ </tspan><tspan>Sentinel-2</tspan><tspan fill="#c9a962"> Æ </tspan><tspan>OpenWeather</tspan><tspan fill="#c9a962"> Æ </tspan><tspan>IA</tspan>
-    <animate attributeName="opacity" values="0.6;1;0.6" dur="2.5s" repeatCount="indefinite"/>
-  </text>
-  <!-- Anneau pulse -->
-  <circle cx="450" cy="95" r="72" fill="none" stroke="#c9a962" stroke-width="1" opacity="0.25">
-    <animate attributeName="r" values="68;78;68" dur="2s" repeatCount="indefinite"/>
-    <animate attributeName="opacity" values="0.15;0.4;0.15" dur="2s" repeatCount="indefinite"/>
+  <path d="M60 215 Q300 240 460 210 T820 225" fill="none" stroke="#c9a962" stroke-width="1" opacity="0.3" stroke-dasharray="4 8">
+    <animate attributeName="stroke-dashoffset" from="0" to="-80" dur="4s" repeatCount="indefinite"/>
+  </path>
+  <!-- Anneaux pulse -->
+  <circle cx="460" cy="125" r="95" fill="none" stroke="#c9a962" stroke-width="1" opacity="0.2">
+    <animate attributeName="r" values="88;102;88" dur="2.5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.1;0.35;0.1" dur="2.5s" repeatCount="indefinite"/>
   </circle>
+  <circle cx="460" cy="125" r="110" fill="none" stroke="#4ade80" stroke-width="0.5" opacity="0.15">
+    <animate attributeName="r" values="105;118;105" dur="3.5s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Pin carte animé -->
+  <g transform="translate(460,125)">
+    <circle r="8" fill="#c9a962" opacity="0.9">
+      <animate attributeName="r" values="7;10;7" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <path d="M0,-8 L0,14 Q0,22 -8,22 Q-14,14 0,-8" fill="#dc2626" opacity="0.85" transform="scale(0.9)"/>
+  </g>
+  <text x="460" y="108" text-anchor="middle" font-family="Georgia,Palatino,serif" font-size="48" font-weight="700" fill="url(#gold)" filter="url(#glow)">SIG Sols Togo</text>
+  <text x="460" y="142" text-anchor="middle" font-family="system-ui,sans-serif" font-size="15" letter-spacing="8" fill="#d4e8dc">DUSOL · DISIA · MARITIME</text>
+  <text x="460" y="178" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#86efac">
+    <tspan fill="#6ee7b7">NASA</tspan><tspan fill="#c9a962"> ? </tspan><tspan fill="#6ee7b7">Sentinel-2</tspan><tspan fill="#c9a962"> ? </tspan><tspan fill="#6ee7b7">OpenWeather</tspan><tspan fill="#c9a962"> ? </tspan><tspan fill="#6ee7b7">PostGIS</tspan><tspan fill="#c9a962"> ? </tspan><tspan fill="#6ee7b7">IA</tspan>
+    <animate attributeName="opacity" values="0.55;1;0.55" dur="2s" repeatCount="indefinite"/>
+  </text>
+  <text x="460" y="205" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" letter-spacing="3" fill="#a7c4b5" opacity="0.7">INTELLIGENCE DES SOLS · TOGO 2026</text>
+  <!-- Cadre doré -->
+  <rect x="8" y="8" width="904" height="284" rx="18" fill="none" stroke="url(#gold)" stroke-width="1" opacity="0.35">
+    <animate attributeName="opacity" values="0.2;0.5;0.2" dur="3s" repeatCount="indefinite"/>
+  </rect>
 </svg>
