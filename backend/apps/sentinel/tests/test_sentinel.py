@@ -38,8 +38,9 @@ class SentinelHubAPITest(TestCase):
         self.assertIn('ndvi', ids)
         self.assertIn('true_color', ids)
 
+    @patch('sentinel.views.clip_bbox_to_region', return_value=(1.0, 6.1, 1.2, 6.3))
     @patch('sentinel.views.process_image', return_value=b'\x89PNG\r\n')
-    def test_tile_png(self, _mock_proc):
-        r = self.client.get('/api/v1/sentinel/tiles/ndvi/10/512/512.png')
+    def test_tile_png(self, _mock_proc, _mock_clip):
+        r = self.client.get('/api/v1/sentinel/tiles/ndvi/11/1032/720.png')
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r['Content-Type'], 'image/png')

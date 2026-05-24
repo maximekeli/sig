@@ -15,6 +15,7 @@ urlpatterns = [
     path('api/v1/', include('soils.urls')),
     path('api/v1/spatial/', include('spatial.urls')),
     path('api/v1/nasa/', include('nasa.urls')),
+    path('api/v1/sentinel/', include('sentinel.urls')),
     path('api/v1/ml/', include('ml_predict.urls')),
     path('api/v1/education/', include('education.urls')),
     path('api/v1/platform/', include('sig_platform.urls')),

@@ -7,7 +7,6 @@ from rest_framework.views import APIView
 from accounts.permissions import IsAdministrator
 
 from .client import (
-    LAYER_PRESETS,
     SentinelHubError,
     clip_bbox_to_region,
     is_configured,
@@ -15,7 +14,7 @@ from .client import (
     process_image,
     tile_xyz_to_bbox,
 )
-from .evalscripts import LAYER_PRESETS as LAYERS_META
+from .evalscripts import LAYER_PRESETS
 
 
 def _parse_bbox_param(raw: str) -> tuple[float, float, float, float]:
