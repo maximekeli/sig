@@ -1,6 +1,13 @@
 #!/bin/sh
 set -e
 
+if [ -f /opt/dusol.env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . /opt/dusol.env
+  set +a
+fi
+
 echo "==> Migrations PostGIS..."
 python manage.py migrate --noinput
 

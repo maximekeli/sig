@@ -8,9 +8,17 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# .env projet (racine DUSOL_PROJET) — monté dans Docker en /opt/dusol.env
+for _env_path in (
+    Path('/opt/dusol.env'),
+    Path('/tmp/dusol.env'),
+    BASE_DIR.parent / '.env',
+    BASE_DIR / '.env',
+):
+    if _env_path.is_file():
+        load_dotenv(_env_path, override=True)
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-change-in-production')
 DEBUG = os.environ.get('DEBUG', '1') == '1'
