@@ -221,6 +221,44 @@ export function initSentinelMapTools() {
   setSentinelOpacity(Number(opacityInput?.value || 55));
 }
 
+export function displaySentinelParcelSummary(sentinel, parcelName = '') {
+  const out = document.getElementById('sentinel-ndvi-out');
+  const badge = document.getElementById('sentinel-map-badge');
+  if (!out) return;
+
+  if (!sentinel || sentinel.skipped) {
+    out.textContent = '';
+    return;
+  }
+  if (sentinel.configured === false) {
+    out.textContent = 'Sentinel Hub non configuré (.env)';
+    badge?.classList.add('hidden');
+    return;
+  }
+  if (sentinel.error) {
+    out.textContent = `Sentinel : ${sentinel.error}`;
+    badge?.classList.add('hidden');
+    return;
+  }
+  if (sentinel.ndvi_mean == null) {
+    out.textContent = 'Sentinel-2 : pas de pixels valides (nuages)';
+    badge?.classList.add('hidden');
+    return;
+  }
+  const label = parcelName ? `parcelle « ${parcelName} »` : 'parcelle';
+  out.textContent = `NDVI ${label} : ${sentinel.ndvi_mean} (min ${sentinel.ndvi_min}, max ${sentinel.ndvi_max}) — ${sentinel.pixel_count || '—'} px`;
+  if (badge) {
+    badge.classList.remove('hidden');
+    badge.textContent = `Sentinel-2 NDVI : ${sentinel.ndvi_mean}`;
+  }
+}
+
+export function clearSentinelParcelSummary() {
+  const out = document.getElementById('sentinel-ndvi-out');
+  if (out) out.textContent = '';
+  document.getElementById('sentinel-map-badge')?.classList.add('hidden');
+}
+
 export function formatSentinelHtml(sentinel) {
   if (!sentinel || sentinel.skipped) return '';
   if (sentinel.configured === false) {

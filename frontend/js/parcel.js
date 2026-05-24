@@ -12,8 +12,16 @@ import {
   healthClass,
   vulnLabel,
 } from './core/parcelUtils.js';
-import { formatSentinelHtml } from './sentinelMap.js';
-import { formatWeatherHtml } from './weatherMap.js';
+import {
+  clearSentinelParcelSummary,
+  displaySentinelParcelSummary,
+  formatSentinelHtml,
+} from './sentinelMap.js';
+import {
+  clearWeatherParcelSummary,
+  displayWeatherParcelSummary,
+  formatWeatherHtml,
+} from './weatherMap.js';
 
 let drawControl = null;
 let drawnLayer = null;
@@ -24,7 +32,7 @@ let liveDebounce = null;
 let liveInterval = null;
 let selectedParcelCode = null;
 let selectedGeometry = null;
-let refreshInFlight = false;
+let liveRequestSeq = 0;
 let shouldFitBounds = true;
 let lastParcelData = null;
 let allZones = [];
@@ -41,6 +49,11 @@ function isLiveEnabled() {
 
 function showSoilPointsOnMap() {
   return document.getElementById('parcel-show-soil-points')?.checked !== false;
+}
+
+function resetParcelDiagnostics() {
+  clearSentinelParcelSummary();
+  clearWeatherParcelSummary();
 }
 
 function clearParcelLayers() {
@@ -99,8 +112,15 @@ function initDrawControl() {
   map.on(L.Draw.Event.EDITED, onDrawChange);
   map.on(L.Draw.Event.DELETED, () => {
     selectedGeometry = null;
+    lastParcelData = null;
+    resetParcelDiagnostics();
     hideLivePanel();
     clearParcelLayers();
+    const box = document.getElementById('parcel-analysis-result');
+    if (box) {
+      box.classList.add('hidden');
+      box.innerHTML = '';
+    }
     setParcelStatus('Sélection effacée.');
   });
 }
@@ -411,6 +431,15 @@ function hideLivePanel() {
   document.getElementById('parcel-live-panel')?.classList.add('hidden');
 }
 
+function syncParcelDiagnostics(data) {
+  if (!data) {
+    resetParcelDiagnostics();
+    return;
+  }
+  displaySentinelParcelSummary(data.sentinel, data.parcel_name);
+  displayWeatherParcelSummary(data.weather, data.parcel_name);
+}
+
 async function refreshLiveParcelInfo(fullAnalysis = false) {
   const selRaw = document.getElementById('parcel-zone-select')?.value;
   const selVal = selRaw && String(selRaw).trim() ? String(selRaw).trim() : '';
@@ -420,49 +449,45 @@ async function refreshLiveParcelInfo(fullAnalysis = false) {
   if (!zoneCode && !geometry) {
     hideLivePanel();
     clearParcelLayers();
+    resetParcelDiagnostics();
     return;
   }
-  if (refreshInFlight) return;
-  refreshInFlight = true;
 
+  const requestId = ++liveRequestSeq;
   showLivePanel(formatLivePanelHtml({}, { loading: true }));
   const useMl = fullAnalysis || document.getElementById('parcel-use-ml')?.checked === true;
   const useSentinel = document.getElementById('parcel-use-sentinel')?.checked === true;
   const useWeather = document.getElementById('parcel-use-weather')?.checked !== false;
 
   try {
-    let data;
-    const needsPost = fullAnalysis || useMl || useSentinel || useWeather || geometry;
-    if (zoneCode && !needsPost) {
-      data = await SigSolsAPI.api(
-        `/spatial/parcel/live/?zone_code=${encodeURIComponent(zoneCode)}&use_ml=0`,
-      );
-    } else {
-      const body = {
-        use_ml: useMl,
-        use_sentinel: useSentinel,
-        use_weather: useWeather,
-      };
-      if (zoneCode) body.zone_code = zoneCode;
-      else body.geometry = geometry;
-      data = await SigSolsAPI.api('/spatial/parcel/live/', {
-        method: 'POST',
-        body: JSON.stringify(body),
-      });
-    }
+    const body = {
+      use_ml: useMl,
+      use_sentinel: useSentinel,
+      use_weather: useWeather,
+    };
+    if (zoneCode) body.zone_code = zoneCode;
+    else body.geometry = geometry;
+
+    const data = await SigSolsAPI.api('/spatial/parcel/live/', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+
+    if (requestId !== liveRequestSeq) return;
 
     lastParcelData = data;
     showLivePanel(formatLivePanelHtml(data));
     highlightParcel(data.geometry_geojson, data.vulnerability?.level, shouldFitBounds);
     renderSoilPointsInParcel(data.soil_points_map);
     renderAnalysisResult(data);
+    syncParcelDiagnostics(data);
     setParcelStatus(`${data.parcel_name || zoneCode} — ${spCount(data)} pt(s) · vuln. ${vulnLabel(data.vulnerability?.level)}`);
   } catch (e) {
+    if (requestId !== liveRequestSeq) return;
     notifyError(e);
     setParcelStatus('Erreur : ' + (e.message || 'impossible'));
     showLivePanel(`<p class="parcel-error">${e.message}</p>`);
-  } finally {
-    refreshInFlight = false;
+    resetParcelDiagnostics();
   }
 }
 
@@ -561,8 +586,15 @@ function onZoneSelectChange() {
 
 function clearParcelSelectionSoft() {
   selectedParcelCode = null;
+  lastParcelData = null;
+  resetParcelDiagnostics();
   hideLivePanel();
   clearParcelLayers();
+  const box = document.getElementById('parcel-analysis-result');
+  if (box) {
+    box.classList.add('hidden');
+    box.innerHTML = '';
+  }
   renderParcelList();
   loadParcelsOnMap();
   setParcelStatus('Sélectionnez une parcelle.');
@@ -577,6 +609,7 @@ function clearParcelSelection() {
   document.getElementById('parcel-search').value = '';
   clearDrawnOnly();
   clearParcelLayers();
+  resetParcelDiagnostics();
   hideLivePanel();
   const box = document.getElementById('parcel-analysis-result');
   if (box) {
@@ -617,6 +650,12 @@ function initParcelTools() {
   });
   document.getElementById('parcel-live-update')?.addEventListener('change', () => {
     if (isLiveEnabled()) scheduleLiveRefresh();
+  });
+  document.getElementById('parcel-use-sentinel')?.addEventListener('change', () => {
+    if (selectedParcelCode || getDrawnGeometry()) scheduleLiveRefresh();
+  });
+  document.getElementById('parcel-use-weather')?.addEventListener('change', () => {
+    if (selectedParcelCode || getDrawnGeometry()) scheduleLiveRefresh();
   });
   document.getElementById('parcel-live-close')?.addEventListener('click', hideLivePanel);
   document.getElementById('parcel-search')?.addEventListener('input', renderParcelList);

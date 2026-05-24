@@ -78,7 +78,7 @@ function formatPopupHtml(data, lat, lon) {
     </div>`;
 }
 
-function updateMapBadge(data) {
+export function updateMapBadge(data) {
   const badge = document.getElementById('weather-map-badge');
   if (!badge) return;
   const cur = data?.current;
@@ -293,6 +293,37 @@ export function initWeatherMapTools() {
 
   addMapControl();
   setWeatherAutoBadge(autoBadgeEnabled);
+}
+
+export function displayWeatherParcelSummary(weather, parcelName = '') {
+  const out = document.getElementById('weather-out');
+  if (!out) return;
+
+  if (!weather) {
+    out.innerHTML = '';
+    return;
+  }
+  if (weather.configured === false) {
+    out.innerHTML = '<p class="parcel-weather parcel-weather--warn">OpenWeather non configuré (.env)</p>';
+    document.getElementById('weather-map-badge')?.classList.add('hidden');
+    return;
+  }
+  if (weather.error) {
+    out.innerHTML = `<p class="weather-popup-err">${escapeHtml(weather.error)}</p>`;
+    document.getElementById('weather-map-badge')?.classList.add('hidden');
+    return;
+  }
+  if (weather.current) {
+    const label = parcelName ? ` — ${escapeHtml(parcelName)}` : '';
+    out.innerHTML = `<p class="weather-coords">Météo parcelle${label}</p>${formatCurrentBlock(weather)}`;
+    updateMapBadge(weather);
+  }
+}
+
+export function clearWeatherParcelSummary() {
+  const out = document.getElementById('weather-out');
+  if (out) out.innerHTML = '';
+  document.getElementById('weather-map-badge')?.classList.add('hidden');
 }
 
 export function formatWeatherHtml(weather) {
