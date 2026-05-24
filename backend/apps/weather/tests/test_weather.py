@@ -66,6 +66,67 @@ class OpenWeatherClientTest(TestCase):
         self.assertTrue(summary['configured'])
         self.assertIn('current', summary)
 
+    def test_fetch_current_outside_region(self):
+        from weather.client import OpenWeatherError, fetch_current
+
+        with self.assertRaises(OpenWeatherError) as ctx:
+            fetch_current(10.0, 10.0)
+        self.assertIn('hors zone', str(ctx.exception))
+
+    @override_settings(OPENWEATHER_API_KEY='')
+    def test_fetch_without_api_key(self):
+        from weather.client import OpenWeatherError, fetch_current
+
+        with self.assertRaises(OpenWeatherError) as ctx:
+            fetch_current(6.4, 1.35)
+        self.assertIn('non configuré', str(ctx.exception))
+
+    @patch('weather.client.requests.get')
+    def test_fetch_current_uses_cache(self, mock_get):
+        from weather.client import fetch_current
+
+        mock_get.return_value = MagicMock(
+            ok=True,
+            status_code=200,
+            json=lambda: SAMPLE_CURRENT,
+        )
+        fetch_current(6.4, 1.35, force_refresh=True)
+        fetch_current(6.4, 1.35)
+        self.assertEqual(mock_get.call_count, 1)
+
+    @patch('weather.client.requests.get')
+    def test_fetch_forecast(self, mock_get):
+        from weather.client import fetch_forecast
+
+        mock_get.return_value = MagicMock(
+            ok=True,
+            status_code=200,
+            json=lambda: SAMPLE_FORECAST,
+        )
+        data = fetch_forecast(6.4, 1.35, force_refresh=True)
+        self.assertEqual(data['city'], 'Lomé')
+        self.assertEqual(len(data['forecast']), 1)
+        self.assertEqual(data['forecast'][0]['description'], 'pluie légère')
+        self.assertEqual(data['forecast'][0]['pop'], 0.4)
+
+    @patch('weather.client.requests.get')
+    def test_weather_summary_agro_tips_heat(self, mock_get):
+        from weather.client import weather_summary_for_point
+
+        hot = {**SAMPLE_CURRENT, 'main': {**SAMPLE_CURRENT['main'], 'temp': 36.0}}
+        mock_get.return_value = MagicMock(ok=True, status_code=200, json=lambda: hot)
+        summary = weather_summary_for_point(6.4, 1.35)
+        self.assertTrue(any('chaleur' in t.lower() for t in summary.get('agro_tips', [])))
+
+    @patch('weather.client.requests.get')
+    def test_http_error_raises(self, mock_get):
+        from weather.client import OpenWeatherError, fetch_current
+
+        mock_get.return_value = MagicMock(ok=False, status_code=401, text='Invalid API key')
+        with self.assertRaises(OpenWeatherError) as ctx:
+            fetch_current(6.4, 1.35, force_refresh=True)
+        self.assertIn('401', str(ctx.exception))
+
 
 @override_settings(
     OPENWEATHER_API_KEY='test-ow-key',
@@ -108,3 +169,12 @@ class OpenWeatherAPITest(TestCase):
     def test_current_outside_region(self):
         r = self.client.get('/api/v1/weather/current/?lat=10&lon=10')
         self.assertEqual(r.status_code, 502)
+
+    def test_current_missing_params(self):
+        r = self.client.get('/api/v1/weather/current/')
+        self.assertEqual(r.status_code, 400)
+        self.assertIn('lat', r.data['detail'].lower())
+
+    def test_forecast_missing_params(self):
+        r = self.client.get('/api/v1/weather/forecast/')
+        self.assertEqual(r.status_code, 400)

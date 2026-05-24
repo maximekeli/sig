@@ -50,3 +50,12 @@ if dc exec -T web python manage.py test_sentinel_hub 2>/dev/null \
 else
   echo "AVERTISSEMENT: Sentinel Hub — vérifiez SENTINEL_HUB_* dans .env puis : ./scripts/reload-sentinel.sh"
 fi
+
+echo "==> Test OpenWeather"
+if dc exec -T web python manage.py test_openweather 2>/dev/null \
+  || sudo docker compose exec -T web python manage.py test_openweather; then
+  curl -sf http://localhost:8081/api/v1/weather/status/ | head -c 200 && echo
+  echo "OK OpenWeather"
+else
+  echo "AVERTISSEMENT: OpenWeather — vérifiez OPENWEATHER_API_KEY dans .env"
+fi

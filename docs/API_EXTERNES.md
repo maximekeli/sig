@@ -14,10 +14,13 @@
 | **earthaccess** | Téléchargement granules NASA | Mêmes identifiants Earthdata | `backend/apps/nasa/earthdata.py` |
 | **pystac-client** | Recherche STAC CMR | Public (catalogue) | `backend/apps/nasa/stac_client.py` |
 | **Sentinel Hub** | NDVI / couleur vraie Sentinel-2 (Process API) | `.env` : `SENTINEL_HUB_CLIENT_ID`, `SENTINEL_HUB_CLIENT_SECRET` | `backend/apps/sentinel/` |
+| **OpenWeatherMap** | Météo actuelle et prévisions (zone pilote Maritime) | `.env` : `OPENWEATHER_API_KEY` | `backend/apps/weather/` |
 
 Tuiles NASA affichées sur la carte : **placeholder PNG** via l’API interne `/api/v1/nasa/tiles/...` (pas de tuiles raster NASA réelles tant que l’ingestion WMS/XYZ n’est pas branchée).
 
 Couches **Sentinel Hub** : tuiles réelles via `/api/v1/sentinel/tiles/{layer}/{z}/{x}/{y}.png` (NDVI colorisé, couleur vraie).
+
+Météo **OpenWeather** : `/api/v1/weather/status/`, `current/?lat=&lon=`, `forecast/?lat=&lon=` (cache ~10 min, zone bbox `REGION_MARITIME_BBOX`).
 
 ## Internes (pas externes)
 
@@ -40,7 +43,7 @@ Les fiches listées via l’API incluent un champ **`pdf_url`** (chemin relatif 
 | **OpenAI / Anthropic** | Même usage que Gemini | ❌ Non intégré |
 | **Mapbox / MapTiler** | Fonds carte vectoriels haute qualité | ❌ Non intégré (OSM suffit pour le pilote) |
 | **Sentinel Hub** | NDVI temps réel haute résolution | ✅ Intégré — voir `SENTINEL_HUB_*` dans `.env` |
-| **Open-Meteo** | Météo locale pour recommandations irrigation | ❌ Non intégré |
+| **Open-Meteo** | Météo locale (alternative sans clé) | ❌ Non intégré (OpenWeather utilisé) |
 | **SMTP (SendGrid, Brevo…)** | Emails réels mot de passe oublié | ⚠️ `send_mail` Django en dev (console) — configurer `EMAIL_*` en production |
 | **Sentry / Datadog** | Monitoring erreurs | ❌ Non intégré |
 
@@ -55,6 +58,9 @@ NASA_EARTHDATA_TOKEN=
 # Sentinel Hub (OAuth — dashboard https://apps.sentinel-hub.com/)
 SENTINEL_HUB_CLIENT_ID=
 SENTINEL_HUB_CLIENT_SECRET=
+
+# OpenWeather — https://openweathermap.org/api
+OPENWEATHER_API_KEY=
 
 # Production email
 EMAIL_HOST=

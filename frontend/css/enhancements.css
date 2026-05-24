@@ -912,6 +912,39 @@ body:not(.agent-mode) .agent-only { display: none !important; }
 .parcel-sentinel { font-size: 0.85rem; margin: 0.35rem 0 0; color: #0f766e; }
 .parcel-sentinel--warn { color: #b45309; }
 
+.weather-status { font-size: 0.85rem; margin: 0.35rem 0 0.5rem; }
+.weather-status--ok { color: #1e40af; }
+.weather-status--err { color: #991b1b; }
+.weather-out { font-size: 0.85rem; margin-top: 0.5rem; }
+.weather-current { display: flex; gap: 0.5rem; align-items: flex-start; }
+.weather-feels { display: block; font-size: 0.8rem; color: #64748b; }
+.weather-meta { margin: 0.25rem 0 0; font-size: 0.8rem; color: #475569; }
+.weather-coords { font-size: 0.75rem; color: #64748b; margin: 0 0 0.35rem; }
+.weather-forecast-list { list-style: none; padding: 0; margin: 0; }
+.weather-forecast-list li {
+  display: grid;
+  grid-template-columns: 5.5rem 3rem 1fr auto;
+  gap: 0.35rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.8rem;
+}
+.weather-map-badge {
+  position: absolute;
+  top: 3.5rem;
+  right: 0.75rem;
+  z-index: 500;
+  background: rgba(30, 64, 175, 0.92);
+  color: #fff;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  max-width: 14rem;
+  pointer-events: none;
+}
+.parcel-weather { font-size: 0.85rem; margin: 0.35rem 0 0; color: #1d4ed8; }
+.parcel-weather--warn { color: #b45309; }
+
 .shorts-feed {
   display: flex;
   flex-direction: column;

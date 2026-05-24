@@ -427,15 +427,22 @@ async function refreshLiveParcelInfo(fullAnalysis = false) {
 
   showLivePanel(formatLivePanelHtml({}, { loading: true }));
   const useMl = fullAnalysis || document.getElementById('parcel-use-ml')?.checked === true;
+  const useSentinel = document.getElementById('parcel-use-sentinel')?.checked === true;
+  const useWeather = document.getElementById('parcel-use-weather')?.checked !== false;
 
   try {
     let data;
-    if (zoneCode && !fullAnalysis && !useMl) {
+    const needsPost = fullAnalysis || useMl || useSentinel || useWeather || geometry;
+    if (zoneCode && !needsPost) {
       data = await SigSolsAPI.api(
         `/spatial/parcel/live/?zone_code=${encodeURIComponent(zoneCode)}&use_ml=0`,
       );
     } else {
-      const body = { use_ml: useMl };
+      const body = {
+        use_ml: useMl,
+        use_sentinel: useSentinel,
+        use_weather: useWeather,
+      };
       if (zoneCode) body.zone_code = zoneCode;
       else body.geometry = geometry;
       data = await SigSolsAPI.api('/spatial/parcel/live/', {
@@ -490,6 +497,7 @@ function renderAnalysisResult(data) {
       <p class="parcel-nasa">NASA : ${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
       ${formatStacLine(nasa)}
       ${formatSentinelHtml(data.sentinel)}
+      ${formatWeatherHtml(data.weather)}
       ${ml?.predicted_class ? `<p class="parcel-ml">IA : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
       ${(data.recommendations || []).length ? `<ul class="parcel-recs">${data.recommendations.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
     </div>`;
