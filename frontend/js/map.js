@@ -21,6 +21,7 @@ import {
 import {
   initWeatherMapTools,
   loadWeatherStatus,
+  showWeatherAtPoint,
 } from './weatherMap.js';
 import { showLoading } from './core/ui.js';
 import { notifyError, notifySuccess } from './core/ui.js';

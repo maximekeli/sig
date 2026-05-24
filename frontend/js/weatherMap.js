@@ -1,8 +1,16 @@
 /**
- * OpenWeather — météo carte et parcelles.
+ * OpenWeather — intégration carte (popup, contrôle, badge, parcelles).
  */
 import { MARITIME_CENTER } from './core/mapUtils.js';
 import { notifyError } from './core/ui.js';
+
+let clickProbeEnabled = false;
+let autoBadgeEnabled = true;
+let clickHandler = null;
+let moveendHandler = null;
+let moveDebounce = null;
+let lastProbeMarker = null;
+let weatherControl = null;
 
 function escapeHtml(s) {
   const d = document.createElement('div');
@@ -19,19 +27,20 @@ function iconUrl(icon) {
   return `https://openweathermap.org/img/wn/${icon}@2x.png`;
 }
 
-function formatCurrentBlock(data) {
+export function formatCurrentBlock(data) {
   const c = data?.current || {};
-  const icon = c.icon ? `<img src="${iconUrl(c.icon)}" alt="" width="48" height="48" />` : '';
+  const icon = c.icon ? `<img src="${iconUrl(c.icon)}" alt="" width="48" height="48" class="weather-popup-icon" />` : '';
   const loc = c.location || data?.city || '';
   return `
-    <div class="weather-current">
+    <div class="weather-current weather-current--popup">
       ${icon}
       <div>
-        <strong>${c.temp_c != null ? `${Math.round(c.temp_c)}°C` : '—'}</strong>
+        <strong class="weather-temp">${c.temp_c != null ? `${Math.round(c.temp_c)}°C` : '—'}</strong>
         ${c.feels_like_c != null ? `<span class="weather-feels">ressenti ${Math.round(c.feels_like_c)}°C</span>` : ''}
         <p>${escapeHtml(c.description || '—')}${loc ? ` · ${escapeHtml(loc)}` : ''}</p>
         <p class="weather-meta">
           Humidité ${c.humidity_pct ?? '—'}% · Vent ${c.wind_speed_ms ?? '—'} m/s
+          ${c.wind_deg != null ? ` (${c.wind_deg}°)` : ''}
           ${c.rain_1h_mm ? ` · Pluie ${c.rain_1h_mm} mm/h` : ''}
         </p>
       </div>
@@ -56,6 +65,48 @@ function formatForecastList(items) {
   </ul>`;
 }
 
+function formatPopupHtml(data, lat, lon) {
+  if (!data?.current) {
+    return `<p class="weather-popup-err">${escapeHtml(data?.detail || data?.error || 'Météo indisponible')}</p>`;
+  }
+  return `
+    <div class="weather-map-popup">
+      <strong>OpenWeather</strong>
+      <p class="weather-coords">${lat.toFixed(4)}°, ${lon.toFixed(4)}°</p>
+      ${formatCurrentBlock(data)}
+      <p class="weather-popup-credit"><small>Données © OpenWeatherMap</small></p>
+    </div>`;
+}
+
+function updateMapBadge(data) {
+  const badge = document.getElementById('weather-map-badge');
+  if (!badge) return;
+  const cur = data?.current;
+  if (!cur || cur.temp_c == null) {
+    badge.classList.add('hidden');
+    return;
+  }
+  badge.classList.remove('hidden');
+  const icon = cur.icon ? `<img src="${iconUrl(cur.icon)}" alt="" width="22" height="22" />` : '';
+  badge.innerHTML = `${icon}<span>${Math.round(cur.temp_c)}°C · ${escapeHtml(cur.description || '')}</span>`;
+}
+
+function setProbeMarker(lat, lon) {
+  const map = getMap();
+  if (!map) return;
+  if (lastProbeMarker) {
+    map.removeLayer(lastProbeMarker);
+    lastProbeMarker = null;
+  }
+  lastProbeMarker = L.circleMarker([lat, lon], {
+    radius: 7,
+    color: '#1d4ed8',
+    fillColor: '#3b82f6',
+    fillOpacity: 0.75,
+    weight: 2,
+  }).addTo(map);
+}
+
 export async function loadWeatherStatus() {
   const statusEl = document.getElementById('weather-status-msg');
   if (!statusEl) return false;
@@ -64,6 +115,9 @@ export async function loadWeatherStatus() {
     statusEl.textContent = status.message || (status.ok ? 'OpenWeather OK' : 'Non configuré');
     statusEl.classList.toggle('weather-status--ok', Boolean(status.ok));
     statusEl.classList.toggle('weather-status--err', !status.ok);
+    if (status.ok && autoBadgeEnabled) {
+      refreshWeatherAtMapCenter('current', { silent: true });
+    }
     return Boolean(status.ok);
   } catch (e) {
     statusEl.textContent = e.message || 'OpenWeather indisponible';
@@ -79,17 +133,44 @@ export async function fetchWeatherAt(lat, lon, kind = 'current') {
   return SigSolsAPI.api(path);
 }
 
-export async function refreshWeatherAtMapCenter(kind = 'current') {
+export async function showWeatherAtPoint(lat, lon, latlng = null) {
+  const map = getMap();
+  if (!map) return null;
+  const ll = latlng || L.latLng(lat, lon);
+  const popup = L.popup({ maxWidth: 300, className: 'weather-leaflet-popup' })
+    .setLatLng(ll)
+    .setContent('<p class="weather-loading">Chargement météo…</p>')
+    .openOn(map);
+
+  try {
+    const data = await fetchWeatherAt(lat, lon, 'current');
+    popup.setContent(formatPopupHtml(data, lat, lon));
+    updateMapBadge(data);
+    setProbeMarker(lat, lon);
+    const out = document.getElementById('weather-out');
+    if (out) {
+      out.innerHTML = `<p class="weather-coords">${lat.toFixed(3)}°, ${lon.toFixed(3)}°</p>${formatCurrentBlock(data)}`;
+    }
+    return data;
+  } catch (e) {
+    const msg = e.message || e.detail || 'Erreur météo';
+    popup.setContent(`<p class="weather-popup-err">${escapeHtml(msg)}</p>`);
+    notifyError(e);
+    return null;
+  }
+}
+
+export async function refreshWeatherAtMapCenter(kind = 'current', { silent = false } = {}) {
   const map = getMap();
   const out = document.getElementById('weather-out');
   if (!map) {
-    notifyError({ message: 'Carte non initialisée.' });
+    if (!silent) notifyError({ message: 'Carte non initialisée.' });
     return null;
   }
   const c = map.getCenter();
   const lat = c.lat;
   const lon = c.lng;
-  if (out) out.textContent = 'Chargement météo…';
+  if (out && !silent) out.textContent = 'Chargement météo…';
   try {
     const data = await fetchWeatherAt(lat, lon, kind);
     if (out) {
@@ -97,20 +178,95 @@ export async function refreshWeatherAtMapCenter(kind = 'current') {
         ? `<p class="weather-coords">${lat.toFixed(3)}°, ${lon.toFixed(3)}°</p>${formatForecastList(data.forecast)}`
         : `<p class="weather-coords">${lat.toFixed(3)}°, ${lon.toFixed(3)}°</p>${formatCurrentBlock(data)}`;
     }
-    const badge = document.getElementById('weather-map-badge');
-    if (badge && kind === 'current') {
-      const cur = data.current || {};
-      badge.classList.remove('hidden');
-      badge.textContent = cur.temp_c != null
-        ? `Météo : ${Math.round(cur.temp_c)}°C · ${cur.description || ''}`
-        : 'Météo chargée';
-    }
+    if (kind === 'current') updateMapBadge(data);
     return data;
   } catch (e) {
     if (out) out.textContent = e.message || 'Erreur météo';
-    notifyError(e);
+    if (!silent) notifyError(e);
     return null;
   }
+}
+
+function bindClickProbe() {
+  const map = getMap();
+  if (!map) return;
+
+  if (clickHandler) {
+    map.off('click', clickHandler);
+    clickHandler = null;
+  }
+
+  if (!clickProbeEnabled) return;
+
+  clickHandler = (e) => {
+    const { lat, lng } = e.latlng;
+    showWeatherAtPoint(lat, lng, e.latlng);
+  };
+  map.on('click', clickHandler);
+}
+
+function bindAutoBadge() {
+  const map = getMap();
+  if (!map) return;
+
+  if (moveendHandler) {
+    map.off('moveend', moveendHandler);
+    moveendHandler = null;
+  }
+
+  if (!autoBadgeEnabled) return;
+
+  moveendHandler = () => {
+    clearTimeout(moveDebounce);
+    moveDebounce = setTimeout(() => {
+      refreshWeatherAtMapCenter('current', { silent: true });
+    }, 800);
+  };
+  map.on('moveend', moveendHandler);
+}
+
+export function setWeatherClickProbe(enabled) {
+  clickProbeEnabled = Boolean(enabled);
+  const map = getMap();
+  if (map && clickProbeEnabled) {
+    map.getContainer().classList.add('map-weather-probe');
+  } else if (map) {
+    map.getContainer().classList.remove('map-weather-probe');
+  }
+  bindClickProbe();
+}
+
+export function setWeatherAutoBadge(enabled) {
+  autoBadgeEnabled = Boolean(enabled);
+  bindAutoBadge();
+  if (autoBadgeEnabled) refreshWeatherAtMapCenter('current', { silent: true });
+  else document.getElementById('weather-map-badge')?.classList.add('hidden');
+}
+
+function addMapControl() {
+  const map = getMap();
+  if (!map || weatherControl) return;
+
+  const WeatherCtrl = L.Control.extend({
+    options: { position: 'topright' },
+    onAdd() {
+      const btn = L.DomUtil.create('button', 'leaflet-weather-btn');
+      btn.type = 'button';
+      btn.title = 'Météo au centre de la carte';
+      btn.innerHTML = '☁';
+      btn.setAttribute('aria-label', 'Météo');
+      L.DomEvent.disableClickPropagation(btn);
+      L.DomEvent.on(btn, 'click', (e) => {
+        L.DomEvent.stop(e);
+        const c = map.getCenter();
+        showWeatherAtPoint(c.lat, c.lng, c);
+      });
+      return btn;
+    },
+  });
+
+  weatherControl = new WeatherCtrl();
+  weatherControl.addTo(map);
 }
 
 export function initWeatherMapTools() {
@@ -122,8 +278,21 @@ export function initWeatherMapTools() {
   });
   document.getElementById('btn-weather-fit-maritime')?.addEventListener('click', () => {
     getMap()?.setView(MARITIME_CENTER, 9);
-    refreshWeatherAtMapCenter('current');
+    setTimeout(() => refreshWeatherAtMapCenter('current'), 400);
   });
+
+  document.getElementById('weather-click-probe')?.addEventListener('change', (e) => {
+    setWeatherClickProbe(e.target.checked);
+  });
+
+  const autoEl = document.getElementById('weather-auto-badge');
+  if (autoEl) {
+    autoBadgeEnabled = autoEl.checked;
+    autoEl.addEventListener('change', (e) => setWeatherAutoBadge(e.target.checked));
+  }
+
+  addMapControl();
+  setWeatherAutoBadge(autoBadgeEnabled);
 }
 
 export function formatWeatherHtml(weather) {

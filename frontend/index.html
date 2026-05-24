@@ -261,15 +261,17 @@
         <div class="sentinel-legend-bar"></div>
         <span class="sentinel-legend-labels"><em>faible</em><em>élevé</em></span>
       </div>
-      <hr />
-      <h3>Météo (OpenWeather)</h3>
+      <h4 class="map-sat-sub">OpenWeather (météo sur la carte)</h4>
       <p id="weather-status-msg" class="weather-status panel-hint">—</p>
+      <label class="parcel-check"><input type="checkbox" id="weather-auto-badge" checked /> Badge météo (suit le centre carte)</label>
+      <label class="parcel-check"><input type="checkbox" id="weather-click-probe" /> Météo au clic sur la carte</label>
       <div class="map-sat-actions">
-        <button type="button" id="btn-weather-current" class="btn-sm">Actuelle (centre carte)</button>
+        <button type="button" id="btn-weather-current" class="btn-sm">Actuelle (centre)</button>
         <button type="button" id="btn-weather-forecast" class="btn-sm">Prévisions</button>
         <button type="button" id="btn-weather-fit-maritime" class="btn-sm btn-auth-outline">Zone pilote</button>
       </div>
       <div id="weather-out" class="weather-out" aria-live="polite"></div>
+      <p class="panel-hint map-weather-hint">Bouton ☁ en haut à droite de la carte · popup au clic si activé.</p>
       <hr />
       <h3>Export</h3>
       <button type="button" id="btn-export-geojson">GeoJSON</button>
