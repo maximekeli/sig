@@ -12,6 +12,7 @@ import {
   healthClass,
   vulnLabel,
 } from './core/parcelUtils.js';
+import { formatSentinelHtml } from './sentinelMap.js';
 
 let drawControl = null;
 let drawnLayer = null;

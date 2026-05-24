@@ -54,7 +54,7 @@ export function toggleSentinelLayer(layerId, on) {
         basemaps.satellite.addTo(map);
       }
     }
-    document.getElementById('sentinel-ndvi-legend')?.classList.toggle('hidden', layerId !== 'ndvi');
+    document.querySelector('.sentinel-ndvi-legend')?.classList.toggle('hidden', layerId !== 'ndvi');
   } else if (!on && overlays[layerId]) {
     map.removeLayer(overlays[layerId]);
     delete overlays[layerId];
