@@ -42,9 +42,13 @@ class SentinelStatusView(APIView):
                 'configured': False,
                 'ok': False,
                 'has_secret': True,
+                'user_id': getattr(settings, 'SENTINEL_HUB_USER_ID', '') or None,
+                'account_id': getattr(settings, 'SENTINEL_HUB_ACCOUNT_ID', '') or None,
                 'message': (
-                    'Secret présent mais SENTINEL_HUB_CLIENT_ID manquant — '
-                    'copiez le Client ID depuis apps.sentinel-hub.com (OAuth clients).'
+                    'Secret OAuth OK, mais SENTINEL_HUB_CLIENT_ID manquant. '
+                    'Dans apps.sentinel-hub.com → User settings → OAuth clients, '
+                    'copiez la colonne « Client ID » du client lié au secret PLAK… '
+                    '(ce n’est ni l’ID utilisateur ni l’ID compte).'
                 ),
             })
         try:

@@ -266,6 +266,8 @@ SENTINEL_HUB_CLIENT_SECRET = os.environ.get(
     'SENTINEL_HUB_CLIENT_SECRET',
     os.environ.get('SENTINEL_HUB_API_KEY', ''),
 )
+SENTINEL_HUB_USER_ID = os.environ.get('SENTINEL_HUB_USER_ID', '')
+SENTINEL_HUB_ACCOUNT_ID = os.environ.get('SENTINEL_HUB_ACCOUNT_ID', '')
 SENTINEL_HUB_BASE_URL = os.environ.get(
     'SENTINEL_HUB_BASE_URL',
     'https://services.sentinel-hub.com',
