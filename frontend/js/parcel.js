@@ -13,6 +13,10 @@ import {
   vulnLabel,
 } from './core/parcelUtils.js';
 import {
+  formatParcelExternalGrid,
+  saveLastParcelToStorage,
+} from './core/parcelExternal.js';
+import {
   clearSentinelParcelSummary,
   displaySentinelParcelSummary,
   formatSentinelHtml,
@@ -54,6 +58,8 @@ function showSoilPointsOnMap() {
 function resetParcelDiagnostics() {
   clearSentinelParcelSummary();
   clearWeatherParcelSummary();
+  saveLastParcelToStorage(null);
+  window.dispatchEvent(new CustomEvent('sig-sols-parcel-cleared'));
 }
 
 function clearParcelLayers() {
@@ -411,6 +417,7 @@ function formatLivePanelHtml(data, { loading = false } = {}) {
       </div>
       <p class="parcel-live-nasa">${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
       ${formatStacLine(nasa)}
+      ${formatParcelExternalGrid(data.sentinel, data.weather)}
       ${formatSentinelHtml(data.sentinel)}
       ${formatWeatherHtml(data.weather)}
       ${formatTypesBreakdown(data.soil_types_breakdown)}
