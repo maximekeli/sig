@@ -287,6 +287,14 @@ def analyze_parcel(
 
     sentinel_block = _parcel_sentinel_summary(geom) if use_sentinel else None
 
+    weather_block = None
+    if use_weather:
+        try:
+            from weather.client import weather_summary_for_point
+            weather_block = weather_summary_for_point(centroid.y, centroid.x)
+        except ImportError:
+            weather_block = {'configured': False, 'error': 'module weather indisponible'}
+
     return {
         'parcel_name': parcel_name,
         'zone_code': code,
@@ -313,6 +321,7 @@ def analyze_parcel(
             'stac_parcel': _parcel_stac_summary(geom),
         },
         'sentinel': sentinel_block,
+        'weather': weather_block,
         'vulnerability': vulnerability,
         'ml_prediction': ml_prediction,
         'recommendations': recommendations,
