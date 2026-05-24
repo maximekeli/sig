@@ -18,6 +18,10 @@ import {
   initSentinelMapTools,
   loadSentinelToggles,
 } from './sentinelMap.js';
+import {
+  initWeatherMapTools,
+  loadWeatherStatus,
+} from './weatherMap.js';
 import { showLoading } from './core/ui.js';
 import { notifyError, notifySuccess } from './core/ui.js';
 import { toast } from './core/toast.js';
@@ -81,6 +85,8 @@ function initMap() {
   loadNasaToggles();
   loadSentinelToggles();
   initSentinelMapTools();
+  loadWeatherStatus();
+  initWeatherMapTools();
 }
 
 function updateSelfMarker(lat, lon, accuracy_m) {
@@ -330,6 +336,7 @@ window.SigSolsMap = {
   getBasemaps: () => basemaps,
   loadSoilPoints,
   loadSentinelToggles,
+  loadWeatherStatus,
   runPrediction,
   startLiveLocation,
   stopLiveLocation,

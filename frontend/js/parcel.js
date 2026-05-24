@@ -13,6 +13,7 @@ import {
   vulnLabel,
 } from './core/parcelUtils.js';
 import { formatSentinelHtml } from './sentinelMap.js';
+import { formatWeatherHtml } from './weatherMap.js';
 
 let drawControl = null;
 let drawnLayer = null;
@@ -391,6 +392,7 @@ function formatLivePanelHtml(data, { loading = false } = {}) {
       <p class="parcel-live-nasa">${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
       ${formatStacLine(nasa)}
       ${formatSentinelHtml(data.sentinel)}
+      ${formatWeatherHtml(data.weather)}
       ${formatTypesBreakdown(data.soil_types_breakdown)}
       ${ml?.predicted_class ? `<p class="parcel-live-ml">IA fertilité : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
       ${(data.recommendations || []).slice(0, 2).map((r) => `<p class="parcel-live-tip">• ${r}</p>`).join('')}

@@ -163,8 +163,15 @@ class ParcelLiveView(APIView):
         if not zone_code:
             return Response({'error': 'zone_code requis'}, status=400)
         use_ml = request.query_params.get('use_ml', '0') == '1'
+        use_sentinel = request.query_params.get('use_sentinel', '0') == '1'
+        use_weather = request.query_params.get('use_weather', '0') == '1'
         try:
-            return Response(analyze_parcel(zone_code=zone_code, use_ml=use_ml))
+            return Response(analyze_parcel(
+                zone_code=zone_code,
+                use_ml=use_ml,
+                use_sentinel=use_sentinel,
+                use_weather=use_weather,
+            ))
         except ValueError as exc:
             return Response({'error': str(exc)}, status=400)
 

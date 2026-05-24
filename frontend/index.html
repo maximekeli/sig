@@ -201,6 +201,7 @@
       <p id="parcel-status" class="parcel-status">Sélectionnez une parcelle sur la carte ou dans la liste.</p>
       <label class="parcel-check"><input type="checkbox" id="parcel-use-nasa" checked /> Données NASA (NDVI, SMAP)</label>
       <label class="parcel-check"><input type="checkbox" id="parcel-use-sentinel" checked /> NDVI Sentinel-2 (parcelle)</label>
+      <label class="parcel-check"><input type="checkbox" id="parcel-use-weather" checked /> Météo OpenWeather (parcelle)</label>
       <label class="parcel-check"><input type="checkbox" id="parcel-use-ml" /> Prédiction IA (analyse complète)</label>
       <div class="parcel-actions-row">
         <button type="button" id="btn-parcel-refresh" class="btn-parcel-clear" title="Actualiser">↻</button>
@@ -261,6 +262,15 @@
         <span class="sentinel-legend-labels"><em>faible</em><em>élevé</em></span>
       </div>
       <hr />
+      <h3>Météo (OpenWeather)</h3>
+      <p id="weather-status-msg" class="weather-status panel-hint">—</p>
+      <div class="map-sat-actions">
+        <button type="button" id="btn-weather-current" class="btn-sm">Actuelle (centre carte)</button>
+        <button type="button" id="btn-weather-forecast" class="btn-sm">Prévisions</button>
+        <button type="button" id="btn-weather-fit-maritime" class="btn-sm btn-auth-outline">Zone pilote</button>
+      </div>
+      <div id="weather-out" class="weather-out" aria-live="polite"></div>
+      <hr />
       <h3>Export</h3>
       <button type="button" id="btn-export-geojson">GeoJSON</button>
       <button type="button" id="btn-export-csv">CSV</button>
@@ -282,6 +292,7 @@
     </aside>
     <div id="map" class="map-container">
       <div id="sentinel-map-badge" class="sentinel-map-badge hidden" aria-live="polite"></div>
+      <div id="weather-map-badge" class="weather-map-badge hidden" aria-live="polite"></div>
       <div id="parcel-map-legend" class="parcel-map-legend" aria-hidden="true">
         <span><i class="legend-swatch legend-canton"></i> Canton</span>
         <span><i class="legend-swatch legend-degraded"></i> Zone dégradée</span>
