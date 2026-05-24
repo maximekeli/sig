@@ -844,6 +844,15 @@ body:not(.agent-mode) .agent-only { display: none !important; }
   border-radius: var(--radius-md, 12px);
 }
 
+.sentinel-status { font-size: 0.85rem; margin: 0.35rem 0 0.5rem; }
+.sentinel-status--ok { color: #065f46; }
+.sentinel-status--err { color: #991b1b; }
+#sentinel-layers-toggles label {
+  display: block;
+  margin: 0.25rem 0;
+  font-size: 0.88rem;
+}
+
 .shorts-feed {
   display: flex;
   flex-direction: column;

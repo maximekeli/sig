@@ -13,8 +13,11 @@
 | **NASA Earthdata / CMR-STAC** | Catalogue MODIS, SMAP, GPM… | `.env` : `NASA_EARTHDATA_USERNAME`, `NASA_EARTHDATA_PASSWORD` ou `NASA_EARTHDATA_TOKEN` | `backend/apps/nasa/` |
 | **earthaccess** | Téléchargement granules NASA | Mêmes identifiants Earthdata | `backend/apps/nasa/earthdata.py` |
 | **pystac-client** | Recherche STAC CMR | Public (catalogue) | `backend/apps/nasa/stac_client.py` |
+| **Sentinel Hub** | NDVI / couleur vraie Sentinel-2 (Process API) | `.env` : `SENTINEL_HUB_CLIENT_ID`, `SENTINEL_HUB_CLIENT_SECRET` | `backend/apps/sentinel/` |
 
 Tuiles NASA affichées sur la carte : **placeholder PNG** via l’API interne `/api/v1/nasa/tiles/...` (pas de tuiles raster NASA réelles tant que l’ingestion WMS/XYZ n’est pas branchée).
+
+Couches **Sentinel Hub** : tuiles réelles via `/api/v1/sentinel/tiles/{layer}/{z}/{x}/{y}.png` (NDVI colorisé, couleur vraie).
 
 ## Internes (pas externes)
 
@@ -36,7 +39,7 @@ Les fiches listées via l’API incluent un champ **`pdf_url`** (chemin relatif 
 | **Google Gemini API** | Assistant IA conversationnel (sols, parcelles, quiz, NASA) | ✅ Intégré via `GEMINI_API_KEY` — `POST /api/v1/assistant/chat/` |
 | **OpenAI / Anthropic** | Même usage que Gemini | ❌ Non intégré |
 | **Mapbox / MapTiler** | Fonds carte vectoriels haute qualité | ❌ Non intégré (OSM suffit pour le pilote) |
-| **Sentinel Hub** | NDVI temps réel haute résolution | ❌ Non intégré (NASA MODIS utilisé) |
+| **Sentinel Hub** | NDVI temps réel haute résolution | ✅ Intégré — voir `SENTINEL_HUB_*` dans `.env` |
 | **Open-Meteo** | Météo locale pour recommandations irrigation | ❌ Non intégré |
 | **SMTP (SendGrid, Brevo…)** | Emails réels mot de passe oublié | ⚠️ `send_mail` Django en dev (console) — configurer `EMAIL_*` en production |
 | **Sentry / Datadog** | Monitoring erreurs | ❌ Non intégré |
@@ -48,6 +51,10 @@ Voir `.env.example` pour la liste à jour.
 ```bash
 # NASA (fortement recommandé pour ingestion réelle)
 NASA_EARTHDATA_TOKEN=
+
+# Sentinel Hub (OAuth — dashboard https://apps.sentinel-hub.com/)
+SENTINEL_HUB_CLIENT_ID=
+SENTINEL_HUB_CLIENT_SECRET=
 
 # Production email
 EMAIL_HOST=

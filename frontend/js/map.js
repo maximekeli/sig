@@ -274,6 +274,12 @@ function toggleNasaLayer(product, on) {
   }
 }
 
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s ?? '';
+  return d.innerHTML;
+}
+
 async function loadSentinelToggles() {
   const container = document.getElementById('sentinel-layers-toggles');
   const statusEl = document.getElementById('sentinel-status-msg');
