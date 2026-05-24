@@ -2,19 +2,26 @@
 # Redémarre le backend avec .env à jour (clé Gemini + modèle).
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+dc() {
+  if docker compose "$@" 2>/dev/null; then return 0; fi
+  sudo docker compose "$@"
+}
+
 echo "Modèle recommandé : gemini-2.5-flash-lite (quota gratuit)"
 grep -q '^GEMINI_MODEL=' .env || echo 'GEMINI_MODEL=gemini-2.5-flash-lite' >> .env
 echo "==> Arrêt des anciens conteneurs web (sudo si besoin)…"
-docker rm -f dusol_web dusol_projet-web-1 2963aa31d25b_dusol_web 2>/dev/null || true
-sudo docker rm -f dusol_web dusol_projet-web-1 2963aa31d25b_dusol_web 2>/dev/null || true
-docker compose down web 2>/dev/null || sudo docker compose down web 2>/dev/null || true
+for c in dusol_sig_web 3211a08c249c_dusol_sig_web 904eca994559_dusol_sig_web \
+  dusol_web dusol_projet-web-1 2963aa31d25b_dusol_web; do
+  docker rm -f "$c" 2>/dev/null || sudo docker rm -f "$c" 2>/dev/null || true
+done
+dc down web 2>/dev/null || true
 
 echo "==> Reconstruction image web…"
-docker compose build web || sudo docker compose build web
+dc build web
 
 echo "==> Démarrage web + nginx…"
-docker compose up -d --force-recreate --remove-orphans web nginx \
-  || sudo docker compose up -d --force-recreate --remove-orphans web nginx
+dc up -d --force-recreate --remove-orphans web nginx
 
 sleep 4
 echo "==> Test /api/v1/assistant/status/"
@@ -34,3 +41,12 @@ if [ "$CODE" = "404" ]; then
   exit 1
 fi
 echo "OK routes likes/commentaires (toggle_like → HTTP $CODE)"
+
+echo "==> Test Sentinel Hub"
+if dc exec -T web python manage.py test_sentinel_hub 2>/dev/null \
+  || sudo docker compose exec -T web python manage.py test_sentinel_hub; then
+  curl -sf http://localhost:8081/api/v1/sentinel/status/ | head -c 200 && echo
+  echo "OK Sentinel Hub"
+else
+  echo "AVERTISSEMENT: Sentinel Hub — vérifiez SENTINEL_HUB_* dans .env puis : ./scripts/reload-sentinel.sh"
+fi
