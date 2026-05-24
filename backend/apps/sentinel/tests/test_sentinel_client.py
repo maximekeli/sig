@@ -102,9 +102,16 @@ class SentinelClientTest(TestCase):
 )
 class SentinelHubAPITest(TestCase):
     def setUp(self):
+        from accounts.models import User
         from rest_framework.test import APIClient
 
         self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='sentinel_tester',
+            password='testpass12345',
+            role=User.Role.PUBLIC,
+        )
+        self.client.force_authenticate(user=self.user)
         cache.clear()
 
     @patch('sentinel.client.requests.post')
