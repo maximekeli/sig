@@ -23,6 +23,18 @@ dc build web
 echo "==> Démarrage web + nginx…"
 dc up -d --force-recreate --remove-orphans web nginx
 
+echo "==> Retrait des conteneurs web orphelins du réseau Docker…"
+for c in 3211a08c249c_dusol_sig_web 904eca994559_dusol_sig_web; do
+  docker network disconnect dusol_projet_default "$c" 2>/dev/null \
+    || sudo docker network disconnect dusol_projet_default "$c" 2>/dev/null || true
+done
+
+NGINX_C=$(docker ps -q -f name=dusol_projet-nginx 2>/dev/null | head -1)
+if [ -n "$NGINX_C" ]; then
+  docker exec "$NGINX_C" nginx -s reload 2>/dev/null \
+    || sudo docker exec "$NGINX_C" nginx -s reload 2>/dev/null || true
+fi
+
 sleep 4
 echo "==> Test /api/v1/assistant/status/"
 curl -sf http://localhost:8081/api/v1/assistant/status/ && echo || {
