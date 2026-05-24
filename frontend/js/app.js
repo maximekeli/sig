@@ -21,9 +21,15 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
       setTimeout(() => {
         SigSolsMap.getMap()?.invalidateSize?.();
         window.SigSolsMap?.loadSentinelToggles?.();
+        window.SigSolsMap?.loadWeatherStatus?.();
+        const last = window.SigSolsParcel?.getLastParcelData?.();
+        if (last) window.SigSolsParcel?.refreshLiveParcelInfo?.(false);
       }, 200);
     }
-    if (viewName === 'dashboard') SigSolsDashboard.loadDashboard();
+    if (viewName === 'dashboard') {
+      SigSolsDashboard.loadDashboard();
+      SigSolsDashboard.renderDashboardParcelExternal?.();
+    }
     if (viewName === 'quiz') {
       SigSolsQuiz.loadQuizStats?.();
       SigSolsQuiz.loadLeaderboard();

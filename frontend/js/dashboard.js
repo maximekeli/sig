@@ -1,4 +1,8 @@
 import { formatMlF1, formatSmapCorrelation, renderSoilTypeRows } from './core/dashboardUtils.js';
+import {
+  formatParcelExternalGrid,
+  loadLastParcelFromStorage,
+} from './core/parcelExternal.js';
 import { showLoading } from './core/ui.js';
 import { notifyError } from './core/ui.js';
 
@@ -48,6 +52,25 @@ function renderFertilityChart(stats) {
   });
 }
 
+export function renderDashboardParcelExternal(data) {
+  const body = document.getElementById('dashboard-parcel-external-body');
+  if (!body) return;
+
+  const live = data || window.SigSolsParcel?.getLastParcelData?.() || loadLastParcelFromStorage();
+  if (!live || (!live.sentinel && !live.weather)) {
+    body.innerHTML = '<p class="parcel-ext-empty">Aucune parcelle analysée — allez sur la carte, sélectionnez une parcelle et attendez l’analyse (Sentinel + OpenWeather cochés).</p>';
+    return;
+  }
+
+  const title = [
+    live.parcel_name || live.zone_code || 'Parcelle',
+    live.area?.area_ha != null ? `${live.area.area_ha} ha` : '',
+    live.health_index != null ? `santé ${live.health_index}/100` : '',
+  ].filter(Boolean).join(' · ');
+
+  body.innerHTML = formatParcelExternalGrid(live.sentinel, live.weather, { title });
+}
+
 async function loadDashboard() {
   showLoading(true);
   try {
@@ -73,6 +96,7 @@ async function loadDashboard() {
     }
     document.getElementById('smap-corr').textContent = formatSmapCorrelation(smap);
     renderFertilityChart(stats);
+    renderDashboardParcelExternal();
   } catch (e) {
     notifyError(e);
   } finally {
@@ -80,4 +104,18 @@ async function loadDashboard() {
   }
 }
 
-window.SigSolsDashboard = { loadDashboard };
+function initDashboardParcelExternal() {
+  document.getElementById('btn-dashboard-goto-map')?.addEventListener('click', () => {
+    document.querySelector('.nav-btn[data-view="map"]')?.click();
+  });
+  window.addEventListener('sig-sols-parcel-analyzed', (e) => {
+    renderDashboardParcelExternal(e.detail);
+  });
+  window.addEventListener('sig-sols-parcel-cleared', () => {
+    renderDashboardParcelExternal(null);
+  });
+}
+
+initDashboardParcelExternal();
+
+window.SigSolsDashboard = { loadDashboard, renderDashboardParcelExternal };

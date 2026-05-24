@@ -483,11 +483,14 @@ async function refreshLiveParcelInfo(fullAnalysis = false) {
     if (requestId !== liveRequestSeq) return;
 
     lastParcelData = data;
+    saveLastParcelToStorage(data);
     showLivePanel(formatLivePanelHtml(data));
     highlightParcel(data.geometry_geojson, data.vulnerability?.level, shouldFitBounds);
     renderSoilPointsInParcel(data.soil_points_map);
     renderAnalysisResult(data);
     syncParcelDiagnostics(data);
+    window.dispatchEvent(new CustomEvent('sig-sols-parcel-analyzed', { detail: data }));
+    document.getElementById('parcel-analysis-result')?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
     setParcelStatus(`${data.parcel_name || zoneCode} — ${spCount(data)} pt(s) · vuln. ${vulnLabel(data.vulnerability?.level)}`);
   } catch (e) {
     if (requestId !== liveRequestSeq) return;
@@ -525,6 +528,7 @@ function renderAnalysisResult(data) {
         <span>SMAP <strong>${sp.avg_smap ?? nasa.avg_smap ?? '—'}</strong></span>
         <span>Humid. <strong>${sp.avg_humidity_pct ?? '—'}%</strong></span>
       </div>
+      ${formatParcelExternalGrid(data.sentinel, data.weather, { title: 'Imagerie & météo (parcelle)' })}
       ${formatTypesBreakdown(data.soil_types_breakdown)}
       <p class="parcel-nasa">NASA : ${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
       ${formatStacLine(nasa)}
