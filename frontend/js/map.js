@@ -17,7 +17,7 @@ import { showLoading } from './core/ui.js';
 import { notifyError, notifySuccess } from './core/ui.js';
 import { toast } from './core/toast.js';
 
-let map, markersLayer, usersLayer, nasaOverlays = {};
+let map, markersLayer, usersLayer, nasaOverlays = {}, sentinelOverlays = {};
 let mapReady = false;
 let loadDebounce = null;
 let bboxLoadEnabled = true;
@@ -268,6 +268,71 @@ function toggleNasaLayer(product, on) {
   } else if (!on && nasaOverlays[product]) {
     map.removeLayer(nasaOverlays[product]);
     delete nasaOverlays[product];
+  }
+}
+
+async function loadSentinelToggles() {
+  const container = document.getElementById('sentinel-layers-toggles');
+  const statusEl = document.getElementById('sentinel-status-msg');
+  if (!container) return;
+  try {
+    const status = await SigSolsAPI.api('/sentinel/status/');
+    if (statusEl) {
+      statusEl.textContent = status.ok
+        ? 'Sentinel Hub connecté'
+        : (status.message || 'Non configuré');
+      statusEl.classList.toggle('sentinel-status--ok', Boolean(status.ok));
+      statusEl.classList.toggle('sentinel-status--err', !status.ok);
+    }
+    if (!status.configured || !status.ok) {
+      container.innerHTML = '<p class="panel-hint">Configurez SENTINEL_HUB_CLIENT_ID et le secret dans .env</p>';
+      return;
+    }
+    const layers = await SigSolsAPI.api('/sentinel/layers/');
+    container.innerHTML = '';
+    (layers.layers || []).forEach((layer) => {
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="checkbox" data-sentinel-layer="${layer.id}" /> ${escapeHtml(layer.title)}`;
+      label.querySelector('input').addEventListener('change', (e) => {
+        toggleSentinelLayer(layer.id, e.target.checked);
+      });
+      container.appendChild(label);
+    });
+  } catch (err) {
+    if (statusEl) statusEl.textContent = err.message || 'Sentinel Hub indisponible';
+  }
+}
+
+function toggleSentinelLayer(layerId, on) {
+  if (!map) return;
+  if (on && !sentinelOverlays[layerId]) {
+    sentinelOverlays[layerId] = L.tileLayer(
+      sentinelTileUrl(window.location.origin, layerId),
+      { opacity: 0.55, maxZoom: 14 },
+    ).addTo(map);
+  } else if (!on && sentinelOverlays[layerId]) {
+    map.removeLayer(sentinelOverlays[layerId]);
+    delete sentinelOverlays[layerId];
+  }
+}
+
+async function analyzeSentinelNdvi() {
+  const out = document.getElementById('sentinel-ndvi-out');
+  if (!out || !map) return;
+  out.textContent = 'Analyse NDVI Sentinel…';
+  try {
+    const bbox = bboxFromLeaflet(map);
+    const data = await SigSolsAPI.api('/sentinel/analyze/', {
+      method: 'POST',
+      body: JSON.stringify({ bbox }),
+    });
+    if (data.ndvi_mean == null) {
+      out.textContent = 'Pas de pixels valides (nuages ou hors couverture).';
+      return;
+    }
+    out.textContent = `NDVI moyen : ${data.ndvi_mean} (min ${data.ndvi_min}, max ${data.ndvi_max}) — ${data.pixel_count} px`;
+  } catch (err) {
+    out.textContent = err.message || 'Échec analyse Sentinel';
   }
 }
 

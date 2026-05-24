@@ -44,3 +44,7 @@ export function markerStyleForPoint(point) {
 export function nasaTileUrl(origin, product, dateStr) {
   return `${origin}/api/v1/nasa/tiles/${product}/${dateStr}/{z}/{x}/{y}.png`;
 }
+
+export function sentinelTileUrl(origin, layer) {
+  return `${origin}/api/v1/sentinel/tiles/${layer}/{z}/{x}/{y}.png`;
+}

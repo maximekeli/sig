@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'soils',
     'spatial',
     'nasa',
+    'sentinel',
     'ml_predict',
     'education',
     'sig_platform',
@@ -257,6 +258,18 @@ NASA_EARTHDATA_PASSWORD = os.environ.get('NASA_EARTHDATA_PASSWORD', '')
 NASA_EARTHDATA_TOKEN = os.environ.get('NASA_EARTHDATA_TOKEN', '')
 NASA_CACHE_DIR = BASE_DIR / 'data' / 'nasa_cache'
 NASA_CACHE_RETENTION_DAYS = 365
+
+# Sentinel Hub — https://www.sentinel-hub.com/
+# OAuth : client_id + client_secret depuis le tableau de bord (Apps).
+SENTINEL_HUB_CLIENT_ID = os.environ.get('SENTINEL_HUB_CLIENT_ID', '')
+SENTINEL_HUB_CLIENT_SECRET = os.environ.get(
+    'SENTINEL_HUB_CLIENT_SECRET',
+    os.environ.get('SENTINEL_HUB_API_KEY', ''),
+)
+SENTINEL_HUB_BASE_URL = os.environ.get(
+    'SENTINEL_HUB_BASE_URL',
+    'https://services.sentinel-hub.com',
+)
 
 # ML
 ML_ARTIFACTS_DIR = BASE_DIR / 'apps' / 'ml_predict' / 'artifacts'

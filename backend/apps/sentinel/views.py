@@ -44,7 +44,7 @@ class SentinelStatusView(APIView):
                 'configured': True,
                 'ok': True,
                 'message': 'Connexion Sentinel Hub OK',
-                'layers': list(LAYERS_META.keys()),
+                'layers': list(LAYER_PRESETS.keys()),
             })
         except SentinelHubError as exc:
             return Response({
