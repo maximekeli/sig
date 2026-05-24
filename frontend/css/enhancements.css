@@ -847,11 +847,70 @@ body:not(.agent-mode) .agent-only { display: none !important; }
 .sentinel-status { font-size: 0.85rem; margin: 0.35rem 0 0.5rem; }
 .sentinel-status--ok { color: #065f46; }
 .sentinel-status--err { color: #991b1b; }
-#sentinel-layers-toggles label {
+
+.map-sat-hint { font-size: 0.82rem; margin: 0 0 0.5rem; opacity: 0.85; }
+.map-sat-sub { font-size: 0.9rem; margin: 0.6rem 0 0.35rem; font-weight: 600; }
+.map-layer-toggles label,
+#sentinel-layers-toggles label,
+#nasa-layers-toggles label {
   display: block;
   margin: 0.25rem 0;
   font-size: 0.88rem;
 }
+
+.map-sat-opacity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+.map-sat-opacity input[type="range"] { flex: 1; min-width: 6rem; }
+
+.map-sat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0;
+}
+
+.sentinel-ndvi-legend {
+  margin: 0.5rem 0;
+  padding: 0.45rem 0.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  font-size: 0.75rem;
+}
+.sentinel-legend-title { display: block; margin-bottom: 0.25rem; }
+.sentinel-legend-bar {
+  height: 10px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #a61e1e, #e6a817, #f5f529, #7bc96f, #1a6b2d);
+}
+.sentinel-legend-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.15rem;
+  opacity: 0.8;
+}
+
+.sentinel-map-badge {
+  position: absolute;
+  top: 0.65rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 800;
+  padding: 0.35rem 0.75rem;
+  background: rgba(15, 23, 42, 0.82);
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.parcel-sentinel { font-size: 0.85rem; margin: 0.35rem 0 0; color: #0f766e; }
+.parcel-sentinel--warn { color: #b45309; }
 
 .shorts-feed {
   display: flex;
