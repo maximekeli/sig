@@ -976,6 +976,51 @@ body:not(.agent-mode) .agent-only { display: none !important; }
 .parcel-weather { font-size: 0.85rem; margin: 0.35rem 0 0; color: #1d4ed8; }
 .parcel-weather--warn { color: #b45309; }
 
+.parcel-external-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+@media (max-width: 520px) {
+  .parcel-external-grid { grid-template-columns: 1fr; }
+}
+.parcel-ext-card {
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.65);
+}
+.parcel-ext-card h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+.parcel-ext-card--sentinel { border-color: #6ee7b7; background: rgba(16, 185, 129, 0.08); }
+.parcel-ext-card--weather { border-color: #93c5fd; background: rgba(59, 130, 246, 0.08); }
+.parcel-ext-card--warn { border-color: #fcd34d; background: rgba(251, 191, 36, 0.1); }
+.parcel-ext-card--empty { opacity: 0.75; }
+.parcel-ext-kpi { margin: 0.2rem 0; font-size: 1.05rem; }
+.parcel-ext-kpi strong { color: #0f766e; }
+.parcel-ext-card--weather .parcel-ext-kpi strong { color: #1d4ed8; }
+.parcel-ext-kpi span { display: block; font-size: 0.8rem; font-weight: 400; opacity: 0.9; }
+.parcel-ext-meta { margin: 0.15rem 0 0; font-size: 0.75rem; opacity: 0.8; }
+.parcel-ext-src { margin: 0.2rem 0 0; font-size: 0.7rem; opacity: 0.65; }
+.parcel-ext-weather-row { display: flex; gap: 0.4rem; align-items: flex-start; }
+.parcel-ext-tips { margin: 0.35rem 0 0; padding-left: 1rem; font-size: 0.72rem; }
+.parcel-ext-title { margin: 0 0 0.25rem; font-size: 0.8rem; font-weight: 600; }
+.parcel-ext-empty { font-size: 0.85rem; opacity: 0.8; margin: 0; }
+.dashboard-parcel-external-body { min-height: 4rem; }
+#btn-dashboard-goto-map { margin-top: 0.5rem; }
+
+[data-theme="dark"] .parcel-ext-card {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: #334155;
+}
+
 .shorts-feed {
   display: flex;
   flex-direction: column;

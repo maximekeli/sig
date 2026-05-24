@@ -153,6 +153,30 @@ def test_parcel_live_by_zone(api_client, sample_zone):
 
 
 @pytest.mark.django_db
+def test_parcel_live_post_defaults_sentinel_weather(auth_client, sample_zone, monkeypatch):
+    """Sans flags explicites, Sentinel et OpenWeather sont demandés par défaut."""
+
+    def fake_sentinel(geom):
+        return {'configured': True, 'ndvi_mean': 0.42}
+
+    def fake_weather(lat, lon):
+        return {'configured': True, 'current': {'temp_c': 30, 'description': 'test'}}
+
+    monkeypatch.setattr('spatial.parcel_analysis._parcel_sentinel_summary', fake_sentinel)
+    monkeypatch.setattr('weather.client.weather_summary_for_point', fake_weather)
+
+    r = auth_client.post(
+        '/api/v1/spatial/parcel/live/',
+        {'zone_code': sample_zone.code, 'use_ml': False},
+        format='json',
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body['sentinel']['ndvi_mean'] == 0.42
+    assert body['weather']['current']['temp_c'] == 30
+
+
+@pytest.mark.django_db
 def test_ndvi_timeseries_empty(api_client, sample_soil_point):
     r = api_client.get(f'/api/v1/spatial/ndvi-timeseries/{sample_soil_point.id}/')
     assert r.status_code == 200

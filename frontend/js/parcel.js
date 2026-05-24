@@ -19,12 +19,10 @@ import {
 import {
   clearSentinelParcelSummary,
   displaySentinelParcelSummary,
-  formatSentinelHtml,
 } from './sentinelMap.js';
 import {
   clearWeatherParcelSummary,
   displayWeatherParcelSummary,
-  formatWeatherHtml,
 } from './weatherMap.js';
 
 let drawControl = null;
@@ -418,8 +416,6 @@ function formatLivePanelHtml(data, { loading = false } = {}) {
       <p class="parcel-live-nasa">${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
       ${formatStacLine(nasa)}
       ${formatParcelExternalGrid(data.sentinel, data.weather)}
-      ${formatSentinelHtml(data.sentinel)}
-      ${formatWeatherHtml(data.weather)}
       ${formatTypesBreakdown(data.soil_types_breakdown)}
       ${ml?.predicted_class ? `<p class="parcel-live-ml">IA fertilité : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
       ${(data.recommendations || []).slice(0, 2).map((r) => `<p class="parcel-live-tip">• ${r}</p>`).join('')}
@@ -463,7 +459,7 @@ async function refreshLiveParcelInfo(fullAnalysis = false) {
   const requestId = ++liveRequestSeq;
   showLivePanel(formatLivePanelHtml({}, { loading: true }));
   const useMl = fullAnalysis || document.getElementById('parcel-use-ml')?.checked === true;
-  const useSentinel = document.getElementById('parcel-use-sentinel')?.checked === true;
+  const useSentinel = document.getElementById('parcel-use-sentinel')?.checked !== false;
   const useWeather = document.getElementById('parcel-use-weather')?.checked !== false;
 
   try {
@@ -532,8 +528,6 @@ function renderAnalysisResult(data) {
       ${formatTypesBreakdown(data.soil_types_breakdown)}
       <p class="parcel-nasa">NASA : ${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
       ${formatStacLine(nasa)}
-      ${formatSentinelHtml(data.sentinel)}
-      ${formatWeatherHtml(data.weather)}
       ${ml?.predicted_class ? `<p class="parcel-ml">IA : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
       ${(data.recommendations || []).length ? `<ul class="parcel-recs">${data.recommendations.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
     </div>`;
@@ -642,6 +636,17 @@ function startLiveInterval() {
 }
 
 function initParcelTools() {
+  const sentCb = document.getElementById('parcel-use-sentinel');
+  const weatherCb = document.getElementById('parcel-use-weather');
+  if (sentCb && sentCb.checked === false && sentCb.dataset.userTouched !== '1') {
+    sentCb.checked = true;
+  }
+  if (weatherCb && weatherCb.checked === false && weatherCb.dataset.userTouched !== '1') {
+    weatherCb.checked = true;
+  }
+  sentCb?.addEventListener('change', () => { sentCb.dataset.userTouched = '1'; });
+  weatherCb?.addEventListener('change', () => { weatherCb.dataset.userTouched = '1'; });
+
   initDrawControl();
   loadZonesSelect();
   loadParcelsOnMap();

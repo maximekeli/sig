@@ -1,4 +1,4 @@
-const CACHE = 'sig-sols-v4';
+const CACHE = 'sig-sols-v5';
 const ASSETS = [
   '/frontend/index.html',
   '/frontend/css/style.css',
@@ -11,6 +11,9 @@ const ASSETS = [
   '/frontend/js/features.js',
   '/frontend/js/map.js',
   '/frontend/js/parcel.js',
+  '/frontend/js/core/parcelExternal.js',
+  '/frontend/js/sentinelMap.js',
+  '/frontend/js/weatherMap.js',
   '/frontend/js/dashboard.js',
   '/frontend/js/quiz.js',
   '/frontend/js/tools.js',

@@ -9,6 +9,19 @@ from soils.serializers import AdministrativeZoneSerializer
 from . import services
 
 
+def _parse_bool_flag(value, *, default=True):
+    """Interprète un flag JSON/query (true/false/1/0) ; absent → default."""
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        return value.strip().lower() in ('1', 'true', 'yes', 'on')
+    return bool(value)
+
+
 class ProximityView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -98,17 +111,17 @@ class ParcelAnalyzeView(APIView):
     def post(self, request):
         from .parcel_analysis import analyze_parcel
 
-        use_ml = request.data.get('use_ml', True)
-        use_sentinel = request.data.get('use_sentinel', False)
-        use_weather = request.data.get('use_weather', False)
+        use_ml = _parse_bool_flag(request.data.get('use_ml'), default=True)
+        use_sentinel = _parse_bool_flag(request.data.get('use_sentinel'), default=True)
+        use_weather = _parse_bool_flag(request.data.get('use_weather'), default=True)
         try:
             result = analyze_parcel(
                 geometry=request.data.get('geometry'),
                 zone_code=request.data.get('zone_code'),
                 zone_id=request.data.get('zone_id'),
-                use_ml=bool(use_ml),
-                use_sentinel=bool(use_sentinel),
-                use_weather=bool(use_weather),
+                use_ml=use_ml,
+                use_sentinel=use_sentinel,
+                use_weather=use_weather,
             )
         except ValueError as exc:
             return Response({'error': str(exc)}, status=400)
@@ -178,17 +191,17 @@ class ParcelLiveView(APIView):
     def post(self, request):
         from .parcel_analysis import analyze_parcel
 
-        use_ml = request.data.get('use_ml', False)
-        use_sentinel = request.data.get('use_sentinel', False)
-        use_weather = request.data.get('use_weather', False)
+        use_ml = _parse_bool_flag(request.data.get('use_ml'), default=False)
+        use_sentinel = _parse_bool_flag(request.data.get('use_sentinel'), default=True)
+        use_weather = _parse_bool_flag(request.data.get('use_weather'), default=True)
         try:
             return Response(analyze_parcel(
                 geometry=request.data.get('geometry'),
                 zone_code=request.data.get('zone_code'),
                 zone_id=request.data.get('zone_id'),
-                use_ml=bool(use_ml),
-                use_sentinel=bool(use_sentinel),
-                use_weather=bool(use_weather),
+                use_ml=use_ml,
+                use_sentinel=use_sentinel,
+                use_weather=use_weather,
             ))
         except ValueError as exc:
             return Response({'error': str(exc)}, status=400)
