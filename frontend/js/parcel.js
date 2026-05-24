@@ -390,6 +390,7 @@ function formatLivePanelHtml(data, { loading = false } = {}) {
       </div>
       <p class="parcel-live-nasa">${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
       ${formatStacLine(nasa)}
+      ${formatSentinelHtml(data.sentinel)}
       ${formatTypesBreakdown(data.soil_types_breakdown)}
       ${ml?.predicted_class ? `<p class="parcel-live-ml">IA fertilité : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
       ${(data.recommendations || []).slice(0, 2).map((r) => `<p class="parcel-live-tip">• ${r}</p>`).join('')}

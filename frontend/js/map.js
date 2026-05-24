@@ -327,7 +327,9 @@ async function exportWithAuth(path, filename) {
 window.SigSolsMap = {
   initMap,
   getMap,
+  getBasemaps: () => basemaps,
   loadSoilPoints,
+  loadSentinelToggles,
   runPrediction,
   startLiveLocation,
   stopLiveLocation,

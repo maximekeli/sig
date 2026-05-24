@@ -17,6 +17,12 @@ document.querySelectorAll('.nav-btn').forEach((btn) => {
     });
     document.getElementById('welcome-banner')?.classList.add('hidden');
     import('./core/activityTracker.js').then(({ trackNav }) => trackNav(viewName)).catch(() => {});
+    if (viewName === 'map') {
+      setTimeout(() => {
+        SigSolsMap.getMap()?.invalidateSize?.();
+        window.SigSolsMap?.loadSentinelToggles?.();
+      }, 200);
+    }
     if (viewName === 'dashboard') SigSolsDashboard.loadDashboard();
     if (viewName === 'quiz') {
       SigSolsQuiz.loadQuizStats?.();
