@@ -11,6 +11,7 @@ import {
   buildSoilFiltersQuery,
   markerStyleForPoint,
   nasaTileUrl,
+  sentinelTileUrl,
   parseSoilPointsList,
 } from './core/mapUtils.js';
 import { showLoading } from './core/ui.js';
@@ -74,6 +75,8 @@ function initMap() {
   });
   loadSoilPoints();
   loadNasaToggles();
+  loadSentinelToggles();
+  document.getElementById('btn-sentinel-ndvi')?.addEventListener('click', analyzeSentinelNdvi);
 }
 
 function updateSelfMarker(lat, lon, accuracy_m) {
