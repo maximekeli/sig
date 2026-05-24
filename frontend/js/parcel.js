@@ -487,6 +487,7 @@ function renderAnalysisResult(data) {
       ${formatTypesBreakdown(data.soil_types_breakdown)}
       <p class="parcel-nasa">NASA : ${NDVI_LABELS[nasa.ndvi_status] || '—'} · ${SMAP_LABELS[nasa.smap_status] || '—'}</p>
       ${formatStacLine(nasa)}
+      ${formatSentinelHtml(data.sentinel)}
       ${ml?.predicted_class ? `<p class="parcel-ml">IA : <strong>${ml.predicted_class}</strong> (${Math.round((ml.confidence || 0) * 100)}%)</p>` : ''}
       ${(data.recommendations || []).length ? `<ul class="parcel-recs">${data.recommendations.map((r) => `<li>${r}</li>`).join('')}</ul>` : ''}
     </div>`;
