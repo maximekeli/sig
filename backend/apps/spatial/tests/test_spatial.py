@@ -119,8 +119,6 @@ def test_parcel_zones_geojson(api_client, sample_zone):
 
 @pytest.mark.django_db
 def test_parcel_analyze_with_weather(auth_client, sample_zone, monkeypatch):
-    from weather.client import weather_summary_for_point
-
     def fake_weather(lat, lon):
         return {
             'configured': True,
@@ -128,10 +126,7 @@ def test_parcel_analyze_with_weather(auth_client, sample_zone, monkeypatch):
             'agro_tips': ['Test conseil météo.'],
         }
 
-    monkeypatch.setattr(
-        'spatial.parcel_analysis.weather_summary_for_point',
-        fake_weather,
-    )
+    monkeypatch.setattr('weather.client.weather_summary_for_point', fake_weather)
     r = auth_client.post('/api/v1/spatial/parcel/analyze/', {
         'zone_code': sample_zone.code,
         'use_weather': True,
