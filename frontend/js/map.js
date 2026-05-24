@@ -11,14 +11,18 @@ import {
   buildSoilFiltersQuery,
   markerStyleForPoint,
   nasaTileUrl,
-  sentinelTileUrl,
   parseSoilPointsList,
 } from './core/mapUtils.js';
+import {
+  analyzeBboxNdvi,
+  initSentinelMapTools,
+  loadSentinelToggles,
+} from './sentinelMap.js';
 import { showLoading } from './core/ui.js';
 import { notifyError, notifySuccess } from './core/ui.js';
 import { toast } from './core/toast.js';
 
-let map, markersLayer, usersLayer, nasaOverlays = {}, sentinelOverlays = {};
+let map, markersLayer, usersLayer, nasaOverlays = {};
 let mapReady = false;
 let loadDebounce = null;
 let bboxLoadEnabled = true;
@@ -76,7 +80,7 @@ function initMap() {
   loadSoilPoints();
   loadNasaToggles();
   loadSentinelToggles();
-  document.getElementById('btn-sentinel-ndvi')?.addEventListener('click', analyzeSentinelNdvi);
+  initSentinelMapTools();
 }
 
 function updateSelfMarker(lat, lon, accuracy_m) {
@@ -215,15 +219,25 @@ async function loadSoilPoints() {
       const style = markerStyleForPoint(props);
       const marker = L.circleMarker([coords[1], coords[0]], style);
       const status = props.validation_status || (props.is_validated ? 'validated' : 'pending');
+      const lon = coords[0];
+      const lat = coords[1];
       marker.bindPopup(`
         <strong>Point #${props.id}</strong> (${status})<br/>
         pH: ${props.ph} · Humidité: ${props.humidity_pct}%<br/>
         Type: ${props.soil_type}<br/>
-        NDVI: ${props.ndvi_3m_avg ?? '—'} · SMAP: ${props.smap_moisture_avg ?? '—'}<br/>
+        NDVI terrain: ${props.ndvi_3m_avg ?? '—'} · SMAP: ${props.smap_moisture_avg ?? '—'}<br/>
+        <button type="button" class="btn-sm" data-sentinel-point="${lat},${lon}">NDVI Sentinel (zone)</button>
         <button type="button" onclick="predictAtPoint(${props.ph}, ${props.humidity_pct}, '${props.soil_type}')">Prédire fertilité</button>
-        <button type="button" onclick="SigSolsFeatures.loadNdviChart(${props.id}, 'ndvi-${props.id}')">Série NDVI</button>
+        <button type="button" onclick="SigSolsFeatures.loadNdviChart(${props.id}, 'ndvi-${props.id}')">Série NDVI NASA</button>
         <div id="ndvi-${props.id}"></div>
       `);
+      marker.on('popupopen', () => {
+        const btn = document.querySelector(`[data-sentinel-point="${lat},${lon}"]`);
+        btn?.addEventListener('click', () => {
+          const d = 0.015;
+          analyzeBboxNdvi([lon - d, lat - d, lon + d, lat + d], `point #${props.id}`);
+        }, { once: true });
+      });
       markersLayer.addLayer(marker);
       window.SigSolsFeatures?.addMarkerToCluster(marker);
     });
