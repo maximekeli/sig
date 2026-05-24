@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
@@ -12,11 +13,10 @@ from rest_framework.test import APIClient
 class SentinelHubAPITest(TestCase):
     def setUp(self):
         self.client = APIClient()
+        cache.clear()
 
-    @patch('sentinel.client.cache.get', return_value=None)
-    @patch('sentinel.client.cache.set')
     @patch('sentinel.client.requests.post')
-    def test_status_ok(self, mock_post, _mock_set, _mock_get):
+    def test_status_ok(self, mock_post):
         mock_post.return_value = MagicMock(
             status_code=200,
             json=lambda: {'access_token': 'tok', 'expires_in': 3600},
