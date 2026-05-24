@@ -21,7 +21,12 @@ class SentinelHubError(Exception):
 
 
 def is_configured() -> bool:
-    return bool(settings.SENTINEL_HUB_CLIENT_ID and settings.SENTINEL_HUB_CLIENT_SECRET)
+    secret = settings.SENTINEL_HUB_CLIENT_SECRET
+    return bool(settings.SENTINEL_HUB_CLIENT_ID and secret)
+
+
+def has_secret() -> bool:
+    return bool(settings.SENTINEL_HUB_CLIENT_SECRET)
 
 
 def _base_url() -> str:
@@ -39,7 +44,7 @@ def get_access_token(*, force_refresh: bool = False) -> str:
         if cached:
             return cached
 
-    url = f'{_base_url()}/oauth/token'
+    url = settings.SENTINEL_HUB_TOKEN_URL
     try:
         resp = requests.post(
             url,
@@ -48,9 +53,14 @@ def get_access_token(*, force_refresh: bool = False) -> str:
                 'client_id': settings.SENTINEL_HUB_CLIENT_ID,
                 'client_secret': settings.SENTINEL_HUB_CLIENT_SECRET,
             },
+            headers={'content-type': 'application/x-www-form-urlencoded'},
             timeout=30,
         )
-        resp.raise_for_status()
+        if not resp.ok:
+            detail = (resp.text or '')[:400]
+            raise SentinelHubError(
+                f'OAuth HTTP {resp.status_code} : {detail}',
+            )
         data = resp.json()
     except requests.RequestException as exc:
         logger.warning('Sentinel Hub OAuth failed: %s', exc)

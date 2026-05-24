@@ -31,6 +31,16 @@ class SentinelHubAPITest(TestCase):
             r = self.client.get('/api/v1/sentinel/status/')
         self.assertFalse(r.data['configured'])
 
+    @override_settings(
+        SENTINEL_HUB_CLIENT_ID='',
+        SENTINEL_HUB_CLIENT_SECRET='only-secret',
+    )
+    def test_status_secret_without_client_id(self):
+        r = self.client.get('/api/v1/sentinel/status/')
+        self.assertFalse(r.data['ok'])
+        self.assertTrue(r.data.get('has_secret'))
+        self.assertIn('CLIENT_ID', r.data['message'])
+
     def test_layers_list(self):
         r = self.client.get('/api/v1/sentinel/layers/')
         self.assertEqual(r.status_code, 200)

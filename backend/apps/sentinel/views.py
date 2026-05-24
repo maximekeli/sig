@@ -9,6 +9,7 @@ from accounts.permissions import IsAdministrator
 from .client import (
     SentinelHubError,
     clip_bbox_to_region,
+    has_secret,
     is_configured,
     ndvi_mean_for_bbox,
     process_image,
@@ -28,13 +29,22 @@ class SentinelStatusView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get(self, request):
-        if not is_configured():
+        if not has_secret():
             return Response({
                 'configured': False,
                 'ok': False,
                 'message': (
-                    'Ajoutez SENTINEL_HUB_CLIENT_ID et SENTINEL_HUB_CLIENT_SECRET '
-                    '(ou SENTINEL_HUB_API_KEY) dans le fichier .env'
+                    'Ajoutez SENTINEL_HUB_CLIENT_SECRET (ou SENTINEL_HUB_API_KEY) dans .env'
+                ),
+            })
+        if not is_configured():
+            return Response({
+                'configured': False,
+                'ok': False,
+                'has_secret': True,
+                'message': (
+                    'Secret présent mais SENTINEL_HUB_CLIENT_ID manquant — '
+                    'copiez le Client ID depuis apps.sentinel-hub.com (OAuth clients).'
                 ),
             })
         try:

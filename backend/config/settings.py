@@ -270,6 +270,10 @@ SENTINEL_HUB_BASE_URL = os.environ.get(
     'SENTINEL_HUB_BASE_URL',
     'https://services.sentinel-hub.com',
 )
+SENTINEL_HUB_TOKEN_URL = os.environ.get(
+    'SENTINEL_HUB_TOKEN_URL',
+    'https://services.sentinel-hub.com/auth/realms/main/protocol/openid-connect/token',
+)
 
 # ML
 ML_ARTIFACTS_DIR = BASE_DIR / 'apps' / 'ml_predict' / 'artifacts'
