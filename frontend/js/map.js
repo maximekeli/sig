@@ -239,10 +239,14 @@ async function loadSoilPoints() {
         <div id="ndvi-${props.id}"></div>
       `);
       marker.on('popupopen', () => {
-        const btn = document.querySelector(`[data-sentinel-point="${lat},${lon}"]`);
-        btn?.addEventListener('click', () => {
+        const sentinelBtn = document.querySelector(`[data-sentinel-point="${lat},${lon}"]`);
+        sentinelBtn?.addEventListener('click', () => {
           const d = 0.015;
           analyzeBboxNdvi([lon - d, lat - d, lon + d, lat + d], `point #${props.id}`);
+        }, { once: true });
+        const weatherBtn = document.querySelector(`[data-weather-point="${lat},${lon}"]`);
+        weatherBtn?.addEventListener('click', () => {
+          showWeatherAtPoint(lat, lon);
         }, { once: true });
       });
       markersLayer.addLayer(marker);
