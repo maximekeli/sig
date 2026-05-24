@@ -128,7 +128,45 @@ def _dominant_soil_type(points_qs) -> str:
     return Counter(types).most_common(1)[0][0]
 
 
-def analyze_parcel(*, geometry=None, zone_code=None, zone_id=None, use_ml=True):
+def _parcel_sentinel_summary(geom):
+    """NDVI moyen Sentinel-2 (Process API) sur la bbox de la parcelle."""
+    import os
+
+    from django.conf import settings
+
+    if os.environ.get('DJANGO_TEST') == '1':
+        return {'skipped': True}
+    try:
+        from sentinel.client import (
+            SentinelHubError,
+            clip_bbox_to_region,
+            is_configured,
+            ndvi_mean_for_bbox,
+        )
+    except ImportError:
+        return {'configured': False, 'error': 'module sentinel indisponible'}
+
+    if not is_configured():
+        return {'configured': False}
+
+    extent = geom.extent
+    bbox = (extent[0], extent[1], extent[2], extent[3])
+    clipped = clip_bbox_to_region(bbox, settings.REGION_MARITIME_BBOX)
+    if clipped is None:
+        return {'configured': True, 'error': 'Parcelle hors zone pilote Maritime'}
+
+    try:
+        stats = ndvi_mean_for_bbox(clipped, days_back=60)
+        return {
+            'configured': True,
+            'source': 'Sentinel Hub Sentinel-2 L2A',
+            **stats,
+        }
+    except SentinelHubError as exc:
+        return {'configured': True, 'error': str(exc)[:240]}
+
+
+def analyze_parcel(*, geometry=None, zone_code=None, zone_id=None, use_ml=True, use_sentinel=False):
     geom, parcel_name, code = _geom_from_request(geometry, zone_code, zone_id)
     area = services.polygon_area(geom.geojson)
 
@@ -239,6 +277,8 @@ def analyze_parcel(*, geometry=None, zone_code=None, zone_id=None, use_ml=True):
         NasaLayerCatalog.objects.filter(is_active=True).values_list('product', flat=True)[:10],
     )
 
+    sentinel_block = _parcel_sentinel_summary(geom) if use_sentinel else None
+
     return {
         'parcel_name': parcel_name,
         'zone_code': code,
@@ -264,6 +304,7 @@ def analyze_parcel(*, geometry=None, zone_code=None, zone_id=None, use_ml=True):
             'active_catalog_layers': active_layers,
             'stac_parcel': _parcel_stac_summary(geom),
         },
+        'sentinel': sentinel_block,
         'vulnerability': vulnerability,
         'ml_prediction': ml_prediction,
         'recommendations': recommendations,

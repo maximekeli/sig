@@ -99,12 +99,14 @@ class ParcelAnalyzeView(APIView):
         from .parcel_analysis import analyze_parcel
 
         use_ml = request.data.get('use_ml', True)
+        use_sentinel = request.data.get('use_sentinel', False)
         try:
             result = analyze_parcel(
                 geometry=request.data.get('geometry'),
                 zone_code=request.data.get('zone_code'),
                 zone_id=request.data.get('zone_id'),
                 use_ml=bool(use_ml),
+                use_sentinel=bool(use_sentinel),
             )
         except ValueError as exc:
             return Response({'error': str(exc)}, status=400)
