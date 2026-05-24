@@ -100,6 +100,7 @@ class ParcelAnalyzeView(APIView):
 
         use_ml = request.data.get('use_ml', True)
         use_sentinel = request.data.get('use_sentinel', False)
+        use_weather = request.data.get('use_weather', False)
         try:
             result = analyze_parcel(
                 geometry=request.data.get('geometry'),
@@ -107,6 +108,7 @@ class ParcelAnalyzeView(APIView):
                 zone_id=request.data.get('zone_id'),
                 use_ml=bool(use_ml),
                 use_sentinel=bool(use_sentinel),
+                use_weather=bool(use_weather),
             )
         except ValueError as exc:
             return Response({'error': str(exc)}, status=400)

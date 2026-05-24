@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'spatial',
     'nasa',
     'sentinel',
+    'weather',
     'ml_predict',
     'education',
     'sig_platform',
@@ -284,6 +285,10 @@ SENTINEL_HUB_TOKEN_URL = os.environ.get(
     'SENTINEL_HUB_TOKEN_URL',
     'https://services.sentinel-hub.com/auth/realms/main/protocol/openid-connect/token',
 )
+
+# OpenWeather — https://openweathermap.org/api
+OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', '')
+OPENWEATHER_CACHE_SECONDS = int(os.environ.get('OPENWEATHER_CACHE_SECONDS', '600'))
 
 # ML
 ML_ARTIFACTS_DIR = BASE_DIR / 'apps' / 'ml_predict' / 'artifacts'

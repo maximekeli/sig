@@ -166,7 +166,15 @@ def _parcel_sentinel_summary(geom):
         return {'configured': True, 'error': str(exc)[:240]}
 
 
-def analyze_parcel(*, geometry=None, zone_code=None, zone_id=None, use_ml=True, use_sentinel=False):
+def analyze_parcel(
+    *,
+    geometry=None,
+    zone_code=None,
+    zone_id=None,
+    use_ml=True,
+    use_sentinel=False,
+    use_weather=False,
+):
     geom, parcel_name, code = _geom_from_request(geometry, zone_code, zone_id)
     area = services.polygon_area(geom.geojson)
 
