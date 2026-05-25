@@ -184,16 +184,30 @@ def ndvi_mean_for_bbox(
     }
     token = get_access_token()
     url = f'{_base_url()}/api/v1/process'
-    resp = requests.post(
-        url,
-        json=payload,
-        headers={'Authorization': f'Bearer {token}'},
-        timeout=120,
-    )
-    resp.raise_for_status()
+    try:
+        resp = requests.post(
+            url,
+            json=payload,
+            headers={'Authorization': f'Bearer {token}'},
+            timeout=120,
+        )
+        if resp.status_code == 401:
+            token = get_access_token(force_refresh=True)
+            resp = requests.post(
+                url,
+                json=payload,
+                headers={'Authorization': f'Bearer {token}'},
+                timeout=120,
+            )
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        logger.warning('Sentinel Hub NDVI stats failed: %s', exc)
+        detail = ''
+        if getattr(exc, 'response', None) is not None and exc.response is not None:
+            detail = (exc.response.text or '')[:300]
+        raise SentinelHubError(f'Statistiques NDVI : {exc} {detail}') from exc
     try:
         import numpy as np
-        import rasterio
         from rasterio.io import MemoryFile
     except ImportError as exc:
         raise SentinelHubError('rasterio/numpy requis pour les statistiques NDVI.') from exc

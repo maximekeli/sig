@@ -1,6 +1,7 @@
 """Tests unitaires — client Sentinel Hub (sans appel réseau)."""
 from unittest.mock import MagicMock, patch
 
+import requests
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 
@@ -10,6 +11,7 @@ from sentinel.client import (
     get_access_token,
     has_secret,
     is_configured,
+    ndvi_mean_for_bbox,
     process_image,
     tile_xyz_to_bbox,
 )
@@ -93,6 +95,14 @@ class SentinelClientTest(TestCase):
         self.assertEqual(data, b'\x89PNG')
         call_kwargs = mock_post.call_args
         self.assertIn('Bearer tok', call_kwargs.kwargs['headers']['Authorization'])
+
+    @patch('sentinel.client.get_access_token', return_value='tok')
+    @patch('sentinel.client.requests.post')
+    def test_ndvi_mean_for_bbox_request_error(self, mock_post, _mock_token):
+        mock_post.side_effect = requests.RequestException('dns failure')
+        with self.assertRaises(SentinelHubError) as ctx:
+            ndvi_mean_for_bbox((1.1, 6.2, 1.3, 6.4))
+        self.assertIn('Statistiques NDVI', str(ctx.exception))
 
 
 @override_settings(
