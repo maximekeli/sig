@@ -20,6 +20,20 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
+function summarizeSentinelError(error) {
+  const msg = String(error || '').toLowerCase();
+  if (msg.includes('nameresolutionerror') || msg.includes('failed to resolve') || msg.includes('dns')) {
+    return 'Sentinel Hub indisponible pour le moment (réseau/DNS).';
+  }
+  if (msg.includes('401') || msg.includes('oauth') || msg.includes('authentification')) {
+    return 'Connexion Sentinel Hub refusée. Vérifiez les clés OAuth.';
+  }
+  if (msg.includes('timeout')) {
+    return 'Sentinel Hub répond trop lentement. Réessayez.';
+  }
+  return `Sentinel : ${error}`;
+}
+
 function getMap() {
   return window.SigSolsMap?.getMap?.();
 }
@@ -236,7 +250,7 @@ export function displaySentinelParcelSummary(sentinel, parcelName = '') {
     return;
   }
   if (sentinel.error) {
-    out.textContent = `Sentinel : ${sentinel.error}`;
+    out.textContent = summarizeSentinelError(sentinel.error);
     badge?.classList.add('hidden');
     return;
   }
@@ -265,7 +279,7 @@ export function formatSentinelHtml(sentinel) {
     return '<p class="parcel-sentinel parcel-sentinel--warn">Sentinel Hub non configuré (.env)</p>';
   }
   if (sentinel.error) {
-    return `<p class="parcel-sentinel parcel-sentinel--warn">Sentinel : ${escapeHtml(sentinel.error)}</p>`;
+    return `<p class="parcel-sentinel parcel-sentinel--warn">${escapeHtml(summarizeSentinelError(sentinel.error))}</p>`;
   }
   if (sentinel.ndvi_mean == null) {
     return '<p class="parcel-sentinel">Sentinel-2 : pas de pixels valides (nuages)</p>';

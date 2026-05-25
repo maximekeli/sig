@@ -12,6 +12,20 @@ function weatherIconUrl(icon) {
   return icon ? `https://openweathermap.org/img/wn/${icon}@2x.png` : '';
 }
 
+function summarizeSentinelError(error) {
+  const msg = String(error || '').toLowerCase();
+  if (msg.includes('nameresolutionerror') || msg.includes('failed to resolve') || msg.includes('dns')) {
+    return 'Service temporairement inaccessible (DNS/réseau). Réessayez dans quelques instants.';
+  }
+  if (msg.includes('401') || msg.includes('oauth') || msg.includes('authentification')) {
+    return 'Connexion Sentinel Hub refusée. Vérifiez les identifiants OAuth dans .env.';
+  }
+  if (msg.includes('timeout')) {
+    return 'Sentinel Hub met trop de temps à répondre. Réessayez.';
+  }
+  return String(error || 'Erreur Sentinel Hub.');
+}
+
 export function formatSentinelCard(sentinel) {
   if (!sentinel || sentinel.skipped) {
     return `
@@ -31,7 +45,7 @@ export function formatSentinelCard(sentinel) {
     return `
       <article class="parcel-ext-card parcel-ext-card--sentinel parcel-ext-card--warn">
         <h4>Sentinel Hub</h4>
-        <p>${escapeHtml(sentinel.error)}</p>
+        <p>${escapeHtml(summarizeSentinelError(sentinel.error))}</p>
       </article>`;
   }
   if (sentinel.ndvi_mean == null) {
