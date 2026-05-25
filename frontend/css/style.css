@@ -1500,6 +1500,16 @@ main {
 
 .app-footer p { margin: 0.25rem 0; }
 
+.app-footer .developer-credit {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.app-footer .developer-credit strong {
+  color: #f0d58a;
+}
+
 /* Public mode */
 body.public-mode .sidebar label:not(:has(#filter-validated)),
 body.public-mode #pred-result,
