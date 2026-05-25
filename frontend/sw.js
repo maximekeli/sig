@@ -1,4 +1,4 @@
-const CACHE = 'sig-sols-v5';
+const CACHE = 'sig-sols-v6';
 const ASSETS = [
   '/frontend/index.html',
   '/frontend/css/style.css',

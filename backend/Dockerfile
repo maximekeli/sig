@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgdal-dev \
     libgeos-dev \
     libproj-dev \
+    libsqlite3-mod-spatialite \
     gcc \
     g++ \
     && rm -rf /var/lib/apt/lists/*

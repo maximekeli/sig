@@ -178,6 +178,18 @@ body::after {
   color: var(--gold-300);
 }
 
+.developer-signature {
+  margin: 0.18rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.developer-signature--welcome {
+  margin-top: 0.5rem;
+  color: var(--gold-300);
+}
+
 /* Navigation */
 .main-nav {
   display: flex;
@@ -1614,6 +1626,7 @@ body.public-mode #btn-predict {
   .brand-logo { width: 44px; height: 44px; }
   .brand h1 { font-size: 1.25rem; }
   .subtitle { font-size: 0.65rem; letter-spacing: 0.08em; }
+  .developer-signature { font-size: 0.64rem; }
   .main-nav { order: 3; width: 100%; overflow-x: auto; }
   .auth-box { order: 2; max-width: 100%; width: 100%; }
   #view-map { flex-direction: column; }

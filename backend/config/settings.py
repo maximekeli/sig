@@ -1,7 +1,8 @@
 """
 SIG-SOLS-TOGO-2026-01 — Django settings
-DISIA / DUSOL — GeoDjango + PostGIS
+DISIA / DUSOL — GeoDjango + PostGIS / SpatiaLite
 """
+import ctypes.util
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -121,26 +122,47 @@ TEMPLATES = [
     },
 ]
 
-_db_options = {
-    'connect_timeout': int(os.environ.get('DB_CONNECT_TIMEOUT', '10')),
-    'options': os.environ.get('DB_OPTIONS', '-c statement_timeout=30000'),
-}
-if os.environ.get('DB_SSLMODE'):
-    _db_options['sslmode'] = os.environ['DB_SSLMODE']
+DB_BACKEND = os.environ.get('DB_BACKEND', 'postgis').strip().lower()
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': os.environ.get('POSTGRES_DB', 'sig_sols'),
-        'USER': os.environ.get('POSTGRES_USER', 'sig_sols'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'sig_sols_secret'),
-        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
-        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
-        'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '60')),
-        'CONN_HEALTH_CHECKS': True,
-        'OPTIONS': _db_options,
+if DB_BACKEND in {'sqlite', 'sqlite3', 'spatialite'}:
+    _spatialite_default = (
+        ctypes.util.find_library('mod_spatialite')
+        or '/usr/lib/x86_64-linux-gnu/mod_spatialite.so'
+    )
+    SPATIALITE_LIBRARY_PATH = (
+        os.environ.get('SPATIALITE_LIBRARY_PATH')
+        or _spatialite_default
+        or ctypes.util.find_library('spatialite')
+        or 'mod_spatialite'
+    )
+    sqlite_name = os.environ.get('SQLITE_NAME', '').strip()
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.contrib.gis.db.backends.spatialite',
+            'NAME': sqlite_name or str(BASE_DIR / 'db.sqlite3'),
+        }
     }
-}
+else:
+    _db_options = {
+        'connect_timeout': int(os.environ.get('DB_CONNECT_TIMEOUT', '10')),
+        'options': os.environ.get('DB_OPTIONS', '-c statement_timeout=30000'),
+    }
+    if os.environ.get('DB_SSLMODE'):
+        _db_options['sslmode'] = os.environ['DB_SSLMODE']
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.contrib.gis.db.backends.postgis',
+            'NAME': os.environ.get('POSTGRES_DB', 'sig_sols'),
+            'USER': os.environ.get('POSTGRES_USER', 'sig_sols'),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'sig_sols_secret'),
+            'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+            'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '60')),
+            'CONN_HEALTH_CHECKS': True,
+            'OPTIONS': _db_options,
+        }
+    }
 
 # Réplique lecture seule (production à grande échelle)
 _replica_host = os.environ.get('POSTGRES_REPLICA_HOST', '').strip()
