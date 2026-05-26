@@ -222,6 +222,11 @@ async function handleRegister() {
 }
 
 async function handleLogout() {
+  const confirmed = window.confirm('Voulez-vous vraiment vous déconnecter ?');
+  if (!confirmed) {
+    toast('Déconnexion annulée.', 'info');
+    return;
+  }
   trackAuth('logout');
   await SigSolsMap.stopLiveLocation();
   await SigSolsAPI.logout();
