@@ -122,6 +122,7 @@ TEMPLATES = [
     },
 ]
 
+# Base de données : SQLite/SpatiaLite (temporaire) ou PostGIS.
 DB_BACKEND = os.environ.get('DB_BACKEND', 'postgis').strip().lower()
 
 if DB_BACKEND in {'sqlite', 'sqlite3', 'spatialite'}:
@@ -143,6 +144,14 @@ if DB_BACKEND in {'sqlite', 'sqlite3', 'spatialite'}:
         }
     }
 else:
+    _db_name = os.environ.get('DB_NAME', os.environ.get('POSTGRES_DB', 'sig_sols'))
+    _db_user = os.environ.get('DB_USER', os.environ.get('POSTGRES_USER', 'sig_sols'))
+    _db_password = os.environ.get(
+        'DB_PASSWORD',
+        os.environ.get('POSTGRES_PASSWORD', 'sig_sols_secret'),
+    )
+    _db_host = os.environ.get('DB_HOST', os.environ.get('POSTGRES_HOST', 'localhost'))
+    _db_port = os.environ.get('DB_PORT', os.environ.get('POSTGRES_PORT', '5432'))
     _db_options = {
         'connect_timeout': int(os.environ.get('DB_CONNECT_TIMEOUT', '10')),
         'options': os.environ.get('DB_OPTIONS', '-c statement_timeout=30000'),
@@ -153,11 +162,11 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.contrib.gis.db.backends.postgis',
-            'NAME': os.environ.get('POSTGRES_DB', 'sig_sols'),
-            'USER': os.environ.get('POSTGRES_USER', 'sig_sols'),
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'sig_sols_secret'),
-            'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
-            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+            'NAME': _db_name,
+            'USER': _db_user,
+            'PASSWORD': _db_password,
+            'HOST': _db_host,
+            'PORT': _db_port,
             'CONN_MAX_AGE': int(os.environ.get('DB_CONN_MAX_AGE', '60')),
             'CONN_HEALTH_CHECKS': True,
             'OPTIONS': _db_options,
@@ -165,12 +174,18 @@ else:
     }
 
 # Réplique lecture seule (production à grande échelle)
-_replica_host = os.environ.get('POSTGRES_REPLICA_HOST', '').strip()
+_replica_host = os.environ.get(
+    'DB_REPLICA_HOST',
+    os.environ.get('POSTGRES_REPLICA_HOST', ''),
+).strip()
 if _replica_host:
     DATABASES['replica'] = {
         **DATABASES['default'],
         'HOST': _replica_host,
-        'PORT': os.environ.get('POSTGRES_REPLICA_PORT', DATABASES['default']['PORT']),
+        'PORT': os.environ.get(
+            'DB_REPLICA_PORT',
+            os.environ.get('POSTGRES_REPLICA_PORT', DATABASES['default']['PORT']),
+        ),
     }
     DATABASE_ROUTERS = ['config.db_router.ReadReplicaRouter']
 
