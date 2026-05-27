@@ -31,9 +31,13 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     image: dusol_projet-web
-    container_name: dusol_sig_web
-    hostname: dusol_sig_web
+    # Important: ne pas fixer container_name (évite les conflits / orphelins)
     command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
+    networks:
+      default:
+        aliases:
+          - web
+          - dusol_sig_web
     volumes:
       - ./backend:/app
       - ./.env:/opt/dusol.env:ro
