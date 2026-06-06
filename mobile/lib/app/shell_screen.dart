@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../shared/widgets/offline_banner.dart';
 import '../features/assistant/assistant_screen.dart';
 import '../features/community/community_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
@@ -50,7 +51,12 @@ class _ShellScreenState extends State<ShellScreen> {
           IconButton(icon: const Icon(Icons.person), tooltip: 'Profil', onPressed: () => context.go('/profile')),
         ],
       ),
-      body: widget.child,
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(child: widget.child),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index.clamp(0, 8),
         onDestinationSelected: _go,

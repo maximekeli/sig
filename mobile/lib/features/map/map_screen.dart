@@ -5,8 +5,10 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/config/env.dart';
+import '../../core/offline/offline_sync_service.dart';
 import '../../models/soil_point.dart';
 import '../../services/sig_api.dart';
+import '../../shared/widgets/add_soil_point_dialog.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 
@@ -134,7 +136,13 @@ class _MapScreenState extends State<MapScreen> {
           options: MapOptions(
             initialCenter: _myPosition ?? _togoCenter,
             initialZoom: 9,
-            onTap: (_, point) => _showProbeMenu(context, point),
+            onTap: (_, point) {
+              if (_addPointMode) {
+                _openAddPointForm(point);
+              } else {
+                _showProbeMenu(context, point);
+              }
+            },
           ),
           children: layers,
         ),
@@ -166,6 +174,15 @@ class _MapScreenState extends State<MapScreen> {
                         label: const Text('NDVI NASA'),
                         selected: _showNasaNdvi,
                         onSelected: (v) => setState(() => _showNasaNdvi = v),
+                      ),
+                      FilterChip(
+                        label: const Text('Ajouter point'),
+                        selected: _addPointMode,
+                        avatar: Icon(
+                          _addPointMode ? Icons.add_location_alt : Icons.add_location,
+                          size: 18,
+                        ),
+                        onSelected: (v) => setState(() => _addPointMode = v),
                       ),
                     ],
                   ),
