@@ -245,6 +245,137 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  Future<void> _showMapTools(BuildContext context) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(leading: const Icon(Icons.near_me), title: const Text('Près de moi (5 km)'), onTap: () => Navigator.pop(context, 'proximity')),
+            ListTile(leading: const Icon(Icons.grid_on), title: const Text('Heatmap pH'), onTap: () => Navigator.pop(context, 'heatmap')),
+            ListTile(leading: const Icon(Icons.warning), title: const Text('Alertes sécheresse'), onTap: () => Navigator.pop(context, 'alerts')),
+            ListTile(leading: const Icon(Icons.compare), title: const Text('Comparer 2 points'), onTap: () => Navigator.pop(context, 'compare')),
+            ListTile(leading: const Icon(Icons.filter_list), title: const Text('Filtres pH / type'), onTap: () => Navigator.pop(context, 'filters')),
+            ListTile(leading: const Icon(Icons.timeline), title: const Text('Ma trajectoire 24h'), onTap: () => Navigator.pop(context, 'trajectory')),
+            ListTile(leading: const Icon(Icons.cloud), title: const Text('Prévisions météo'), onTap: () => Navigator.pop(context, 'forecast')),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted || action == null) return;
+    final api = context.read<SigApi>();
+    try {
+      if (action == 'proximity' && _myPosition != null) {
+        final r = await api.proximity(lat: _myPosition!.latitude, lon: _myPosition!.longitude);
+        if (!context.mounted) return;
+        showDialog(context: context, builder: (_) => AlertDialog(
+          title: const Text('Proximité'),
+          content: Text('${r['count'] ?? 0} point(s) à proximité'),
+        ));
+      } else if (action == 'heatmap') {
+        final r = await api.fetchHeatmap();
+        if (!context.mounted) return;
+        showDialog(context: context, builder: (_) => AlertDialog(
+          title: const Text('Heatmap pH'),
+          content: Text('${(r['points'] as List?)?.length ?? 0} cellules'),
+        ));
+      } else if (action == 'alerts') {
+        final alerts = await api.droughtAlerts();
+        if (!context.mounted) return;
+        showDialog(context: context, builder: (_) => AlertDialog(
+          title: const Text('Alertes sécheresse'),
+          content: Text('${alerts.length} alerte(s)'),
+        ));
+      } else if (action == 'compare') {
+        final aCtrl = TextEditingController();
+        final bCtrl = TextEditingController();
+        if (!context.mounted) return;
+        final ok = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Comparer points'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: aCtrl, decoration: const InputDecoration(labelText: 'ID point A')),
+                TextField(controller: bCtrl, decoration: const InputDecoration(labelText: 'ID point B')),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
+              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Comparer')),
+            ],
+          ),
+        );
+        if (ok == true) {
+          final r = await api.comparePoints(int.parse(aCtrl.text), int.parse(bCtrl.text));
+          if (context.mounted) {
+            showDialog(context: context, builder: (_) => AlertDialog(
+              title: const Text('Comparaison'),
+              content: Text(r.toString()),
+            ));
+          }
+        }
+      } else if (action == 'filters') {
+        await _loadWithFilters(context);
+      } else if (action == 'trajectory') {
+        final r = await api.fetchTrajectory();
+        if (!context.mounted) return;
+        showDialog(context: context, builder: (_) => AlertDialog(
+          title: const Text('Trajectoire 24h'),
+          content: Text('${(r['points'] as List?)?.length ?? 0} position(s)'),
+        ));
+      } else if (action == 'forecast' && _myPosition != null) {
+        final w = await api.weatherForecast(_myPosition!.latitude, _myPosition!.longitude);
+        if (!context.mounted) return;
+        showDialog(context: context, builder: (_) => AlertDialog(
+          title: const Text('Prévisions météo'),
+          content: Text(w.toString()),
+        ));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
+  Future<void> _loadWithFilters(BuildContext context) async {
+    final soilCtrl = TextEditingController();
+    final phMin = TextEditingController(text: '5');
+    final phMax = TextEditingController(text: '8');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Filtres carte'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: soilCtrl, decoration: const InputDecoration(labelText: 'Type sol')),
+            TextField(controller: phMin, decoration: const InputDecoration(labelText: 'pH min')),
+            TextField(controller: phMax, decoration: const InputDecoration(labelText: 'pH max')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Appliquer')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      final points = await context.read<SigApi>().fetchSoilPoints(
+            soilType: soilCtrl.text.trim().isEmpty ? null : soilCtrl.text.trim(),
+            phMin: double.tryParse(phMin.text),
+            phMax: double.tryParse(phMax.text),
+          );
+      setState(() => _points = points);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   Future<void> _openAddPointForm(LatLng coords) async {
     final body = await showDialog<Map<String, dynamic>>(
       context: context,

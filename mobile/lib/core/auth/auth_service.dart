@@ -80,4 +80,10 @@ class AuthService extends ChangeNotifier {
     _user = null;
     notifyListeners();
   }
+
+  Future<void> refreshFromJson(Map<String, dynamic> json) async {
+    _user = AppUser.fromJson(json);
+    await _saveUser(_user!);
+    notifyListeners();
+  }
 }
