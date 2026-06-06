@@ -127,13 +127,35 @@ class _ParcelScreenState extends State<ParcelScreen> {
                   value: _useMl,
                   onChanged: (v) => setState(() => _useMl = v),
                 ),
-                if (_zones.isNotEmpty)
-                  Text('${_zones.length} zones canton disponibles', style: Theme.of(context).textTheme.bodySmall),
-                const SizedBox(height: 12),
+                if (_zones.isNotEmpty) ...[
+                  DropdownButtonFormField<String>(
+                    value: _selectedZone,
+                    decoration: const InputDecoration(
+                      labelText: 'Zone canton',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _zones
+                        .map(
+                          (z) => DropdownMenuItem(
+                            value: z['code']?.toString(),
+                            child: Text(z['name']?.toString() ?? z['code']?.toString() ?? '—'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedZone = v),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: _analyzeZone,
+                    icon: const Icon(Icons.map),
+                    label: const Text('Analyser la zone'),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 FilledButton.icon(
                   onPressed: _analyzeHere,
-                  icon: const Icon(Icons.analytics),
-                  label: const Text('Analyser ici'),
+                  icon: const Icon(Icons.my_location),
+                  label: const Text('Analyser ici (GPS)'),
                 ),
                 if (_result != null) ...[
                   const SizedBox(height: 20),
