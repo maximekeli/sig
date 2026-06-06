@@ -14,12 +14,33 @@ def health_check(request):
         return JsonResponse(payload)
 
     checks = {}
+    db_cfg = settings.DATABASES['default']
+    engine = db_cfg.get('ENGINE', '')
+    if 'postgis' in engine:
+        backend_label = 'postgis'
+    elif 'sqlite' in engine or 'spatialite' in engine:
+        backend_label = 'sqlite'
+    else:
+        backend_label = engine.rsplit('.', 1)[-1] if engine else 'unknown'
+
     try:
         with connection.cursor() as cursor:
             cursor.execute('SELECT 1')
         checks['database'] = 'ok'
+        checks['database_info'] = {
+            'backend': backend_label,
+            'name': db_cfg.get('NAME', ''),
+            'host': db_cfg.get('HOST') or 'local',
+            'clients': 'web,mobile',
+            'note': 'Site web et app mobile partagent cette base via l\'API Django.',
+        }
     except Exception as exc:
         checks['database'] = str(exc)
+        checks['database_info'] = {
+            'backend': backend_label,
+            'name': db_cfg.get('NAME', ''),
+            'host': db_cfg.get('HOST') or 'local',
+        }
         payload['status'] = 'degraded'
 
     try:

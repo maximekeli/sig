@@ -14,6 +14,9 @@ class Env {
 
   static String get origin => apiBaseUrl.replaceFirst('/api/v1', '');
 
+  /// Santé système (hors préfixe /api/v1) — même endpoint que le site web.
+  static String get healthUrl => '$origin/health/?detail=1';
+
   static String get wsBaseUrl => '${origin.replaceFirst('http', 'ws')}/ws/live/';
 
   static String get mediaBaseUrl => origin;

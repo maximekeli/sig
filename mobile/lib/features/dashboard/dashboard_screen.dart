@@ -17,6 +17,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic>? _stats;
   Map<String, Map<String, dynamic>>? _apis;
   Map<String, dynamic>? _smap;
+  Map<String, dynamic>? _dbInfo;
   bool _loading = true;
   String? _error;
 
@@ -37,11 +38,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         api.fetchDashboardStats(),
         api.fetchExternalApiStatus(),
         api.smapCorrelation().catchError((_) => <String, dynamic>{}),
+        api.fetchSystemHealth().catchError((_) => <String, dynamic>{}),
       ]);
+      final health = Map<String, dynamic>.from(results[3] as Map);
+      final checks = health['checks'] as Map<String, dynamic>?;
       setState(() {
         _stats = Map<String, dynamic>.from(results[0] as Map);
         _apis = results[1] as Map<String, Map<String, dynamic>>;
         _smap = Map<String, dynamic>.from(results[2] as Map);
+        _dbInfo = checks?['database_info'] != null
+            ? Map<String, dynamic>.from(checks!['database_info'] as Map)
+            : null;
         _loading = false;
       });
     } catch (e) {
@@ -62,6 +69,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (_dbInfo != null && _dbInfo!.isNotEmpty)
+            Card(
+              color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.35),
+              child: ListTile(
+                leading: const Icon(Icons.storage),
+                title: const Text('Base de données partagée'),
+                subtitle: Text(
+                  '${_dbInfo!['backend'] ?? '—'} · ${_dbInfo!['name'] ?? '—'} · '
+                  '${_dbInfo!['host'] ?? '—'}\n'
+                  'Même source que le site web (API Django).',
+                ),
+                isThreeLine: true,
+              ),
+            ),
           Text('KPIs sols', style: Theme.of(context).textTheme.titleMedium),
           _kpiCard('Points validés', '${_stats?['validated_points'] ?? _stats?['total_points'] ?? '—'}'),
           _kpiCard('Points en attente', '${_stats?['pending_points'] ?? '—'}'),

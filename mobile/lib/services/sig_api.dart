@@ -1,4 +1,7 @@
+import 'package:dio/dio.dart';
+
 import '../core/api/api_client.dart';
+import '../core/config/env.dart';
 import '../models/parcel_analysis.dart';
 import '../models/soil_point.dart';
 
@@ -24,6 +27,16 @@ class SigApi {
 
   Future<Map<String, dynamic>> fetchDashboardStats() =>
       _client.get('/dashboard/stats/');
+
+  /// Santé backend + base de données (PostGIS partagée web/mobile).
+  Future<Map<String, dynamic>> fetchSystemHealth() async {
+    final dio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 8),
+      receiveTimeout: const Duration(seconds: 12),
+    ));
+    final res = await dio.get<Map<String, dynamic>>(Env.healthUrl);
+    return Map<String, dynamic>.from(res.data ?? {});
+  }
 
   Future<Map<String, dynamic>> fetchMlMetrics() => _client.get('/ml/metrics/');
 
