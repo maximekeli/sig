@@ -67,7 +67,7 @@ class SigApi {
   Future<Map<String, dynamic>> startQuiz() =>
       _client.post('/education/quiz/start/');
 
-  Future<Map<String, dynamic>> quizLeaderboard() =>
+  Future<dynamic> quizLeaderboard() =>
       _client.get('/education/quiz/leaderboard/');
 
   Future<List<dynamic>> fetchSheets() async {

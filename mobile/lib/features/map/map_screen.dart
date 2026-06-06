@@ -4,7 +4,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/config/env.dart';
 import '../../models/soil_point.dart';
 import '../../services/sig_api.dart';
 import '../../shared/widgets/error_view.dart';

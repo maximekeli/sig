@@ -18,10 +18,10 @@ class _ParcelScreenState extends State<ParcelScreen> {
   bool _loading = false;
 
   Future<void> _analyzeHere() async {
+    final api = context.read<SigApi>();
     setState(() => _loading = true);
     try {
       final pos = await Geolocator.getCurrentPosition();
-      final api = context.read<SigApi>();
       final result = await api.analyzeParcelAt(pos.latitude, pos.longitude);
       setState(() => _result = result);
     } catch (e) {

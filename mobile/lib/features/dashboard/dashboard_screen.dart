@@ -40,10 +40,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         api.sentinelStatus(),
       ]);
       setState(() {
-        _stats = results[0] as Map<String, dynamic>;
-        _ml = results[1] as Map<String, dynamic>;
-        _weatherStatus = results[2] as Map<String, dynamic>;
-        _sentinelStatus = results[3] as Map<String, dynamic>;
+        _stats = Map<String, dynamic>.from(results[0] as Map);
+        _ml = Map<String, dynamic>.from(results[1] as Map);
+        _weatherStatus = Map<String, dynamic>.from(results[2] as Map);
+        _sentinelStatus = Map<String, dynamic>.from(results[3] as Map);
         _loading = false;
       });
     } catch (e) {
