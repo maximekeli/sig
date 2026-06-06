@@ -14,6 +14,7 @@ void main() {
 
     if (!await _ping('http://localhost:8081/health/')) {
       markTestSkipped('Backend indisponible — lancez: docker compose up -d');
+      return;
     }
 
     final health = await _get('http://localhost:8081/health/');
