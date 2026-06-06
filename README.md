@@ -108,6 +108,18 @@ docker compose up -d --build
 | **API REST** | http://localhost:8081/api/v1/ |
 | **Admin** | http://localhost:8081/admin/ |
 | **Health** | http://localhost:8081/health/ |
+| **App mobile Flutter** | `mobile/` → même API `/api/v1/` |
+
+### 📱 Application mobile (Flutter)
+
+```bash
+cd mobile && flutter pub get
+flutter run -d linux                    # PC Linux
+flutter run -d android                  # Émulateur Android
+flutter run --dart-define=API_BASE_URL=http://192.168.x.x:8081/api/v1  # Téléphone réel
+```
+
+Modules : carte, dashboard, parcelle, quiz, fiches, vidéos, shorts, communauté, assistant IA — voir [`mobile/README.md`](mobile/README.md).
 
 <details>
 <summary><b>🔐 Comptes démonstration</b> — <code>make seed</code></summary>
