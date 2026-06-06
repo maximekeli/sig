@@ -54,28 +54,25 @@ class ApiClient {
 
   bool _isAuthPath(String path) => path.contains('/auth/token/');
 
-  Future<String?> _getAccessToken() => _storage.read(key: _tokenKey);
-  Future<String?> _getRefreshToken() => _storage.read(key: _refreshKey);
+  Future<String?> _getAccessToken() => _storage.read(_tokenKey);
+  Future<String?> _getRefreshToken() => _storage.read(_refreshKey);
 
   Future<void> _persistSession(Map<String, dynamic> data) async {
     if (data['access'] != null) {
-      await _storage.write(key: _tokenKey, value: data['access'].toString());
+      await _storage.write(_tokenKey, data['access'].toString());
     }
     if (data['refresh'] != null) {
-      await _storage.write(key: _refreshKey, value: data['refresh'].toString());
+      await _storage.write(_refreshKey, data['refresh'].toString());
     }
     if (data['user'] != null) {
-      await _storage.write(
-        key: _userKey,
-        value: data['user'].toString(),
-      );
+      await _storage.write(_userKey, data['user'].toString());
     }
   }
 
   Future<void> clearSession() async {
-    await _storage.delete(key: _tokenKey);
-    await _storage.delete(key: _refreshKey);
-    await _storage.delete(key: _userKey);
+    await _storage.delete(_tokenKey);
+    await _storage.delete(_refreshKey);
+    await _storage.delete(_userKey);
   }
 
   Future<bool> isAuthenticated() async {
@@ -178,9 +175,9 @@ class ApiClient {
     }
     final res = await _dio.post('/auth/token/refresh/', data: {'refresh': refresh});
     final data = res.data as Map<String, dynamic>;
-    await _storage.write(key: _tokenKey, value: data['access'].toString());
+    await _storage.write(_tokenKey, data['access'].toString());
     if (data['refresh'] != null) {
-      await _storage.write(key: _refreshKey, value: data['refresh'].toString());
+      await _storage.write(_refreshKey, data['refresh'].toString());
     }
   }
 

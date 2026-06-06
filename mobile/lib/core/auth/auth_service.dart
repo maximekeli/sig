@@ -24,7 +24,7 @@ class AuthService extends ChangeNotifier {
     _loading = true;
     notifyListeners();
     try {
-      final raw = await _storage.read(key: _userKey);
+      final raw = await _storage.read(_userKey);
       if (raw != null && await _api.isAuthenticated()) {
         _user = AppUser.fromJson(jsonDecode(raw) as Map<String, dynamic>);
         try {
@@ -41,8 +41,8 @@ class AuthService extends ChangeNotifier {
 
   Future<void> _saveUser(AppUser user) async {
     await _storage.write(
-      key: _userKey,
-      value: jsonEncode({
+      _userKey,
+      jsonEncode({
         'id': user.id,
         'username': user.username,
         'email': user.email,
@@ -76,7 +76,7 @@ class AuthService extends ChangeNotifier {
 
   Future<void> logout() async {
     await _api.logout();
-    await _storage.delete(key: _userKey);
+    await _storage.delete(_userKey);
     _user = null;
     notifyListeners();
   }
