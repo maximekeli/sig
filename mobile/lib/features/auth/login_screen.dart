@@ -95,6 +95,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () => context.push('/register'),
                     child: const Text('Créer un compte'),
                   ),
+                  TextButton(
+                    onPressed: () => context.push('/forgot-password'),
+                    child: const Text('Mot de passe oublié ?'),
+                  ),
                 ],
               ),
             ),

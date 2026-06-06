@@ -16,7 +16,8 @@ class ParcelScreen extends StatefulWidget {
 
 class _ParcelScreenState extends State<ParcelScreen> {
   ParcelAnalysis? _result;
-  List<dynamic> _zones = [];
+  List<Map<String, dynamic>> _zones = [];
+  String? _selectedZone;
   bool _useSentinel = true;
   bool _useWeather = true;
   bool _useMl = true;
@@ -31,8 +32,39 @@ class _ParcelScreenState extends State<ParcelScreen> {
   Future<void> _loadZones() async {
     try {
       final zones = await context.read<SigApi>().parcelZones(zoneType: 'canton');
-      if (mounted) setState(() => _zones = zones);
+      if (mounted) {
+        setState(() {
+          _zones = zones
+              .map((z) => Map<String, dynamic>.from(z as Map))
+              .toList();
+          if (_zones.isNotEmpty) {
+            _selectedZone = _zones.first['code']?.toString();
+          }
+        });
+      }
     } catch (_) {}
+  }
+
+  Future<void> _analyzeZone() async {
+    final code = _selectedZone;
+    if (code == null || code.isEmpty) return;
+    final api = context.read<SigApi>();
+    setState(() => _loading = true);
+    try {
+      final result = await api.analyzeParcelByZone(
+        code,
+        useSentinel: _useSentinel,
+        useWeather: _useWeather,
+        useMl: _useMl,
+      );
+      setState(() => _result = result);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _analyzeHere() async {

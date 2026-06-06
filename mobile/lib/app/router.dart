@@ -1,9 +1,15 @@
 import 'package:go_router/go_router.dart';
 
 import '../core/auth/auth_service.dart';
+import '../features/admin/admin_screen.dart';
+import '../features/auth/forgot_password_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
+import '../features/help/help_screen.dart';
+import '../features/my_dashboard/my_dashboard_screen.dart';
+import '../features/notifications/notifications_screen.dart';
 import '../features/parcel/parcel_screen.dart';
+import '../features/search/search_screen.dart';
 import 'shell_screen.dart';
 
 GoRouter createRouter(AuthService auth) {
@@ -13,7 +19,8 @@ GoRouter createRouter(AuthService auth) {
     redirect: (context, state) {
       final loggedIn = auth.isAuthenticated;
       final onAuth = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register';
+          state.matchedLocation == '/register' ||
+          state.matchedLocation == '/forgot-password';
       if (!loggedIn && !onAuth) return '/login';
       if (loggedIn && state.matchedLocation == '/login') return '/';
       return null;
@@ -21,7 +28,13 @@ GoRouter createRouter(AuthService auth) {
     routes: [
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
+      GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
       GoRoute(path: '/parcel', builder: (_, __) => const ParcelScreen()),
+      GoRoute(path: '/search', builder: (_, __) => const SearchScreen()),
+      GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
+      GoRoute(path: '/my-dashboard', builder: (_, __) => const MyDashboardScreen()),
+      GoRoute(path: '/admin', builder: (_, __) => const AdminScreen()),
+      GoRoute(path: '/help', builder: (_, __) => const HelpScreen()),
       ShellRoute(
         builder: (context, state, child) => ShellScreen(child: child),
         routes: [
