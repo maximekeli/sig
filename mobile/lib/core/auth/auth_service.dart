@@ -1,16 +1,15 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import '../api/api_client.dart';
+import '../storage/token_storage.dart';
 import '../../models/user.dart';
 
 class AuthService extends ChangeNotifier {
   AuthService(this._api);
 
   final ApiClient _api;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final TokenStorage _storage = TokenStorage();
 
   static const _userKey = 'sig_sols_user_json';
 

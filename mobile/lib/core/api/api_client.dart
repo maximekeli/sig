@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../config/env.dart';
+import '../storage/token_storage.dart';
 import 'api_exception.dart';
 
 /// Client HTTP JWT — même logique que frontend/js/core/apiClient.js
 class ApiClient {
-  ApiClient({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage(),
+  ApiClient({TokenStorage? storage})
+      : _storage = storage ?? TokenStorage(),
         _dio = Dio(BaseOptions(
           baseUrl: Env.apiBaseUrl,
           connectTimeout: const Duration(seconds: 30),
@@ -48,7 +48,7 @@ class ApiClient {
   static const _userKey = 'sig_sols_user';
 
   final Dio _dio;
-  final FlutterSecureStorage _storage;
+  final TokenStorage _storage;
 
   Dio get dio => _dio;
 
