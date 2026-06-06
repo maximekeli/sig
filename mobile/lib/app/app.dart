@@ -74,7 +74,7 @@ class _SigSolsAppState extends State<SigSolsApp> {
         Provider.value(value: _apiClient),
         ChangeNotifierProvider.value(value: _authService),
         Provider.value(value: _sigApi),
-        ChangeNotifierProvider.value(value: _activity),
+        Provider.value(value: _activity),
         ChangeNotifierProvider.value(value: _themeService),
         ChangeNotifierProvider.value(value: _offlineSync),
       ],

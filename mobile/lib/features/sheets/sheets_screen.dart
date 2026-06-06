@@ -33,12 +33,12 @@ class _SheetsScreenState extends State<SheetsScreen> {
     });
     try {
       final api = context.read<SigApi>();
-      final results = await Future.wait([
+      final results = await Future.wait<dynamic>([
         api.fetchSheets(),
         api.fetchFavorites().catchError((_) => <dynamic>[]),
       ]);
       final favIds = <int>{};
-      for (final f in results[1] as List) {
+      for (final f in results[1]) {
         final m = Map<String, dynamic>.from(f as Map);
         if (m['target_type'] == 'sheet') {
           final id = m['target_id'] ?? m['id'];
@@ -46,7 +46,7 @@ class _SheetsScreenState extends State<SheetsScreen> {
         }
       }
       setState(() {
-        _sheets = results[0] as List<dynamic>;
+        _sheets = results[0];
         _favoriteIds
           ..clear()
           ..addAll(favIds);
