@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/sig_api.dart';
+import '../../shared/widgets/external_api_cards.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 
@@ -14,9 +15,8 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic>? _stats;
-  Map<String, dynamic>? _ml;
-  Map<String, dynamic>? _weatherStatus;
-  Map<String, dynamic>? _sentinelStatus;
+  Map<String, Map<String, dynamic>>? _apis;
+  Map<String, dynamic>? _smap;
   bool _loading = true;
   String? _error;
 
@@ -35,15 +35,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final api = context.read<SigApi>();
       final results = await Future.wait([
         api.fetchDashboardStats(),
-        api.fetchMlMetrics(),
-        api.weatherStatus(),
-        api.sentinelStatus(),
+        api.fetchExternalApiStatus(),
+        api.smapCorrelation().catchError((_) => <String, dynamic>{}),
       ]);
       setState(() {
         _stats = Map<String, dynamic>.from(results[0] as Map);
-        _ml = Map<String, dynamic>.from(results[1] as Map);
-        _weatherStatus = Map<String, dynamic>.from(results[2] as Map);
-        _sentinelStatus = Map<String, dynamic>.from(results[3] as Map);
+        _apis = results[1] as Map<String, Map<String, dynamic>>;
+        _smap = Map<String, dynamic>.from(results[2] as Map);
         _loading = false;
       });
     } catch (e) {
@@ -64,11 +62,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _kpiCard('Points sol validés', '${_stats?['validated_points'] ?? _stats?['total_points'] ?? '—'}'),
+          Text('KPIs sols', style: Theme.of(context).textTheme.titleMedium),
+          _kpiCard('Points validés', '${_stats?['validated_points'] ?? _stats?['total_points'] ?? '—'}'),
           _kpiCard('Points en attente', '${_stats?['pending_points'] ?? '—'}'),
-          _kpiCard('ML fertilité', _ml?['model_version']?.toString() ?? 'Actif'),
-          _kpiCard('OpenWeather', _weatherStatus?['message']?.toString() ?? '—'),
-          _kpiCard('Sentinel Hub', _sentinelStatus?['message']?.toString() ?? '—'),
+          const SizedBox(height: 12),
+          Text('APIs externes (via backend)', style: Theme.of(context).textTheme.titleMedium),
+          ExternalApiCards(
+            weather: _apis?['weather'],
+            sentinel: _apis?['sentinel'],
+            nasa: _apis?['nasa'],
+            ml: _apis?['ml'],
+            assistant: _apis?['assistant'],
+          ),
+          if (_smap != null && _smap!.isNotEmpty)
+            Card(
+              child: ListTile(
+                title: const Text('Corrélation SMAP'),
+                subtitle: Text(_smap!['summary']?.toString() ?? _smap.toString()),
+              ),
+            ),
           const SizedBox(height: 8),
           Card(
             child: Padding(
@@ -90,23 +102,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _kpiCard(String title, String value) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        title: Text(title),
-        trailing: Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-      ),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(title: Text(title), trailing: Text(value, style: const TextStyle(fontWeight: FontWeight.bold))),
     );
   }
 
   List<Widget> _buildDistribution(dynamic data) {
     if (data is! Map) return [const Text('—')];
     return data.entries
-        .map((e) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [Text(e.key.toString()), Text('${e.value}')],
-              ),
+        .map((e) => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [Text(e.key.toString()), Text('${e.value}')],
             ))
         .toList();
   }
