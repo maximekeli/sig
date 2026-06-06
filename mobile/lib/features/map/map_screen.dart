@@ -208,12 +208,23 @@ class _MapScreenState extends State<MapScreen> {
         Positioned(
           bottom: 16,
           right: 16,
-          child: FloatingActionButton(
-            heroTag: 'loc',
-            onPressed: () {
-              if (_myPosition != null) _mapController.move(_myPosition!, 12);
-            },
-            child: const Icon(Icons.gps_fixed),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FloatingActionButton.small(
+                heroTag: 'tools',
+                onPressed: () => _showMapTools(context),
+                child: const Icon(Icons.build),
+              ),
+              const SizedBox(height: 8),
+              FloatingActionButton(
+                heroTag: 'loc',
+                onPressed: () {
+                  if (_myPosition != null) _mapController.move(_myPosition!, 12);
+                },
+                child: const Icon(Icons.gps_fixed),
+              ),
+            ],
           ),
         ),
       ],
