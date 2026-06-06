@@ -222,12 +222,13 @@ class TestLinkageAuthenticated:
             r = api_client.get('/api/v1/weather/current/?lat=6.4&lon=1.35')
         assert r.status_code == 200
 
-    def test_activity_ping(self, auth_client):
-        r = auth_client.post('/api/v1/platform/activity/', {
+    def test_activity_ping(self, api_client):
+        """Même format que frontend/js/core/activityTracker.js (anonyme OK)."""
+        r = api_client.post('/api/v1/platform/activity/', {
             'session_id': 'linkage-test',
             'events': [{
                 'event_type': 'test_linkage',
-                'category': 'test',
+                'category': 'map',
                 'view_name': 'linkage',
                 'detail': {},
             }],
