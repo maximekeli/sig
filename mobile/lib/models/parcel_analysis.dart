@@ -6,6 +6,8 @@ class ParcelAnalysis {
     this.centroidLon,
     this.weather,
     this.sentinel,
+    this.nasa,
+    this.mlPrediction,
     this.soilPointsCount,
     this.healthIndex,
     this.recommendations = const [],
