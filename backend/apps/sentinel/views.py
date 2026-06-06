@@ -25,6 +25,17 @@ def _parse_bbox_param(raw: str) -> tuple[float, float, float, float]:
     return parts[0], parts[1], parts[2], parts[3]
 
 
+def _normalize_bbox(bbox_raw) -> tuple[float, float, float, float]:
+    """Accepte bbox string «1,6,1.5,6.5» ou liste [1, 6, 1.5, 6.5] (web + mobile)."""
+    if bbox_raw is None:
+        raise ValueError('bbox requis')
+    if isinstance(bbox_raw, (list, tuple)):
+        if len(bbox_raw) != 4:
+            raise ValueError('bbox attendu : 4 nombres [min_lon, min_lat, max_lon, max_lat]')
+        return tuple(float(x) for x in bbox_raw)
+    return _parse_bbox_param(str(bbox_raw))
+
+
 class SentinelStatusView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -94,7 +105,7 @@ class SentinelAnalyzeView(APIView):
             bbox = settings.REGION_MARITIME_BBOX
         else:
             try:
-                bbox = _parse_bbox_param(str(bbox_raw))
+                bbox = _normalize_bbox(bbox_raw)
             except ValueError as exc:
                 return Response({'detail': str(exc)}, status=400)
 

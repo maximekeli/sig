@@ -174,6 +174,23 @@ class SentinelHubAPITest(TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertAlmostEqual(r.data['ndvi_mean'], 0.42)
 
+    @patch('sentinel.views.ndvi_mean_for_bbox', return_value={
+        'ndvi_mean': 0.42,
+        'ndvi_min': 0.2,
+        'ndvi_max': 0.6,
+        'pixel_count': 100,
+        'period': {'from': '2026-01-01T00:00:00Z', 'to': '2026-05-01T00:00:00Z'},
+    })
+    def test_analyze_bbox_array(self, _mock_ndvi):
+        """Format tableau — frontend map.js / mobile SigApi."""
+        r = self.client.post(
+            '/api/v1/sentinel/analyze/',
+            {'bbox': [1.0, 6.1, 1.3, 6.4]},
+            format='json',
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertAlmostEqual(r.data['ndvi_mean'], 0.42)
+
     def test_analyze_bbox_outside_region(self):
         r = self.client.post(
             '/api/v1/sentinel/analyze/',

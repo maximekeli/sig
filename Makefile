@@ -60,6 +60,9 @@ rebuild-web:
 	docker compose build web
 	docker compose up -d --force-recreate web nginx
 
+repair-docker:
+	./scripts/repair-docker.sh
+
 fix-web:
 	@echo "Arrêt des anciens conteneurs web (sudo si besoin)…"
 	-docker rm -f dusol_web 2>/dev/null || true

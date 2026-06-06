@@ -117,6 +117,21 @@ services:
       web:
         condition: service_started
 
+  # Secours si le proxy 8081 est bloqué (docker-proxy root / conteneurs orphelins)
+  nginx-fix:
+    image: nginx:alpine
+    profiles: ["fix"]
+    ports:
+      - "8082:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend:/usr/share/nginx/html/frontend:ro
+      - media_data:/usr/share/nginx/media:ro
+      - ./backend/staticfiles:/usr/share/nginx/static:ro
+    depends_on:
+      web:
+        condition: service_started
+
 volumes:
   postgres_data:
   media_data:

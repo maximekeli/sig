@@ -41,18 +41,24 @@ else
 fi
 
 echo ""
-echo "==> 4/4 Live HTTP — backend Docker sur :8081…"
-BASE="http://localhost:8081"
-API="$BASE/api/v1"
+echo "==> 4/4 Live HTTP — backend Docker…"
+BASE=""
+API=""
+for port in 8081 8082 8083; do
+  if curl -sf --max-time 8 "http://127.0.0.1:${port}/health/" >/dev/null 2>&1; then
+    BASE="http://localhost:${port}"
+    API="$BASE/api/v1"
+    ok "Backend live sur :${port}"
+    break
+  fi
+done
 
-if ! curl -sf --max-time 8 "$BASE/health/" >/dev/null 2>&1; then
-  skip "Backend live indisponible (timeout) — relancez: sudo ./scripts/fix-docker-network.sh"
+if [ -z "$BASE" ]; then
+  skip "Backend live indisponible — lancez: make repair-docker ou sudo ./scripts/fix-docker-network.sh"
   echo ""
   echo "  Cause fréquente : conteneur web orphelin bloqué."
   docker ps -a --filter name=web --format '  - {{.Names}} ({{.Status}})' 2>/dev/null || true
 else
-  ok "Health /health/"
-
   if curl -sf --max-time 8 "$BASE/health/?detail=1" | grep -q '"database":"ok"'; then
     ok "PostGIS accessible"
   else

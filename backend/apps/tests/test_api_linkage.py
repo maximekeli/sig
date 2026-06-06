@@ -204,7 +204,7 @@ class TestLinkageAuthenticated:
             lambda bbox, days_back=60: {'ndvi_mean': 0.42, 'samples': 3},
         )
         r = auth_client.post('/api/v1/sentinel/analyze/', {
-            'bbox': [1.0, 6.0, 1.5, 6.5],
+            'bbox': [1.0, 6.1, 1.3, 6.4],
         }, format='json')
         assert r.status_code == 200
         assert r.json()['ndvi_mean'] == 0.42
