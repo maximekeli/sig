@@ -55,6 +55,8 @@ class _ShellScreenState extends State<ShellScreen> {
 
   void _go(int index) {
     const routes = ['/', '/dashboard', '/quiz', '/sheets', '/videos', '/shorts', '/community', '/assistant', '/profile'];
+    const names = ['map', 'dashboard', 'quiz', 'sheets', 'videos', 'shorts', 'community', 'assistant', 'profile'];
+    context.read<ActivityTracker>().trackNav(names[index]);
     context.go(routes[index]);
   }
 
@@ -112,6 +114,14 @@ class _ShellScreenState extends State<ShellScreen> {
                 Navigator.pop(context);
                 context.push('/help');
               },
+            ),
+            Consumer<ThemeService>(
+              builder: (_, theme, __) => SwitchListTile(
+                secondary: Icon(theme.isDark ? Icons.dark_mode : Icons.light_mode),
+                title: const Text('Thème clair / sombre'),
+                value: !theme.isDark,
+                onChanged: (_) => theme.toggle(),
+              ),
             ),
           ],
         ),

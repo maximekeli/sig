@@ -1,9 +1,12 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/auth/auth_service.dart';
 import '../../core/config/env.dart';
 import '../../core/offline/offline_sync_service.dart';
 import '../../models/soil_point.dart';
@@ -259,6 +262,10 @@ class _MapScreenState extends State<MapScreen> {
             ListTile(leading: const Icon(Icons.filter_list), title: const Text('Filtres pH / type'), onTap: () => Navigator.pop(context, 'filters')),
             ListTile(leading: const Icon(Icons.timeline), title: const Text('Ma trajectoire 24h'), onTap: () => Navigator.pop(context, 'trajectory')),
             ListTile(leading: const Icon(Icons.cloud), title: const Text('Prévisions météo'), onTap: () => Navigator.pop(context, 'forecast')),
+            ListTile(leading: const Icon(Icons.download), title: const Text('Export GeoJSON'), onTap: () => Navigator.pop(context, 'export_geojson')),
+            ListTile(leading: const Icon(Icons.table_chart), title: const Text('Export CSV'), onTap: () => Navigator.pop(context, 'export_csv')),
+            if (context.read<AuthService>().user?.isAgent == true)
+              ListTile(leading: const Icon(Icons.upload_file), title: const Text('Import GeoJSON / CSV'), onTap: () => Navigator.pop(context, 'import')),
           ],
         ),
       ),
