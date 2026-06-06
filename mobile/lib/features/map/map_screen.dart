@@ -27,6 +27,7 @@ class _MapScreenState extends State<MapScreen> {
   Map<String, dynamic>? _apiStatus;
   bool _showSentinelNdvi = false;
   bool _showNasaNdvi = false;
+  bool _addPointMode = false;
   bool _loading = true;
   String? _error;
   LatLng? _myPosition;
