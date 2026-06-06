@@ -35,6 +35,29 @@ cd frontend && node --test tests/*.test.js
 | `dashboardUtils.test.js` | Format KPIs, R² SMAP |
 | `quizUtils.test.js` | Timer 20s, feedback, classement |
 
+## Liaison backend ↔ web ↔ mobile
+
+Vérifie que **tous les endpoints** utilisés par le site et l'app mobile répondent correctement :
+
+```bash
+make test-linkage
+# ou
+./scripts/test-linkage.sh
+```
+
+| Étape | Contenu |
+|-------|---------|
+| 1 | `test_api_linkage.py` — 28+ tests pytest (contrat API complet) |
+| 2 | Tests unitaires frontend (Vitest) |
+| 3 | Tests unitaires mobile (Flutter) |
+| 4 | Tests HTTP live sur `:8081` + intégration Flutter (si Docker actif) |
+
+Si l'étape 4 échoue (timeout), relancez le backend :
+
+```bash
+sudo ./scripts/fix-docker-network.sh
+```
+
 ## Tout lancer
 
 ```bash

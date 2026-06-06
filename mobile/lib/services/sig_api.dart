@@ -267,7 +267,7 @@ class SigApi {
   Future<int> unreadNotifications() async {
     final data =
         await _client.get<Map<String, dynamic>>('/platform/notifications/unread-count/');
-    return data['count'] as int? ?? 0;
+    return data['unread_count'] as int? ?? data['count'] as int? ?? 0;
   }
 
   Future<void> updateLocation(double lat, double lon) =>

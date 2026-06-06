@@ -115,9 +115,8 @@ class TestLinkagePublicEndpoints:
         assert api_client.get('/api/v1/education/quiz/leaderboard/').status_code == 200
         assert api_client.get('/api/v1/education/sheets/').status_code == 200
 
-    def test_videos_public(self, api_client):
+    def test_videos_posts_public(self, api_client):
         assert api_client.get('/api/v1/videos/posts/?kind=video').status_code == 200
-        assert api_client.get('/api/v1/videos/stories/').status_code == 200
 
 
 @pytest.mark.django_db
@@ -161,7 +160,10 @@ class TestLinkageAuthenticated:
         assert auth_client.get('/api/v1/platform/notifications/').status_code == 200
         unread = auth_client.get('/api/v1/platform/notifications/unread-count/')
         assert unread.status_code == 200
-        assert 'count' in unread.json()
+        assert 'unread_count' in unread.json()
+
+    def test_videos_stories_authenticated(self, auth_client):
+        assert auth_client.get('/api/v1/videos/stories/').status_code == 200
 
     def test_quiz_full_flow(self, auth_client):
         from education.models import QuizQuestion
@@ -198,13 +200,14 @@ class TestLinkageAuthenticated:
 
     def test_sentinel_analyze_mocked(self, api_client, monkeypatch):
         monkeypatch.setattr(
-            'sentinel.views.analyze_ndvi_bbox',
-            lambda bbox: {'ndvi_mean': 0.42, 'ok': True},
+            'sentinel.views.ndvi_mean_for_bbox',
+            lambda bbox, days_back=60: {'ndvi_mean': 0.42, 'samples': 3},
         )
         r = api_client.post('/api/v1/sentinel/analyze/', {
             'bbox': [1.0, 6.0, 1.5, 6.5],
         }, format='json')
         assert r.status_code == 200
+        assert r.json()['ndvi_mean'] == 0.42
 
     def test_weather_current_mocked(self, api_client, monkeypatch):
         with override_settings(OPENWEATHER_API_KEY='test-key'):
@@ -221,11 +224,16 @@ class TestLinkageAuthenticated:
 
     def test_activity_ping(self, auth_client):
         r = auth_client.post('/api/v1/platform/activity/', {
-            'action': 'test_linkage',
-            'meta': {},
-            'source': 'test',
+            'session_id': 'linkage-test',
+            'events': [{
+                'event_type': 'test_linkage',
+                'category': 'test',
+                'view_name': 'linkage',
+                'detail': {},
+            }],
         }, format='json')
         assert r.status_code == 200
+        assert r.json()['accepted'] >= 1
 
 
 @pytest.mark.django_db
