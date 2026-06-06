@@ -6,6 +6,11 @@ void main() {
     expect(Env.apiBaseUrl, endsWith('/api/v1'));
   });
 
+  test('healthUrl pointe vers /health/?detail=1', () {
+    expect(Env.healthUrl, endsWith('/health/?detail=1'));
+    expect(Env.healthUrl, startsWith(Env.origin));
+  });
+
   test('resolveMediaUrl chemin relatif', () {
     expect(Env.resolveMediaUrl('/media/photo.jpg'), contains('/media/photo.jpg'));
     expect(Env.resolveMediaUrl('http://cdn.test/img.png'), 'http://cdn.test/img.png');

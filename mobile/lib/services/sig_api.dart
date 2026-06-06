@@ -12,6 +12,10 @@ class SigApi {
   final ApiClient _client;
 
   // --- Sols / dashboard ---
+  /// Création point sol (GeoJSON Feature — même format que le site web).
+  Future<Map<String, dynamic>> createSoilPoint(Map<String, dynamic> geoJsonBody) =>
+      _client.post('/points/', data: geoJsonBody);
+
   Future<List<SoilPoint>> fetchSoilPoints({bool light = true}) async {
     final data = await _client.get<dynamic>(
       '/points/',
