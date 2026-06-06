@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/parcel_analysis.dart';
@@ -21,7 +21,8 @@ class _ParcelScreenState extends State<ParcelScreen> {
     setState(() => _loading = true);
     try {
       final pos = await Geolocator.getCurrentPosition();
-      final result = await context.read<SigApi>().analyzeParcelAt(pos.latitude, pos.longitude);
+      final api = context.read<SigApi>();
+      final result = await api.analyzeParcelAt(pos.latitude, pos.longitude);
       setState(() => _result = result);
     } catch (e) {
       if (mounted) {

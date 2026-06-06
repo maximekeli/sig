@@ -37,7 +37,9 @@ class _QuizScreenState extends State<QuizScreen> {
       final board = await api.quizLeaderboard();
       setState(() {
         _stats = stats;
-        _leaderboard = board is List ? board : (board['results'] as List? ?? []);
+        _leaderboard = board is List
+            ? board
+            : ((board as Map)['results'] as List? ?? []);
         _loading = false;
       });
     } catch (e) {

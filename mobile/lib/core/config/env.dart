@@ -15,7 +15,7 @@ class Env {
 
   static String get wsBaseUrl {
     final api = apiBaseUrl.replaceFirst('/api/v1', '');
-    return api.replaceFirst('http', 'ws') + '/ws/live/';
+    return '${api.replaceFirst('http', 'ws')}/ws/live/';
   }
 
   static String get mediaBaseUrl {
