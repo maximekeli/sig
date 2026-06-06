@@ -186,4 +186,13 @@ class ApiClient {
 
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> payload) =>
       patch<Map<String, dynamic>>('/auth/profile/', data: payload);
+
+  Future<Map<String, dynamic>> uploadProfilePhoto(String filePath) async {
+    final form = FormData.fromMap({
+      'photo': await MultipartFile.fromFile(filePath),
+    });
+    return upload('/auth/profile/photo/', form);
+  }
+
+  Future<void> deleteProfilePhoto() => delete('/auth/profile/photo/');
 }

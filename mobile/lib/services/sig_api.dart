@@ -5,22 +5,31 @@ import '../core/config/env.dart';
 import '../models/parcel_analysis.dart';
 import '../models/soil_point.dart';
 
-/// Façade API — mêmes endpoints que le site web (frontend/js/).
+/// Façade API — parité complète avec le site web (frontend/js/).
 class SigApi {
   SigApi(this._client);
 
   final ApiClient _client;
 
   // --- Sols / dashboard ---
-  /// Création point sol (GeoJSON Feature — même format que le site web).
   Future<Map<String, dynamic>> createSoilPoint(Map<String, dynamic> geoJsonBody) =>
       _client.post('/points/', data: geoJsonBody);
 
-  Future<List<SoilPoint>> fetchSoilPoints({bool light = true}) async {
-    final data = await _client.get<dynamic>(
-      '/points/',
-      query: {'light': light ? '1' : '0', 'is_validated': 'true'},
-    );
+  Future<List<SoilPoint>> fetchSoilPoints({
+    bool light = true,
+    String? soilType,
+    double? phMin,
+    double? phMax,
+    bool? validated,
+  }) async {
+    final query = <String, dynamic>{
+      'light': light ? '1' : '0',
+      if (validated != null) 'is_validated': validated ? 'true' : 'false',
+      if (soilType != null && soilType.isNotEmpty) 'soil_type': soilType,
+      if (phMin != null) 'ph_min': phMin,
+      if (phMax != null) 'ph_max': phMax,
+    };
+    final data = await _client.get<dynamic>('/points/', query: query);
     final list = data is Map
         ? (data['results'] as List? ?? data['features'] as List? ?? [])
         : data as List;
@@ -29,10 +38,18 @@ class SigApi {
         .toList();
   }
 
+  Future<Map<String, dynamic>> fetchPoint(int id) =>
+      _client.get('/points/$id/');
+
+  Future<Map<String, dynamic>> comparePoints(int a, int b) =>
+      _client.get('/points/compare/', query: {'a': a, 'b': b});
+
+  Future<Map<String, dynamic>> fetchHeatmap({String field = 'ph'}) =>
+      _client.get('/heatmap/', query: {'field': field});
+
   Future<Map<String, dynamic>> fetchDashboardStats() =>
       _client.get('/dashboard/stats/');
 
-  /// Santé backend + base de données (PostGIS partagée web/mobile).
   Future<Map<String, dynamic>> fetchSystemHealth() async {
     final dio = Dio(BaseOptions(
       connectTimeout: const Duration(seconds: 8),
@@ -55,6 +72,8 @@ class SigApi {
         'lon': lon,
       });
 
+  Future<Map<String, dynamic>> trainMl() => _client.post('/ml/train/');
+
   // --- NASA ---
   Future<Map<String, dynamic>> nasaCatalogSummary() =>
       _client.get('/nasa/catalog/summary/');
@@ -65,7 +84,9 @@ class SigApi {
     return (data as Map)['results'] as List? ?? [];
   }
 
-  // --- Sentinel Hub ---
+  Future<Map<String, dynamic>> nasaIngest() => _client.post('/nasa/ingest/');
+
+  // --- Sentinel ---
   Future<Map<String, dynamic>> sentinelStatus() =>
       _client.get('/sentinel/status/');
 
@@ -92,7 +113,7 @@ class SigApi {
   Future<Map<String, dynamic>> weatherForecast(double lat, double lon) =>
       _client.get('/weather/forecast/', query: {'lat': lat, 'lon': lon});
 
-  // --- Gemini / Assistant ---
+  // --- Gemini ---
   Future<Map<String, dynamic>> assistantStatus() =>
       _client.get('/assistant/status/');
 
@@ -140,20 +161,21 @@ class SigApi {
     return ParcelAnalysis.fromJson(data);
   }
 
-  Future<ParcelAnalysis> analyzeParcelAt(double lat, double lon) {
-    final geometry = {
-      'type': 'Polygon',
-      'coordinates': [
-        [
-          [lon - 0.01, lat - 0.01],
-          [lon + 0.01, lat - 0.01],
-          [lon + 0.01, lat + 0.01],
-          [lon - 0.01, lat + 0.01],
-          [lon - 0.01, lat - 0.01],
-        ],
-      ],
-    };
-    return analyzeParcelLive(geometry: geometry);
+  Future<ParcelAnalysis> analyzeParcelByZone(String zoneCode, {
+    bool useSentinel = true,
+    bool useWeather = true,
+    bool useMl = true,
+  }) async {
+    final data = await _client.post<Map<String, dynamic>>(
+      '/spatial/parcel/live/',
+      data: {
+        'zone_code': zoneCode,
+        'use_sentinel': useSentinel,
+        'use_weather': useWeather,
+        'use_ml': useMl,
+      },
+    );
+    return ParcelAnalysis.fromJson(data);
   }
 
   Future<Map<String, dynamic>> ndviTimeseries(int pointId) =>
@@ -210,24 +232,64 @@ class SigApi {
     return (data as Map)['badges'] as List? ?? [];
   }
 
+  Future<Map<String, dynamic>> quizLearningPath() =>
+      _client.get('/education/quiz/learning-path/');
+
+  Future<Map<String, dynamic>> quizWeeklyChallenge() =>
+      _client.get('/education/quiz/weekly-challenge/');
+
+  String quizCertificateUrl(int sessionId) =>
+      '${Env.origin}/api/v1/education/quiz/$sessionId/certificate/';
+
   Future<List<dynamic>> fetchSheets() async {
     final data = await _client.get<dynamic>('/education/sheets/');
     if (data is List) return data;
     return (data as Map)['results'] as List? ?? [];
   }
 
+  String sheetPdfUrl(int id) => '${Env.origin}/api/v1/education/sheets/$id/pdf/';
+
   // --- Vidéos ---
-  Future<List<dynamic>> fetchVideos({String kind = 'video'}) async {
+  Future<List<dynamic>> fetchVideos({String kind = 'video', String? category}) async {
     final data = await _client.get<dynamic>(
       '/videos/posts/',
-      query: {'kind': kind},
+      query: {'kind': kind, if (category != null) 'category': category},
     );
     if (data is List) return data;
     return (data as Map)['results'] as List? ?? [];
   }
 
-  Future<void> toggleVideoLike(int postId) =>
+  Future<Map<String, dynamic>> toggleVideoLike(int postId) =>
       _client.post('/videos/posts/$postId/toggle_like/');
+
+  Future<List<dynamic>> fetchVideoComments(int postId) async {
+    final data = await _client.get<dynamic>('/videos/posts/$postId/comments/');
+    if (data is List) return data;
+    return (data as Map)['results'] as List? ?? [];
+  }
+
+  Future<Map<String, dynamic>> postVideoComment(int postId, String text, {int? parentId}) =>
+      _client.post('/videos/posts/$postId/comments/', data: {
+        'text': text,
+        if (parentId != null) 'parent': parentId,
+      });
+
+  Future<Map<String, dynamic>> uploadVideo({
+    required String filePath,
+    required String kind,
+    required String title,
+    String description = '',
+    String category = 'sols',
+  }) async {
+    final form = FormData.fromMap({
+      'kind': kind,
+      'title': title,
+      'description': description,
+      'category': category,
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    return _client.upload('/videos/posts/', form);
+  }
 
   Future<List<dynamic>> fetchStories() async {
     final data = await _client.get<dynamic>('/videos/stories/');
@@ -235,7 +297,29 @@ class SigApi {
     return (data as Map)['results'] as List? ?? [];
   }
 
-  // --- Communauté ---
+  Future<Map<String, dynamic>> uploadStory({
+    required String filePath,
+    String caption = '',
+  }) async {
+    final form = FormData.fromMap({
+      'caption': caption,
+      'media': await MultipartFile.fromFile(filePath),
+    });
+    return _client.upload('/videos/stories/', form);
+  }
+
+  Future<List<dynamic>> pendingVideos() async {
+    final data = await _client.get<dynamic>('/videos/posts/pending/');
+    if (data is List) return data;
+    return (data as Map)['results'] as List? ?? [];
+  }
+
+  Future<void> approveVideo(int id) => _client.post('/videos/posts/$id/approve/');
+
+  Future<void> rejectVideo(int id, {String reason = ''}) =>
+      _client.post('/videos/posts/$id/reject/', data: {'reason': reason});
+
+  // --- Communauté / auth social ---
   Future<List<dynamic>> fetchFeed() async {
     final data = await _client.get<dynamic>('/auth/feed/');
     if (data is List) return data;
@@ -251,13 +335,58 @@ class SigApi {
     return (data as Map)['results'] as List? ?? [];
   }
 
+  Future<Map<String, dynamic>> publicProfile(String username) =>
+      _client.get('/auth/users/$username/public/');
+
   Future<void> followUser(String username) =>
       _client.post('/auth/users/$username/follow/');
 
   Future<void> unfollowUser(String username) =>
       _client.delete('/auth/users/$username/follow/');
 
-  // --- Notifications / GPS ---
+  Future<List<dynamic>> fetchFavorites() async {
+    final data = await _client.get<dynamic>('/auth/favorites/');
+    if (data is List) return data;
+    return (data as Map)['results'] as List? ?? [];
+  }
+
+  Future<void> addFavorite({required String targetType, required int targetId}) =>
+      _client.post('/auth/favorites/', data: {
+        'target_type': targetType,
+        'target_id': targetId,
+      });
+
+  Future<void> removeFavorite(int id) => _client.delete('/auth/favorites/', data: {'id': id});
+
+  Future<List<dynamic>> fetchMessages({String? withUser}) async {
+    final data = await _client.get<dynamic>(
+      '/auth/messages/',
+      query: withUser != null ? {'with': withUser} : null,
+    );
+    if (data is List) return data;
+    return (data as Map)['results'] as List? ?? data['messages'] as List? ?? [];
+  }
+
+  Future<Map<String, dynamic>> sendMessage({
+    required String recipientUsername,
+    required String body,
+  }) =>
+      _client.post('/auth/messages/', data: {
+        'recipient_username': recipientUsername,
+        'body': body,
+      });
+
+  Future<Map<String, dynamic>> fetchTrajectory({int? userId, int hours = 24}) {
+    final path = userId != null ? '/auth/trajectory/$userId/' : '/auth/trajectory/';
+    return _client.get(path, query: {'hours': hours});
+  }
+
+  Future<void> updateLocation(double lat, double lon) =>
+      _client.post('/auth/location/', data: {'lat': lat, 'lon': lon});
+
+  Future<void> clearLocation() => _client.delete('/auth/location/');
+
+  // --- Platform ---
   Future<List<dynamic>> fetchNotifications() async {
     final data = await _client.get<dynamic>('/platform/notifications/');
     if (data is List) return data;
@@ -270,10 +399,82 @@ class SigApi {
     return data['unread_count'] as int? ?? data['count'] as int? ?? 0;
   }
 
-  Future<void> updateLocation(double lat, double lon) =>
-      _client.post('/auth/location/', data: {'lat': lat, 'lon': lon});
+  Future<void> markNotificationRead(int id) =>
+      _client.post('/platform/notifications/$id/read/');
 
-  /// Statuts de toutes les APIs externes (comme le dashboard web).
+  Future<void> markAllNotificationsRead() =>
+      _client.post('/platform/notifications/mark-all-read/');
+
+  Future<List<dynamic>> globalSearch(String q) async {
+    final data = await _client.get<dynamic>('/platform/search/', query: {'q': q});
+    if (data is List) return data;
+    return (data as Map)['results'] as List? ?? [];
+  }
+
+  Future<Map<String, dynamic>> personalDashboard() =>
+      _client.get('/platform/me/dashboard/');
+
+  Future<List<dynamic>> droughtAlerts() async {
+    final data = await _client.get<dynamic>('/platform/alerts/drought/');
+    if (data is List) return data;
+    return (data as Map)['alerts'] as List? ?? data['results'] as List? ?? [];
+  }
+
+  Future<List<dynamic>> alertsNear(double lat, double lon, {int radiusKm = 30}) async {
+    final data = await _client.get<dynamic>(
+      '/platform/alerts/near/',
+      query: {'lat': lat, 'lon': lon, 'radius_km': radiusKm},
+    );
+    if (data is List) return data;
+    return (data as Map)['alerts'] as List? ?? [];
+  }
+
+  Future<void> requestPasswordReset(String email) =>
+      _client.post('/platform/password/reset/', data: {'email': email});
+
+  Future<void> confirmPasswordReset({
+    required String token,
+    required String password,
+  }) =>
+      _client.post('/platform/password/reset/confirm/', data: {
+        'token': token,
+        'password': password,
+      });
+
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) =>
+      _client.post('/auth/password/change/', data: {
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      });
+
+  Future<void> postActivity({
+    required String sessionId,
+    required List<Map<String, dynamic>> events,
+  }) =>
+      _client.post('/platform/activity/', data: {
+        'session_id': sessionId,
+        'events': events,
+      });
+
+  // --- Admin ---
+  Future<Map<String, dynamic>> adminDashboard() =>
+      _client.get('/platform/admin/dashboard/');
+
+  Future<Map<String, dynamic>> adminAnalytics({int days = 30}) =>
+      _client.get('/platform/admin/analytics/', query: {'days': days});
+
+  Future<List<dynamic>> pendingValidation() async {
+    final data = await _client.get<dynamic>('/validation/pending/');
+    if (data is Map) return data['results'] as List? ?? [];
+    return data as List? ?? [];
+  }
+
+  Future<Map<String, dynamic>> validatePoint(int id, {String action = 'validate'}) =>
+      _client.post('/points/$id/validate_point/', data: {'action': action});
+
   Future<Map<String, Map<String, dynamic>>> fetchExternalApiStatus() async {
     final results = await Future.wait([
       weatherStatus(),
