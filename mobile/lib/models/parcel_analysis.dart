@@ -20,6 +20,8 @@ class ParcelAnalysis {
   final double? centroidLon;
   final Map<String, dynamic>? weather;
   final Map<String, dynamic>? sentinel;
+  final Map<String, dynamic>? nasa;
+  final Map<String, dynamic>? mlPrediction;
   final int? soilPointsCount;
   final double? healthIndex;
   final List<String> recommendations;
@@ -37,6 +39,8 @@ class ParcelAnalysis {
       centroidLon: (centroid?['lon'] as num?)?.toDouble(),
       weather: json['weather'] as Map<String, dynamic>?,
       sentinel: json['sentinel'] as Map<String, dynamic>?,
+      nasa: json['nasa'] as Map<String, dynamic>?,
+      mlPrediction: json['ml_prediction'] as Map<String, dynamic>?,
       soilPointsCount: soil?['count'] as int?,
       healthIndex: (json['health_index'] as num?)?.toDouble(),
       recommendations: recs is List

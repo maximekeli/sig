@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/parcel_analysis.dart';
 import '../../services/sig_api.dart';
+import '../../shared/widgets/external_api_cards.dart';
 import '../../shared/widgets/loading_view.dart';
 
 class ParcelScreen extends StatefulWidget {
@@ -15,14 +16,47 @@ class ParcelScreen extends StatefulWidget {
 
 class _ParcelScreenState extends State<ParcelScreen> {
   ParcelAnalysis? _result;
+  List<dynamic> _zones = [];
+  bool _useSentinel = true;
+  bool _useWeather = true;
+  bool _useMl = true;
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadZones();
+  }
+
+  Future<void> _loadZones() async {
+    try {
+      final zones = await context.read<SigApi>().parcelZones(zoneType: 'canton');
+      if (mounted) setState(() => _zones = zones);
+    } catch (_) {}
+  }
 
   Future<void> _analyzeHere() async {
     final api = context.read<SigApi>();
     setState(() => _loading = true);
     try {
       final pos = await Geolocator.getCurrentPosition();
-      final result = await api.analyzeParcelAt(pos.latitude, pos.longitude);
+      final result = await api.analyzeParcelLive(
+        geometry: {
+          'type': 'Polygon',
+          'coordinates': [
+            [
+              [pos.longitude - 0.01, pos.latitude - 0.01],
+              [pos.longitude + 0.01, pos.latitude - 0.01],
+              [pos.longitude + 0.01, pos.latitude + 0.01],
+              [pos.longitude - 0.01, pos.latitude + 0.01],
+              [pos.longitude - 0.01, pos.latitude - 0.01],
+            ],
+          ],
+        },
+        useSentinel: _useSentinel,
+        useWeather: _useWeather,
+        useMl: _useMl,
+      );
       setState(() => _result = result);
     } catch (e) {
       if (mounted) {
@@ -38,14 +72,32 @@ class _ParcelScreenState extends State<ParcelScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Analyse parcelle')),
       body: _loading
-          ? const LoadingView(message: 'Analyse Sentinel + Météo + ML…')
+          ? const LoadingView(message: 'Analyse NASA · Sentinel · Météo · ML…')
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 const Text(
-                  'Analysez une parcelle autour de votre position (même API que le site web).',
+                  'Même API que le site : /spatial/parcel/live/ avec Sentinel, OpenWeather, NASA et ML.',
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  title: const Text('Sentinel Hub (NDVI)'),
+                  value: _useSentinel,
+                  onChanged: (v) => setState(() => _useSentinel = v),
+                ),
+                SwitchListTile(
+                  title: const Text('OpenWeather'),
+                  value: _useWeather,
+                  onChanged: (v) => setState(() => _useWeather = v),
+                ),
+                SwitchListTile(
+                  title: const Text('ML fertilité'),
+                  value: _useMl,
+                  onChanged: (v) => setState(() => _useMl = v),
+                ),
+                if (_zones.isNotEmpty)
+                  Text('${_zones.length} zones canton disponibles', style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: _analyzeHere,
                   icon: const Icon(Icons.analytics),
@@ -61,34 +113,35 @@ class _ParcelScreenState extends State<ParcelScreen> {
   }
 
   Widget _buildResult(ParcelAnalysis r) {
-    final w = r.weather?['current'] as Map<String, dynamic>?;
-    final s = r.sentinel;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Card(child: ListTile(title: Text(r.parcelName), subtitle: Text('${r.areaHa?.toStringAsFixed(1) ?? '—'} ha'))),
         Card(
           child: ListTile(
-            leading: const Icon(Icons.wb_sunny),
-            title: const Text('OpenWeather'),
-            subtitle: Text(w != null
-                ? '${w['temp_c']}°C · ${w['description']}'
-                : r.weather?['error']?.toString() ?? '—'),
+            title: Text(r.parcelName),
+            subtitle: Text(
+              '${r.areaHa?.toStringAsFixed(1) ?? '—'} ha · '
+              '${r.soilPointsCount ?? 0} points sol · '
+              'Santé: ${r.healthIndex?.toStringAsFixed(2) ?? '—'}',
+            ),
           ),
         ),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.satellite_alt),
-            title: const Text('Sentinel NDVI'),
-            subtitle: Text(s != null
-                ? 'NDVI moyen: ${s['ndvi_mean']}'
-                : s?['error']?.toString() ?? '—'),
-          ),
+        ExternalApiCards(
+          weather: r.weather,
+          sentinel: r.sentinel,
+          nasa: r.nasa,
+          ml: r.mlPrediction,
         ),
         if (r.recommendations.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text('Recommandations', style: Theme.of(context).textTheme.titleMedium),
-          ...r.recommendations.map((rec) => ListTile(dense: true, leading: const Icon(Icons.lightbulb_outline), title: Text(rec))),
+          ...r.recommendations.map(
+            (rec) => ListTile(
+              dense: true,
+              leading: const Icon(Icons.lightbulb_outline),
+              title: Text(rec),
+            ),
+          ),
         ],
       ],
     );
