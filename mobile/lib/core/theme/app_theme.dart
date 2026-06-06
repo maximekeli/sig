@@ -40,4 +40,38 @@ class AppTheme {
           ),
         ),
       );
+
+  static ThemeData get light => ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.light,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: accent,
+          primary: primary,
+          secondary: const Color(0xFF2D6A4F),
+          surface: const Color(0xFFF4F7F5),
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF4F7F5),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFE8EFE9),
+          foregroundColor: primary,
+          elevation: 0,
+        ),
+        cardTheme: CardTheme(
+          color: Colors.white,
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: const Color(0xFFE8EFE9),
+          indicatorColor: accent.withValues(alpha: 0.35),
+          labelTextStyle: WidgetStateProperty.all(
+            const TextStyle(fontSize: 11),
+          ),
+        ),
+      );
 }

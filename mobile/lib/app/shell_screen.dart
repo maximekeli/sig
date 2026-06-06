@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../core/activity/activity_tracker.dart';
 import '../core/auth/auth_service.dart';
+import '../core/theme/theme_service.dart';
 import '../features/assistant/assistant_screen.dart';
 import '../features/community/community_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';

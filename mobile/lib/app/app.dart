@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../core/activity/activity_tracker.dart';
 import '../core/api/api_client.dart';
 import '../core/auth/auth_service.dart';
 import '../core/offline/offline_sync_service.dart';
-import '../core/theme/app_theme.dart';
+import '../core/theme/theme_service.dart';
 import '../services/sig_api.dart';
 import 'router.dart';
 
@@ -21,6 +22,8 @@ class _SigSolsAppState extends State<SigSolsApp> {
   late final AuthService _authService;
   late final SigApi _sigApi;
   late final OfflineSyncService _offlineSync;
+  late final ThemeService _themeService;
+  late final ActivityTracker _activity;
   GoRouter? _router;
 
   @override
@@ -30,9 +33,12 @@ class _SigSolsAppState extends State<SigSolsApp> {
     _authService = AuthService(_apiClient);
     _sigApi = SigApi(_apiClient);
     _offlineSync = OfflineSyncService(api: _sigApi, auth: _authService);
-    _authService.init().then((_) async {
+    _themeService = ThemeService();
+    _activity = ActivityTracker(_sigApi);
+    Future.wait([_authService.init(), _themeService.init()]).then((_) async {
       await _offlineSync.init();
       _authService.addListener(_onAuthChanged);
+      _activity.init();
       if (mounted) setState(() => _router = createRouter(_authService));
     });
   }
@@ -40,6 +46,9 @@ class _SigSolsAppState extends State<SigSolsApp> {
   void _onAuthChanged() {
     if (_authService.isAuthenticated) {
       _offlineSync.sync();
+      _activity.track('auth', detail: {'action': 'session'}, category: 'auth');
+    } else {
+      _activity.flush();
     }
   }
 
@@ -47,6 +56,7 @@ class _SigSolsAppState extends State<SigSolsApp> {
   void dispose() {
     _authService.removeListener(_onAuthChanged);
     _offlineSync.dispose();
+    _activity.dispose();
     super.dispose();
   }
 
@@ -54,7 +64,7 @@ class _SigSolsAppState extends State<SigSolsApp> {
   Widget build(BuildContext context) {
     if (_router == null) {
       return MaterialApp(
-        theme: AppTheme.dark,
+        theme: _themeService.theme,
         home: const Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
@@ -64,13 +74,17 @@ class _SigSolsAppState extends State<SigSolsApp> {
         Provider.value(value: _apiClient),
         ChangeNotifierProvider.value(value: _authService),
         Provider.value(value: _sigApi),
+        ChangeNotifierProvider.value(value: _activity),
+        ChangeNotifierProvider.value(value: _themeService),
         ChangeNotifierProvider.value(value: _offlineSync),
       ],
-      child: MaterialApp.router(
-        title: 'SIG Sols Togo',
-        theme: AppTheme.dark,
-        routerConfig: _router!,
-        debugShowCheckedModeBanner: false,
+      child: Consumer<ThemeService>(
+        builder: (_, theme, __) => MaterialApp.router(
+          title: 'SIG Sols Togo',
+          theme: theme.theme,
+          routerConfig: _router!,
+          debugShowCheckedModeBanner: false,
+        ),
       ),
     );
   }

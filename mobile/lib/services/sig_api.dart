@@ -15,6 +15,22 @@ class SigApi {
   Future<Map<String, dynamic>> createSoilPoint(Map<String, dynamic> geoJsonBody) =>
       _client.post('/points/', data: geoJsonBody);
 
+  Future<Map<String, dynamic>> importSoilFile(String filePath) async {
+    final form = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    return _client.upload('/points/import_data/', form);
+  }
+
+  Future<String> exportPointsGeoJson() => _client.downloadText('/points/geojson/');
+
+  Future<String> exportPointsCsv() => _client.downloadText('/points/export-csv/');
+
+  Future<String> adminExportUsers() => _client.downloadText('/platform/admin/export/users.csv');
+
+  Future<String> adminExportActivity({int days = 30}) =>
+      _client.downloadText('/platform/admin/export/activity.csv', query: {'days': days});
+
   Future<List<SoilPoint>> fetchSoilPoints({
     bool light = true,
     String? soilType,

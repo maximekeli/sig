@@ -195,4 +195,17 @@ class ApiClient {
   }
 
   Future<void> deleteProfilePhoto() => delete('/auth/profile/photo/');
+
+  Future<String> downloadText(String path, {Map<String, dynamic>? query}) async {
+    try {
+      final res = await _dio.get(
+        path,
+        queryParameters: query,
+        options: Options(responseType: ResponseType.plain),
+      );
+      return res.data?.toString() ?? '';
+    } on DioException catch (e) {
+      throw ApiException(_parseError(e), statusCode: e.response?.statusCode);
+    }
+  }
 }
