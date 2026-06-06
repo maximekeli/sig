@@ -356,7 +356,11 @@ class SigApi {
         'target_id': targetId,
       });
 
-  Future<void> removeFavorite(int id) => _client.delete('/auth/favorites/', data: {'id': id});
+  Future<void> removeFavorite({required String targetType, required int targetId}) =>
+      _client.delete('/auth/favorites/', data: {
+        'target_type': targetType,
+        'target_id': targetId,
+      });
 
   Future<List<dynamic>> fetchMessages({String? withUser}) async {
     final data = await _client.get<dynamic>(

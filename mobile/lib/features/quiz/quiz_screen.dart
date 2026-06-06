@@ -17,6 +17,9 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> {
   Map<String, dynamic>? _stats;
   List<dynamic>? _leaderboard;
+  List<dynamic>? _badges;
+  Map<String, dynamic>? _learningPath;
+  Map<String, dynamic>? _weeklyChallenge;
   int? _sessionId;
   List<dynamic> _questions = [];
   int _qIndex = 0;
@@ -40,16 +43,25 @@ class _QuizScreenState extends State<QuizScreen> {
     });
     try {
       final api = context.read<SigApi>();
-      final stats = await api.quizStats();
-      final board = await api.quizLeaderboard();
+      final results = await Future.wait([
+        api.quizStats(),
+        api.quizLeaderboard(),
+        api.quizBadges().catchError((_) => <dynamic>[]),
+        api.quizLearningPath().catchError((_) => <String, dynamic>{}),
+        api.quizWeeklyChallenge().catchError((_) => <String, dynamic>{}),
+      ]);
+      final board = results[1];
       setState(() {
-        _stats = stats;
+        _stats = Map<String, dynamic>.from(results[0] as Map);
         if (board is List) {
           _leaderboard = board;
         } else {
           final m = Map<String, dynamic>.from(board as Map);
           _leaderboard = m['top_10'] as List? ?? m['results'] as List? ?? [];
         }
+        _badges = results[2] as List<dynamic>;
+        _learningPath = Map<String, dynamic>.from(results[3] as Map);
+        _weeklyChallenge = Map<String, dynamic>.from(results[4] as Map);
         _loading = false;
       });
     } catch (e) {
@@ -192,6 +204,30 @@ class _QuizScreenState extends State<QuizScreen> {
             subtitle: Text('Meilleur: ${_stats?['best_score'] ?? '—'} · Parties: ${_stats?['sessions_count'] ?? '—'}'),
           ),
         ),
+        if (_weeklyChallenge != null && _weeklyChallenge!.isNotEmpty)
+          Card(
+            child: ListTile(
+              title: const Text('Défi de la semaine'),
+              subtitle: Text(_weeklyChallenge!['title']?.toString() ?? _weeklyChallenge.toString()),
+            ),
+          ),
+        if (_learningPath != null && _learningPath!.isNotEmpty)
+          Card(
+            child: ListTile(
+              title: const Text('Parcours pédagogique'),
+              subtitle: Text('Progression: ${_learningPath!['progress_pct'] ?? _learningPath!['completed'] ?? '—'}'),
+            ),
+          ),
+        if (_badges != null && _badges!.isNotEmpty) ...[
+          Text('Mes badges', style: Theme.of(context).textTheme.titleMedium),
+          Wrap(
+            spacing: 8,
+            children: _badges!
+                .map((b) => Chip(label: Text(Map<String, dynamic>.from(b as Map)['name']?.toString() ?? 'Badge')))
+                .toList(),
+          ),
+          const SizedBox(height: 12),
+        ],
         FilledButton.icon(
           onPressed: _startQuiz,
           icon: const Icon(Icons.play_arrow),

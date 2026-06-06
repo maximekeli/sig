@@ -123,9 +123,9 @@ class ApiClient {
     }
   }
 
-  Future<T> delete<T>(String path) async {
+  Future<T> delete<T>(String path, {Object? data}) async {
     try {
-      final res = await _dio.delete(path);
+      final res = await _dio.delete(path, data: data);
       if (res.statusCode == 204) return null as T;
       return res.data as T;
     } on DioException catch (e) {
