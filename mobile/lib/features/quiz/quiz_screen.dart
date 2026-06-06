@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/env.dart';
 import '../../services/sig_api.dart';
 import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
@@ -15,9 +17,14 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> {
   Map<String, dynamic>? _stats;
   List<dynamic>? _leaderboard;
-  Map<String, dynamic>? _session;
+  int? _sessionId;
+  List<dynamic> _questions = [];
   int _qIndex = 0;
+  int _score = 0;
+  String _feedback = '';
   bool _loading = true;
+  bool _finished = false;
+  Map<String, dynamic>? _finishResult;
   String? _error;
 
   @override
@@ -39,7 +46,7 @@ class _QuizScreenState extends State<QuizScreen> {
         _stats = stats;
         _leaderboard = board is List
             ? board
-            : ((board as Map)['results'] as List? ?? []);
+            : ((board as Map)['top_10'] as List? ?? (board as Map)['results'] as List? ?? []);
         _loading = false;
       });
     } catch (e) {
@@ -51,11 +58,18 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _startQuiz() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _finished = false;
+      _finishResult = null;
+      _feedback = '';
+      _score = 0;
+    });
     try {
-      final session = await context.read<SigApi>().startQuiz();
+      final data = await context.read<SigApi>().startQuiz();
       setState(() {
-        _session = session;
+        _sessionId = data['session_id'] as int?;
+        _questions = data['questions'] as List? ?? [];
         _qIndex = 0;
         _loading = false;
       });
@@ -67,39 +81,97 @@ class _QuizScreenState extends State<QuizScreen> {
     }
   }
 
+  Future<void> _answer(int selectedIndex) async {
+    if (_sessionId == null || _qIndex >= _questions.length) return;
+    final q = _questions[_qIndex] as Map<String, dynamic>;
+    try {
+      final r = await context.read<SigApi>().submitQuizAnswer(
+            _sessionId!,
+            questionId: q['id'] as int,
+            selectedIndex: selectedIndex,
+          );
+      setState(() {
+        _score = r['session_score'] as int? ?? _score;
+        _feedback = r['correct'] == true
+            ? '✓ Correct (+${r['points_earned']})'
+            : '✗ ${r['explanation'] ?? ''}';
+        _qIndex++;
+      });
+      if (_qIndex >= _questions.length) await _finish();
+    } catch (e) {
+      setState(() => _feedback = 'Erreur: $e');
+    }
+  }
+
+  Future<void> _finish() async {
+    if (_sessionId == null) return;
+    try {
+      final r = await context.read<SigApi>().finishQuiz(_sessionId!);
+      setState(() {
+        _finished = true;
+        _finishResult = r;
+      });
+    } catch (e) {
+      setState(() => _feedback = 'Erreur finish: $e');
+    }
+  }
+
+  void _reset() {
+    setState(() {
+      _sessionId = null;
+      _questions = [];
+      _qIndex = 0;
+      _finished = false;
+      _finishResult = null;
+      _feedback = '';
+    });
+    _load();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) return const LoadingView();
     if (_error != null) return ErrorView(message: _error!, onRetry: _load);
 
-    if (_session != null) {
-      final questions = _session!['questions'] as List? ?? [];
-      if (_qIndex >= questions.length) {
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Quiz terminé !'),
-              FilledButton(onPressed: () => setState(() => _session = null), child: const Text('Retour')),
-            ],
-          ),
-        );
-      }
-      final q = questions[_qIndex] as Map<String, dynamic>;
+    if (_finished && _finishResult != null) {
+      final score = _finishResult!['final_score'] ?? _finishResult!['score'] ?? _score;
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text('Quiz terminé !', style: Theme.of(context).textTheme.headlineSmall),
+          Text('Score final: $score'),
+          Text('Badges: ${(_finishResult!['badges_earned'] as List?)?.join(', ') ?? 'aucun'}'),
+          const SizedBox(height: 16),
+          if (_sessionId != null && (score as num) >= 10)
+            FilledButton.icon(
+              onPressed: () => launchUrl(
+                Uri.parse('${Env.origin}/api/v1/education/quiz/$_sessionId/certificate/'),
+              ),
+              icon: const Icon(Icons.workspace_premium),
+              label: const Text('Certificat PDF'),
+            ),
+          FilledButton(onPressed: _reset, child: const Text('Nouveau quiz')),
+        ],
+      );
+    }
+
+    if (_sessionId != null && _qIndex < _questions.length) {
+      final q = _questions[_qIndex] as Map<String, dynamic>;
       final choices = q['choices'] as List? ?? [];
       return Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Question ${_qIndex + 1}/${questions.length}', style: Theme.of(context).textTheme.labelLarge),
+            Text('Question ${_qIndex + 1}/${_questions.length} · Score: $_score'),
+            if (_feedback.isNotEmpty) Text(_feedback, style: TextStyle(color: _feedback.startsWith('✓') ? Colors.green : Colors.redAccent)),
             const SizedBox(height: 12),
             Text(q['text']?.toString() ?? '', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 16),
             ...choices.asMap().entries.map((e) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: OutlinedButton(
-                    onPressed: () => setState(() => _qIndex++),
+                    onPressed: () => _answer(e.key),
                     child: Align(alignment: Alignment.centerLeft, child: Text(e.value.toString())),
                   ),
                 )),
@@ -114,7 +186,7 @@ class _QuizScreenState extends State<QuizScreen> {
         Card(
           child: ListTile(
             title: const Text('Mes statistiques'),
-            subtitle: Text('Score: ${_stats?['best_score'] ?? '—'} · Parties: ${_stats?['sessions_count'] ?? '—'}'),
+            subtitle: Text('Meilleur: ${_stats?['best_score'] ?? '—'} · Parties: ${_stats?['sessions_count'] ?? '—'}'),
           ),
         ),
         FilledButton.icon(
@@ -127,7 +199,7 @@ class _QuizScreenState extends State<QuizScreen> {
         ...(_leaderboard ?? []).take(10).map((e) {
           final m = Map<String, dynamic>.from(e as Map);
           return ListTile(
-            title: Text(m['username']?.toString() ?? m['pseudonym']?.toString() ?? '—'),
+            title: Text(m['pseudonym']?.toString() ?? m['username']?.toString() ?? '—'),
             trailing: Text('${m['score'] ?? m['best_score'] ?? ''}'),
           );
         }),
