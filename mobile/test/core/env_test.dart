@@ -22,4 +22,9 @@ void main() {
     expect(Env.developer, isNotEmpty);
     expect(Env.developerPhone, startsWith('+'));
   });
+
+  test('tuiles NASA et Sentinel', () {
+    expect(Env.nasaTileUrl('NDVI'), contains('/api/v1/nasa/tiles/NDVI/'));
+    expect(Env.sentinelTileUrl('ndvi'), contains('/api/v1/sentinel/tiles/ndvi/'));
+  });
 }

@@ -90,16 +90,20 @@ class _MapScreenState extends State<MapScreen> {
         userAgentPackageName: 'tg.dusol.sig_sols_mobile',
       ),
       if (_showSentinelNdvi)
-        TileLayer(
-          urlTemplate: Env.sentinelTileUrl('ndvi'),
-          userAgentPackageName: 'tg.dusol.sig_sols_mobile',
+        Opacity(
           opacity: 0.55,
+          child: TileLayer(
+            urlTemplate: Env.sentinelTileUrl('ndvi'),
+            userAgentPackageName: 'tg.dusol.sig_sols_mobile',
+          ),
         ),
       if (_showNasaNdvi)
-        TileLayer(
-          urlTemplate: Env.nasaTileUrl('NDVI'),
-          userAgentPackageName: 'tg.dusol.sig_sols_mobile',
+        Opacity(
           opacity: 0.5,
+          child: TileLayer(
+            urlTemplate: Env.nasaTileUrl('NDVI'),
+            userAgentPackageName: 'tg.dusol.sig_sols_mobile',
+          ),
         ),
       MarkerLayer(
         markers: [
