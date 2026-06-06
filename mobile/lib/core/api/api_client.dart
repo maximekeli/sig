@@ -52,8 +52,7 @@ class ApiClient {
 
   Dio get dio => _dio;
 
-  bool _isAuthPath(String path) =>
-      path.contains('/auth/token/') && !path.contains('refresh');
+  bool _isAuthPath(String path) => path.contains('/auth/token/');
 
   Future<String?> _getAccessToken() => _storage.read(key: _tokenKey);
   Future<String?> _getRefreshToken() => _storage.read(key: _refreshKey);

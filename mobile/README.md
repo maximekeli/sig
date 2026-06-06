@@ -1,16 +1,71 @@
-# sig_sols_mobile
+# SIG Sols Togo — Application mobile Flutter
 
-A new Flutter project.
+Application mobile **Flutter** connectée au **même backend Django** que le site web (`/api/v1/`).
 
-## Getting Started
+## Fonctionnalités
 
-This project is a starting point for a Flutter application.
+| Module | Écran | API backend |
+|--------|-------|-------------|
+| Carte | `MapScreen` | `/points/`, `/weather/current/` |
+| Dashboard | `DashboardScreen` | `/dashboard/stats/`, `/ml/metrics/` |
+| Parcelle | `ParcelScreen` | `/spatial/parcel/live/` |
+| Quiz | `QuizScreen` | `/education/quiz/*` |
+| Fiches | `SheetsScreen` | `/education/sheets/` |
+| Vidéos / Shorts | `VideosScreen` | `/videos/posts/` |
+| Communauté | `CommunityScreen` | `/auth/feed/` |
+| Assistant IA | `AssistantScreen` | `/assistant/chat/` |
+| Profil / Auth | `ProfileScreen`, `LoginScreen` | `/auth/token/`, `/auth/profile/` |
 
-A few resources to get you started if this is your first Flutter project:
+## Prérequis
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Flutter SDK 3.7+
+- Backend Docker démarré : `http://localhost:8081`
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Lancer l'app
+
+```bash
+cd mobile
+flutter pub get
+
+# Linux desktop (même machine que Docker)
+flutter run -d linux
+
+# Émulateur Android (10.0.2.2 = localhost hôte)
+flutter run -d android
+
+# Téléphone physique (remplacer par l'IP de votre PC)
+flutter run --dart-define=API_BASE_URL=http://192.168.1.XX:8081/api/v1
+```
+
+## Comptes démo
+
+| Utilisateur | Mot de passe |
+|-------------|--------------|
+| `admin` | `admin123` |
+| `agent1` | `agent123` |
+
+## Configuration API
+
+Fichier : `lib/core/config/env.dart`
+
+| Plateforme | URL par défaut |
+|------------|----------------|
+| Linux / iOS simulateur | `http://localhost:8081/api/v1` |
+| Android émulateur | `http://10.0.2.2:8081/api/v1` |
+| Téléphone réel | `--dart-define=API_BASE_URL=http://<IP>:8081/api/v1` |
+
+## Structure
+
+```
+lib/
+├── app/           # Router, shell navigation
+├── core/          # API client JWT, auth, thème
+├── features/      # Écrans par module
+├── models/        # DTOs
+├── services/      # SigApi (façade REST)
+└── shared/        # Widgets communs
+```
+
+## Développeur
+
+**Maxime Dzidula KELI** · +33 754830039
