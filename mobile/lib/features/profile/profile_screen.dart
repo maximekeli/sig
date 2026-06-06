@@ -4,9 +4,41 @@ import 'package:provider/provider.dart';
 
 import '../../core/auth/auth_service.dart';
 import '../../core/config/env.dart';
+import '../../services/sig_api.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Map<String, dynamic>? _dbInfo;
+  String? _dbStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHealth();
+  }
+
+  Future<void> _loadHealth() async {
+    try {
+      final health = await context.read<SigApi>().fetchSystemHealth();
+      if (!mounted) return;
+      final checks = health['checks'] as Map<String, dynamic>?;
+      setState(() {
+        _dbStatus = checks?['database']?.toString();
+        _dbInfo = checks?['database_info'] != null
+            ? Map<String, dynamic>.from(checks!['database_info'] as Map)
+            : null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _dbStatus = 'indisponible');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +64,22 @@ class ProfileScreen extends StatelessWidget {
           leading: const Icon(Icons.api),
           title: const Text('API backend'),
           subtitle: Text(Env.apiBaseUrl),
+        ),
+        ListTile(
+          leading: Icon(
+            _dbStatus == 'ok' ? Icons.check_circle : Icons.storage,
+            color: _dbStatus == 'ok' ? Colors.green : null,
+          ),
+          title: const Text('Base de données'),
+          subtitle: Text(
+            _dbInfo != null
+                ? '${_dbInfo!['backend']} · ${_dbInfo!['name']} (${_dbInfo!['host']})\n'
+                  'Partagée avec le site web'
+                : _dbStatus == null
+                    ? 'Vérification…'
+                    : 'Connexion impossible — vérifiez Docker',
+          ),
+          isThreeLine: _dbInfo != null,
         ),
         ListTile(
           leading: const Icon(Icons.person),

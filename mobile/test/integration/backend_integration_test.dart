@@ -17,9 +17,14 @@ void main() {
       return;
     }
 
-    final health = await _get('http://localhost:8081/health/');
+    final health = await _get('http://localhost:8081/health/?detail=1');
     expect(health.statusCode, 200);
-    expect((jsonDecode(health.body) as Map)['status'], 'ok');
+    final healthBody = jsonDecode(health.body) as Map<String, dynamic>;
+    expect(healthBody['status'], 'ok');
+    final dbInfo = (healthBody['checks'] as Map)['database_info'] as Map;
+    expect(dbInfo['backend'], 'postgis');
+    expect(dbInfo['name'], 'sig_sols');
+    expect(dbInfo['clients'], 'web,mobile');
 
     final login = await _post('$base/auth/token/', {
       'username': 'admin',

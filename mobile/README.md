@@ -2,6 +2,20 @@
 
 Application mobile **Flutter** connectée au **même backend Django** que le site web (`/api/v1/`).
 
+## Base de données partagée
+
+Le site web et l'app mobile **n'ont pas de base locale séparée** : ils lisent et écrivent les **mêmes données** via l'API REST Django, qui utilise **PostGIS** (PostgreSQL + extensions spatiales).
+
+| Client | Accès aux données |
+|--------|-------------------|
+| Site web (`frontend/`) | `fetch` → `http://localhost:8081/api/v1/…` |
+| App mobile (`mobile/`) | `SigApi` → même URL |
+| Backend | PostGIS `sig_sols` (conteneur Docker `db`) |
+
+Comptes, points sol, parcelles, quiz, vidéos et communauté sont donc **synchronisés automatiquement** dès que les deux clients parlent au même backend.
+
+Vérification : [Santé système](http://localhost:8081/health/?detail=1) ou onglet **Tableau de bord** / **Profil** dans l'app mobile.
+
 ## Fonctionnalités — mêmes API que le site web
 
 | Service | Endpoints backend (clés dans `.env`) |
