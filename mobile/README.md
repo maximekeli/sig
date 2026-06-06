@@ -2,19 +2,20 @@
 
 Application mobile **Flutter** connectée au **même backend Django** que le site web (`/api/v1/`).
 
-## Fonctionnalités
+## Fonctionnalités — mêmes API que le site web
 
-| Module | Écran | API backend |
-|--------|-------|-------------|
-| Carte | `MapScreen` | `/points/`, `/weather/current/` |
-| Dashboard | `DashboardScreen` | `/dashboard/stats/`, `/ml/metrics/` |
-| Parcelle | `ParcelScreen` | `/spatial/parcel/live/` |
-| Quiz | `QuizScreen` | `/education/quiz/*` |
-| Fiches | `SheetsScreen` | `/education/sheets/` |
-| Vidéos / Shorts | `VideosScreen` | `/videos/posts/` |
-| Communauté | `CommunityScreen` | `/auth/feed/` |
-| Assistant IA | `AssistantScreen` | `/assistant/chat/` |
-| Profil / Auth | `ProfileScreen`, `LoginScreen` | `/auth/token/`, `/auth/profile/` |
+| Service | Endpoints backend (clés dans `.env`) |
+|---------|--------------------------------------|
+| **NASA** | `/nasa/catalog/summary/`, tuiles `/nasa/tiles/…` |
+| **Sentinel Hub** | `/sentinel/status/`, `/layers/`, `/analyze/`, tuiles |
+| **OpenWeather** | `/weather/status/`, `/current/`, `/forecast/` |
+| **Gemini IA** | `/assistant/status/`, `/assistant/chat/` |
+| **ML** | `/ml/predict/`, `/ml/metrics/` |
+| **Parcelle** | `/spatial/parcel/live/` (+ NASA, Sentinel, Météo, ML) |
+| **Quiz** | `/education/quiz/start/`, `/answer/`, `/finish/` |
+| **Vidéos / Communauté** | `/videos/posts/`, `/auth/feed/` |
+
+Les clés API (NASA, Sentinel, OpenWeather, Gemini) sont **uniquement côté serveur Django** — jamais dans l'app mobile.
 
 ## Prérequis
 
