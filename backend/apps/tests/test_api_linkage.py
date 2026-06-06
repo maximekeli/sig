@@ -198,12 +198,12 @@ class TestLinkageAuthenticated:
         assert r.status_code == 200
         assert r.json()['reply']
 
-    def test_sentinel_analyze_mocked(self, api_client, monkeypatch):
+    def test_sentinel_analyze_mocked(self, auth_client, monkeypatch):
         monkeypatch.setattr(
             'sentinel.views.ndvi_mean_for_bbox',
             lambda bbox, days_back=60: {'ndvi_mean': 0.42, 'samples': 3},
         )
-        r = api_client.post('/api/v1/sentinel/analyze/', {
+        r = auth_client.post('/api/v1/sentinel/analyze/', {
             'bbox': [1.0, 6.0, 1.5, 6.5],
         }, format='json')
         assert r.status_code == 200
