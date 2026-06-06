@@ -21,6 +21,16 @@ Application mobile **Flutter** connectée au **même backend Django** que le sit
 - Flutter SDK 3.7+
 - Backend Docker démarré : `http://localhost:8081`
 
+## Tests
+
+```bash
+# Tests unitaires (rapides, sans backend)
+cd mobile && flutter test --exclude-tags integration
+
+# Tous les tests (+ API si backend actif)
+../scripts/test-mobile.sh
+```
+
 ## Lancer l'app
 
 ```bash

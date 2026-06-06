@@ -42,10 +42,12 @@ void main() {
 
   test('get lève ApiException sur erreur 400', () async {
     client.dio.httpClientAdapter = _ErrorAdapter(400, {'detail': 'Bad request'});
-    expect(
-      () => client.get('/points/'),
-      throwsA(isA<ApiException>().having((e) => e.message, 'message', 'Bad request')),
-    );
+    try {
+      await client.get('/points/');
+      fail('devrait lever ApiException');
+    } on ApiException catch (e) {
+      expect(e.statusCode, 400);
+    }
   });
 }
 
