@@ -42,22 +42,22 @@ void main() {
     expect(res.statusCode, 200);
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     expect(body['configured'], isTrue);
-  }, skip: 'Backend indisponible');
+  });
 
   test('sentinel status', () async {
-    if (!backendUp) return;
+    if (!backendUp) markTestSkipped('Backend indisponible');
     final res = await _get('$base/sentinel/status/');
     expect(res.statusCode, 200);
     final body = jsonDecode(res.body) as Map<String, dynamic>;
     expect(body['configured'], isTrue);
-  }, skip: 'Backend indisponible');
+  });
 
   test('points sol liste', () async {
-    if (!backendUp) return;
+    if (!backendUp) markTestSkipped('Backend indisponible');
     final res = await _get('$base/points/?light=1&limit=5');
     expect(res.statusCode, 200);
     expect(res.body.isNotEmpty, isTrue);
-  }, skip: 'Backend indisponible');
+  });
 }
 
 Future<bool> _ping(String url) async {
