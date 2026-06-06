@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/auth/auth_service.dart';
@@ -111,19 +112,68 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                   children: [
                     ListView(
                       padding: const EdgeInsets.all(16),
-                      children: _dash?.entries
-                              .map((e) => ListTile(
-                                    title: Text(e.key),
-                                    trailing: Text('${e.value}'),
-                                  ))
-                              .toList() ??
-                          [],
+                      children: [
+                        ...?_dash?.entries.map(
+                          (e) => ListTile(
+                            title: Text(e.key),
+                            trailing: Text('${e.value}'),
+                          ),
+                        ),
+                        const Divider(),
+                        const ListTile(title: Text('Exports CSV')),
+                        ListTile(
+                          leading: const Icon(Icons.download),
+                          title: const Text('Utilisateurs'),
+                          onTap: () => _exportCsv(context, 'utilisateurs', () => context.read<SigApi>().adminExportUsers()),
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.download),
+                          title: const Text('Activité (30 j.)'),
+                          onTap: () => _exportCsv(context, 'activité', () => context.read<SigApi>().adminExportActivity()),
+                        ),
+                      ],
                     ),
                     _pendingList(_pending, isPoint: true),
                     _pendingList(_pendingVideos, isPoint: false),
                   ],
                 ),
     );
+  }
+
+  Future<void> _exportCsv(
+    BuildContext context,
+    String label,
+    Future<String> Function() fetch,
+  ) async {
+    try {
+      final text = await fetch();
+      if (!context.mounted) return;
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text('Export $label'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 200,
+            child: SingleChildScrollView(child: SelectableText(text)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: text));
+                Navigator.pop(context);
+              },
+              child: const Text('Copier'),
+            ),
+            FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Fermer')),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
   }
 
   Widget _pendingList(List<dynamic> items, {required bool isPoint}) {

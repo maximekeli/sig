@@ -26,20 +26,26 @@ Comme le site web, l'app peut **enregistrer des points sol hors ligne** et les e
 
 Les points créés sur mobile apparaissent sur le site web après synchronisation (validation agent requise).
 
-## Fonctionnalités — mêmes API que le site web
+## Fonctionnalités — parité avec le site web
 
-| Service | Endpoints backend (clés dans `.env`) |
-|---------|--------------------------------------|
-| **NASA** | `/nasa/catalog/summary/`, tuiles `/nasa/tiles/…` |
-| **Sentinel Hub** | `/sentinel/status/`, `/layers/`, `/analyze/`, tuiles |
-| **OpenWeather** | `/weather/status/`, `/current/`, `/forecast/` |
-| **Gemini IA** | `/assistant/status/`, `/assistant/chat/` |
-| **ML** | `/ml/predict/`, `/ml/metrics/` |
-| **Parcelle** | `/spatial/parcel/live/` (+ NASA, Sentinel, Météo, ML) |
-| **Quiz** | `/education/quiz/start/`, `/answer/`, `/finish/` |
-| **Vidéos / Communauté** | `/videos/posts/`, `/auth/feed/` |
+| Module | Mobile | API |
+|--------|--------|-----|
+| **Carte** | NDVI NASA/Sentinel, ajout point offline, outils (proximité, heatmap, alertes, comparer, filtres, trajectoire, météo), export GeoJSON/CSV, import agent | `/points/`, `/heatmap/`, `/spatial/` |
+| **Dashboard** | KPIs sols, APIs externes | `/dashboard/stats/` |
+| **Quiz** | Parcours, badges, défi hebdo, classement | `/education/quiz/` |
+| **Fiches** | PDF + favoris | `/education/sheets/`, `/auth/favorites/` |
+| **Vidéos / Shorts** | Upload, likes, commentaires, stories | `/videos/` |
+| **Communauté** | Fil, recherche, favoris, messages | `/auth/feed/`, `/auth/messages/` |
+| **IA** | Chat Gemini | `/assistant/chat/` |
+| **Profil** | Édition, mot de passe, photo, trajectoire | `/auth/profile/` |
+| **Parcelle** | Zone canton + GPS | `/spatial/parcel/live/` |
+| **Menu latéral** | Recherche, notifications (badge), mon espace, admin, aide, thème clair/sombre | `/platform/`, `/auth/notifications/` |
+| **Auth** | Login, register, mot de passe oublié | `/auth/token/` |
+| **Admin** | KPIs, validation points/vidéos, ML/NASA, exports CSV | `/platform/admin/` |
+| **Offline** | File d'attente points sol → sync PostGIS | `POST /points/` |
+| **Activité** | Suivi navigation (comme le web) | `POST /platform/activity/` |
 
-Les clés API (NASA, Sentinel, OpenWeather, Gemini) sont **uniquement côté serveur Django** — jamais dans l'app mobile.
+Les clés API (NASA, Sentinel, OpenWeather, Gemini) restent **côté serveur Django** uniquement.
 
 ## Prérequis
 

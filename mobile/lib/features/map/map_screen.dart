@@ -234,6 +234,33 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  void _showExportDialog(BuildContext context, String label, String text) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Export $label'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 240,
+          child: SingleChildScrollView(child: SelectableText(text)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: text));
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Copié dans le presse-papiers')),
+              );
+            },
+            child: const Text('Copier'),
+          ),
+          FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Fermer')),
+        ],
+      ),
+    );
+  }
+
   String _statusMsg(String key) {
     final s = _apiStatus?[key];
     if (s == null) return '—';
@@ -340,6 +367,27 @@ class _MapScreenState extends State<MapScreen> {
           title: const Text('Prévisions météo'),
           content: Text(w.toString()),
         ));
+      } else if (action == 'export_geojson') {
+        final text = await api.exportPointsGeoJson();
+        if (!context.mounted) return;
+        _showExportDialog(context, 'GeoJSON', text);
+      } else if (action == 'export_csv') {
+        final text = await api.exportPointsCsv();
+        if (!context.mounted) return;
+        _showExportDialog(context, 'CSV', text);
+      } else if (action == 'import') {
+        final pick = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['geojson', 'json', 'csv'],
+        );
+        final path = pick?.files.single.path;
+        if (path == null) return;
+        final r = await api.importSoilFile(path);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${r['created'] ?? 0} point(s) importé(s)')),
+        );
+        await _load();
       }
     } catch (e) {
       if (context.mounted) {
