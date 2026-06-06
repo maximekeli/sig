@@ -16,6 +16,16 @@ Comptes, points sol, parcelles, quiz, vidéos et communauté sont donc **synchro
 
 Vérification : [Santé système](http://localhost:8081/health/?detail=1) ou onglet **Tableau de bord** / **Profil** dans l'app mobile.
 
+## Synchronisation offline (points sol)
+
+Comme le site web, l'app peut **enregistrer des points sol hors ligne** et les envoyer à PostGIS à la reconnexion :
+
+1. Carte → activer **Ajouter point** → toucher la carte → remplir pH / humidité / type
+2. Hors ligne : le point est mis en file (`sig_sols_offline_queue`, même clé que le navigateur)
+3. À la reconnexion (ou tap sur la bannière orange) : envoi automatique via `POST /points/`
+
+Les points créés sur mobile apparaissent sur le site web après synchronisation (validation agent requise).
+
 ## Fonctionnalités — mêmes API que le site web
 
 | Service | Endpoints backend (clés dans `.env`) |

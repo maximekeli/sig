@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/auth/auth_service.dart';
 import '../../core/config/env.dart';
+import '../../core/offline/offline_sync_service.dart';
 import '../../services/sig_api.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -43,6 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
+    final sync = context.watch<OfflineSyncService>();
     final user = auth.user;
 
     return ListView(
@@ -65,6 +67,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           title: const Text('API backend'),
           subtitle: Text(Env.apiBaseUrl),
         ),
+        if (sync.pendingCount > 0)
+          ListTile(
+            leading: const Icon(Icons.cloud_upload),
+            title: Text('${sync.pendingCount} point(s) en attente'),
+            subtitle: const Text('Synchronisation vers PostGIS'),
+            trailing: sync.isSyncing
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : IconButton(
+                    icon: const Icon(Icons.sync),
+                    onPressed: () => sync.sync(),
+                  ),
+          ),
         ListTile(
           leading: Icon(
             _dbStatus == 'ok' ? Icons.check_circle : Icons.storage,

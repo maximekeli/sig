@@ -191,6 +191,19 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
         ),
+        if (_addPointMode)
+          Positioned(
+            bottom: 80,
+            left: 16,
+            right: 16,
+            child: Card(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: const Padding(
+                padding: EdgeInsets.all(10),
+                child: Text('Mode ajout actif — touchez la carte pour placer un point'),
+              ),
+            ),
+          ),
         Positioned(
           bottom: 16,
           right: 16,
@@ -218,6 +231,28 @@ class _MapScreenState extends State<MapScreen> {
       context: context,
       builder: (ctx) => _PointSheet(point: p),
     );
+  }
+
+  Future<void> _openAddPointForm(LatLng coords) async {
+    final body = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => AddSoilPointDialog(coords: coords),
+    );
+    if (body == null || !mounted) return;
+
+    final sync = context.read<OfflineSyncService>();
+    try {
+      final saved = await sync.submitPoint(body);
+      if (!mounted) return;
+      setState(() => _addPointMode = false);
+      final msg = sync.lastMessage ??
+          (saved ? 'Point enregistré.' : 'Point en file d\'attente.');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      if (saved) await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
   }
 
   Future<void> _showProbeMenu(BuildContext context, LatLng point) async {
