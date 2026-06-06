@@ -240,10 +240,11 @@ class TestLinkageAuthenticated:
 class TestLinkageAgentAdmin:
     """Endpoints agent / admin (site web avancé)."""
 
-    def test_validation_pending(self, auth_client, sample_soil_point):
+    def test_validation_pending(self, admin_client, sample_soil_point):
         sample_soil_point.is_validated = False
-        sample_soil_point.save(update_fields=['is_validated'])
-        r = auth_client.get('/api/v1/validation/pending/')
+        sample_soil_point.validation_status = sample_soil_point.ValidationStatus.PENDING
+        sample_soil_point.save(update_fields=['is_validated', 'validation_status'])
+        r = admin_client.get('/api/v1/validation/pending/')
         assert r.status_code == 200
 
     def test_drought_alerts(self, auth_client):
