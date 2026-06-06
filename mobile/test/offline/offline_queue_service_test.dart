@@ -41,7 +41,7 @@ void main() {
 
   test('replaceAll met à jour la file', () async {
     final queue = OfflineQueueService();
-    await queue.enqueue({'body': {'x': 1}});
+    await queue.enqueue({'type': 'Feature'});
     await queue.replaceAll([]);
     expect(await queue.readAll(), isEmpty);
   });
