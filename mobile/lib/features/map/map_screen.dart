@@ -496,24 +496,24 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _showProbeMenu(BuildContext context, LatLng point) async {
     final action = await showModalBottomSheet<String>(
       context: context,
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      builder: (sheetCtx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
           children: [
             ListTile(
               leading: const Icon(Icons.wb_sunny),
               title: const Text('Météo OpenWeather'),
-              onTap: () => Navigator.pop(context, 'weather'),
+              onTap: () => Navigator.pop(sheetCtx, 'weather'),
             ),
             ListTile(
               leading: const Icon(Icons.satellite_alt),
               title: const Text('NDVI Sentinel (zone)'),
-              onTap: () => Navigator.pop(context, 'sentinel'),
+              onTap: () => Navigator.pop(sheetCtx, 'sentinel'),
             ),
             ListTile(
               leading: const Icon(Icons.psychology),
               title: const Text('ML fertilité'),
-              onTap: () => Navigator.pop(context, 'ml'),
+              onTap: () => Navigator.pop(sheetCtx, 'ml'),
             ),
           ],
         ),
