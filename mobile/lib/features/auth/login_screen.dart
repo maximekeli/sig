@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/auth/auth_service.dart';
 import '../../core/config/env.dart';
+import '../../core/i18n/locale_service.dart';
 import '../../core/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -46,6 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = context.watch<LocaleService>();
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -88,16 +90,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _loading ? null : _login,
                       child: _loading
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Text('Se connecter'),
+                          : Text(i18n.t('auth.login')),
                     ),
                   ),
                   TextButton(
                     onPressed: () => context.push('/register'),
-                    child: const Text('Créer un compte'),
+                    child: Text(i18n.t('auth.register')),
                   ),
                   TextButton(
                     onPressed: () => context.push('/forgot-password'),
-                    child: const Text('Mot de passe oublié ?'),
+                    child: Text(i18n.t('auth.forgot')),
                   ),
                 ],
               ),

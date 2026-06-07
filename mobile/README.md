@@ -44,6 +44,8 @@ Les points créés sur mobile apparaissent sur le site web après synchronisatio
 | **Admin** | KPIs, validation points/vidéos, ML/NASA, exports CSV | `/platform/admin/` |
 | **Offline** | File d'attente points sol → sync PostGIS | `POST /points/` |
 | **Activité** | Suivi navigation (comme le web) | `POST /platform/activity/` |
+| **Positions live** | Partage GPS + marqueurs agents + WebSocket | `/auth/location/`, `/ws/live/?token=…` |
+| **i18n** | Français / English (menu latéral) | `LocaleService` |
 
 Les clés API (NASA, Sentinel, OpenWeather, Gemini) restent **côté serveur Django** uniquement.
 

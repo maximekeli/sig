@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/i18n/locale_service.dart';
 import '../../core/offline/offline_sync_service.dart';
 
 class OfflineBanner extends StatelessWidget {
@@ -9,16 +10,17 @@ class OfflineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sync = context.watch<OfflineSyncService>();
+    final i18n = context.watch<LocaleService>();
     final show = !sync.isOnline || sync.pendingCount > 0 || sync.isSyncing;
     if (!show) return const SizedBox.shrink();
 
     final text = sync.isSyncing
-        ? 'Synchronisation en cours…'
+        ? i18n.t('offline.syncing')
         : !sync.isOnline
             ? sync.pendingCount > 0
-                ? 'Hors ligne — ${sync.pendingCount} point(s) en attente'
-                : 'Hors ligne — les données seront synchronisées à la reconnexion'
-            : '${sync.pendingCount} point(s) en file — synchronisation…';
+                ? i18n.t('offline.pending', vars: {'n': '${sync.pendingCount}'})
+                : i18n.t('offline.banner')
+            : i18n.t('offline.queue', vars: {'n': '${sync.pendingCount}'});
 
     return Material(
       color: Colors.orange.shade800,

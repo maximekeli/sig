@@ -17,7 +17,13 @@ class Env {
   /// Santé système (hors préfixe /api/v1) — même endpoint que le site web.
   static String get healthUrl => '$origin/health/?detail=1';
 
-  static String get wsBaseUrl => '${origin.replaceFirst('http', 'ws')}/ws/live/';
+  static String get wsBaseUrl {
+    final o = origin;
+    final wsOrigin = o.startsWith('https://')
+        ? o.replaceFirst('https://', 'wss://')
+        : o.replaceFirst('http://', 'ws://');
+    return '$wsOrigin/ws/live/';
+  }
 
   static String get mediaBaseUrl => origin;
 

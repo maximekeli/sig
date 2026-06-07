@@ -1,0 +1,86 @@
+/// Chaînes FR / EN — parité avec frontend/js/core/i18n.js
+class AppStrings {
+  static const _strings = {
+    'fr': {
+      'app.title': 'SIG Sols Togo',
+      'nav.map': 'Carte',
+      'nav.dashboard': 'Dashboard',
+      'nav.quiz': 'Quiz',
+      'nav.sheets': 'Fiches',
+      'nav.videos': 'Vidéos',
+      'nav.shorts': 'Shorts',
+      'nav.community': 'Communauté',
+      'nav.assistant': 'IA',
+      'nav.profile': 'Profil',
+      'drawer.search': 'Recherche globale',
+      'drawer.notifications': 'Notifications',
+      'drawer.myspace': 'Mon espace',
+      'drawer.admin': 'Administration',
+      'drawer.help': 'Aide',
+      'drawer.theme': 'Thème clair / sombre',
+      'drawer.lang': 'Langue',
+      'auth.login': 'Se connecter',
+      'auth.register': 'Créer un compte',
+      'auth.forgot': 'Mot de passe oublié ?',
+      'offline.banner': 'Hors ligne — les données seront synchronisées à la reconnexion',
+      'offline.pending': 'Hors ligne — {n} point(s) en attente',
+      'offline.syncing': 'Synchronisation en cours…',
+      'offline.queue': '{n} point(s) en file — synchronisation…',
+      'map.loading': 'Chargement carte…',
+      'map.points': '{n} points sol',
+      'map.addPoint': 'Ajouter point',
+      'map.ndviSentinel': 'NDVI Sentinel',
+      'map.ndviNasa': 'NDVI NASA',
+      'map.addMode': 'Mode ajout actif — touchez la carte pour placer un point',
+      'map.liveShare': 'Partager position',
+      'map.liveActive': 'Position partagée',
+      'map.livePeers': '{n} agent(s) en ligne',
+      'parcel.tooltip': 'Parcelle',
+    },
+    'en': {
+      'app.title': 'SIG Sols Togo',
+      'nav.map': 'Map',
+      'nav.dashboard': 'Dashboard',
+      'nav.quiz': 'Quiz',
+      'nav.sheets': 'Sheets',
+      'nav.videos': 'Videos',
+      'nav.shorts': 'Shorts',
+      'nav.community': 'Community',
+      'nav.assistant': 'AI',
+      'nav.profile': 'Profile',
+      'drawer.search': 'Global search',
+      'drawer.notifications': 'Notifications',
+      'drawer.myspace': 'My space',
+      'drawer.admin': 'Administration',
+      'drawer.help': 'Help',
+      'drawer.theme': 'Light / dark theme',
+      'drawer.lang': 'Language',
+      'auth.login': 'Sign in',
+      'auth.register': 'Create account',
+      'auth.forgot': 'Forgot password?',
+      'offline.banner': 'Offline — data will sync when back online',
+      'offline.pending': 'Offline — {n} point(s) pending',
+      'offline.syncing': 'Syncing…',
+      'offline.queue': '{n} point(s) queued — syncing…',
+      'map.loading': 'Loading map…',
+      'map.points': '{n} soil points',
+      'map.addPoint': 'Add point',
+      'map.ndviSentinel': 'Sentinel NDVI',
+      'map.ndviNasa': 'NASA NDVI',
+      'map.addMode': 'Add mode — tap the map to place a point',
+      'map.liveShare': 'Share location',
+      'map.liveActive': 'Location shared',
+      'map.livePeers': '{n} agent(s) online',
+      'parcel.tooltip': 'Parcel',
+    },
+  };
+
+  static String t(String lang, String key, {Map<String, String> vars = const {}}) {
+    final table = _strings[lang] ?? _strings['fr']!;
+    var text = table[key] ?? _strings['fr']![key] ?? key;
+    vars.forEach((k, v) => text = text.replaceAll('{$k}', v));
+    return text;
+  }
+
+  static String langToggleLabel(String lang) => lang == 'fr' ? 'EN' : 'FR';
+}

@@ -401,10 +401,25 @@ class SigApi {
     return _client.get(path, query: {'hours': hours});
   }
 
-  Future<void> updateLocation(double lat, double lon) =>
-      _client.post('/auth/location/', data: {'lat': lat, 'lon': lon});
+  Future<void> updateLocation(
+    double lat,
+    double lon, {
+    double? accuracyM,
+    double? heading,
+    bool isSharing = true,
+  }) =>
+      _client.post('/auth/location/', data: {
+        'lat': lat,
+        'lon': lon,
+        if (accuracyM != null) 'accuracy_m': accuracyM,
+        if (heading != null) 'heading': heading,
+        'is_sharing': isSharing,
+      });
 
   Future<void> clearLocation() => _client.delete('/auth/location/');
+
+  Future<Map<String, dynamic>> fetchLiveLocations({bool includeSelf = false}) =>
+      _client.get('/auth/locations/live/', query: includeSelf ? {'include_self': '1'} : null);
 
   // --- Platform ---
   Future<List<dynamic>> fetchNotifications() async {

@@ -55,6 +55,8 @@ class ApiClient {
   bool _isAuthPath(String path) => path.contains('/auth/token/');
 
   Future<String?> _getAccessToken() => _storage.read(_tokenKey);
+
+  Future<String?> getAccessToken() => _getAccessToken();
   Future<String?> _getRefreshToken() => _storage.read(_refreshKey);
 
   Future<void> _persistSession(Map<String, dynamic> data) async {

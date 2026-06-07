@@ -139,6 +139,14 @@ class MyLocationView(APIView):
             )
         except ValueError as exc:
             return Response({'error': str(exc)}, status=400)
+        if data.get('is_sharing', True):
+            from .ws_broadcast import broadcast_live_location
+
+            broadcast_live_location(
+                user=request.user,
+                lat=data['lat'],
+                lon=data['lon'],
+            )
         return Response(UserLocationSerializer(loc).data, status=status.HTTP_200_OK)
 
     def delete(self, request):

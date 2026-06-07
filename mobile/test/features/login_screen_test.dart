@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sig_sols_mobile/core/api/api_client.dart';
 import 'package:sig_sols_mobile/core/auth/auth_service.dart';
+import 'package:sig_sols_mobile/core/i18n/locale_service.dart';
 import 'package:sig_sols_mobile/features/auth/login_screen.dart';
 import 'package:sig_sols_mobile/services/sig_api.dart';
 
@@ -13,6 +14,7 @@ void main() {
     final api = ApiClient(storage: FakeTokenStorage());
     final auth = AuthService(api);
     final sigApi = SigApi(api);
+    final locale = LocaleService();
 
     await tester.pumpWidget(
       MultiProvider(
@@ -20,6 +22,7 @@ void main() {
           Provider.value(value: api),
           ChangeNotifierProvider.value(value: auth),
           Provider.value(value: sigApi),
+          ChangeNotifierProvider.value(value: locale),
         ],
         child: const MaterialApp(home: LoginScreen()),
       ),

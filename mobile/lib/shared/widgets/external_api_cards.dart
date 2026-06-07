@@ -66,8 +66,14 @@ class ExternalApiCards extends StatelessWidget {
     if (ndvi != null || smap != null) {
       return 'NDVI: ${ndvi ?? '—'} · SMAP: ${smap ?? '—'}';
     }
-    final products = n['products'] as Map?;
-    if (products != null) return '${products.length} produit(s) catalogue';
+    final byProduct = n['by_product'];
+    if (byProduct is List) return '${byProduct.length} produit(s) catalogue';
+    if (byProduct is Map) return '${byProduct.length} produit(s) catalogue';
+    final products = n['products'];
+    if (products is List) return '${products.length} produit(s) catalogue';
+    if (products is Map) return '${products.length} produit(s) catalogue';
+    final count = n['count'];
+    if (count != null) return '$count tuile(s) NASA';
     return n['ndvi_status']?.toString() ?? 'Données NASA';
   }
 

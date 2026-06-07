@@ -8,7 +8,10 @@ import 'package:provider/provider.dart';
 
 import '../../core/auth/auth_service.dart';
 import '../../core/config/env.dart';
+import '../../core/i18n/locale_service.dart';
+import '../../core/live/live_location_service.dart';
 import '../../core/offline/offline_sync_service.dart';
+import '../../models/live_peer.dart';
 import '../../models/soil_point.dart';
 import '../../services/sig_api.dart';
 import '../../shared/widgets/add_soil_point_dialog.dart';
@@ -42,6 +45,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -52,6 +56,7 @@ class _MapScreenState extends State<MapScreen> {
         api.fetchSoilPoints(),
         api.fetchExternalApiStatus().catchError((_) => <String, Map<String, dynamic>>{}),
       ]);
+      if (!mounted) return;
       LatLng? pos;
       try {
         final perm = await Geolocator.checkPermission();
@@ -62,6 +67,7 @@ class _MapScreenState extends State<MapScreen> {
         pos = LatLng(loc.latitude, loc.longitude);
         await api.updateLocation(loc.latitude, loc.longitude);
       } catch (_) {}
+      if (!mounted) return;
       setState(() {
         _points = results[0] as List<SoilPoint>;
         _apiStatus = results[1] as Map<String, Map<String, dynamic>>;
@@ -69,6 +75,7 @@ class _MapScreenState extends State<MapScreen> {
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -85,9 +92,14 @@ class _MapScreenState extends State<MapScreen> {
     return Colors.blue;
   }
 
+  Color _peerColor(LivePeer p) => p.role == 'admin' ? Colors.orange : Colors.teal;
+
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const LoadingView(message: 'Chargement carte…');
+    final i18n = context.watch<LocaleService>();
+    final live = context.watch<LiveLocationService>();
+
+    if (_loading) return LoadingView(message: i18n.t('map.loading'));
     if (_error != null) return ErrorView(message: _error!, onRetry: _load);
 
     final layers = <Widget>[
@@ -129,6 +141,17 @@ class _MapScreenState extends State<MapScreen> {
               height: 36,
               child: const Icon(Icons.my_location, color: Colors.cyanAccent),
             ),
+          ...live.peers.map(
+            (p) => Marker(
+              point: LatLng(p.lat, p.lon),
+              width: 32,
+              height: 32,
+              child: Tooltip(
+                message: p.label,
+                child: Icon(Icons.person_pin_circle, color: _peerColor(p), size: 28),
+              ),
+            ),
+          ),
         ],
       ),
     ];
@@ -160,33 +183,48 @@ class _MapScreenState extends State<MapScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${_points.length} points sol'),
+                  Text(i18n.t('map.points', vars: {'n': '${_points.length}'})),
                   Text(
                     'OW: ${_statusMsg('weather')} · Sentinel: ${_statusMsg('sentinel')} · NASA: ${_statusMsg('nasa')}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  if (live.peers.isNotEmpty)
+                    Text(
+                      i18n.t('map.livePeers', vars: {'n': '${live.peers.length}'}),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.tealAccent),
+                    ),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 6,
                     children: [
                       FilterChip(
-                        label: const Text('NDVI Sentinel'),
+                        label: Text(i18n.t('map.ndviSentinel')),
                         selected: _showSentinelNdvi,
                         onSelected: (v) => setState(() => _showSentinelNdvi = v),
                       ),
                       FilterChip(
-                        label: const Text('NDVI NASA'),
+                        label: Text(i18n.t('map.ndviNasa')),
                         selected: _showNasaNdvi,
                         onSelected: (v) => setState(() => _showNasaNdvi = v),
                       ),
                       FilterChip(
-                        label: const Text('Ajouter point'),
+                        label: Text(i18n.t('map.addPoint')),
                         selected: _addPointMode,
                         avatar: Icon(
                           _addPointMode ? Icons.add_location_alt : Icons.add_location,
                           size: 18,
                         ),
                         onSelected: (v) => setState(() => _addPointMode = v),
+                      ),
+                      FilterChip(
+                        label: Text(live.isSharing ? i18n.t('map.liveActive') : i18n.t('map.liveShare')),
+                        selected: live.isSharing,
+                        avatar: Icon(
+                          live.isSharing ? Icons.location_on : Icons.location_searching,
+                          size: 18,
+                          color: live.isSharing ? Colors.greenAccent : null,
+                        ),
+                        onSelected: (_) => live.toggleSharing(),
                       ),
                     ],
                   ),
@@ -202,9 +240,9 @@ class _MapScreenState extends State<MapScreen> {
             right: 16,
             child: Card(
               color: Theme.of(context).colorScheme.primaryContainer,
-              child: const Padding(
-                padding: EdgeInsets.all(10),
-                child: Text('Mode ajout actif — touchez la carte pour placer un point'),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Text(i18n.t('map.addMode')),
               ),
             ),
           ),
@@ -276,23 +314,25 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _showMapTools(BuildContext context) async {
+    final isAgent = context.read<AuthService>().user?.isAgent == true;
     final action = await showModalBottomSheet<String>(
       context: context,
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      isScrollControlled: true,
+      builder: (sheetCtx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
           children: [
-            ListTile(leading: const Icon(Icons.near_me), title: const Text('Près de moi (5 km)'), onTap: () => Navigator.pop(context, 'proximity')),
-            ListTile(leading: const Icon(Icons.grid_on), title: const Text('Heatmap pH'), onTap: () => Navigator.pop(context, 'heatmap')),
-            ListTile(leading: const Icon(Icons.warning), title: const Text('Alertes sécheresse'), onTap: () => Navigator.pop(context, 'alerts')),
-            ListTile(leading: const Icon(Icons.compare), title: const Text('Comparer 2 points'), onTap: () => Navigator.pop(context, 'compare')),
-            ListTile(leading: const Icon(Icons.filter_list), title: const Text('Filtres pH / type'), onTap: () => Navigator.pop(context, 'filters')),
-            ListTile(leading: const Icon(Icons.timeline), title: const Text('Ma trajectoire 24h'), onTap: () => Navigator.pop(context, 'trajectory')),
-            ListTile(leading: const Icon(Icons.cloud), title: const Text('Prévisions météo'), onTap: () => Navigator.pop(context, 'forecast')),
-            ListTile(leading: const Icon(Icons.download), title: const Text('Export GeoJSON'), onTap: () => Navigator.pop(context, 'export_geojson')),
-            ListTile(leading: const Icon(Icons.table_chart), title: const Text('Export CSV'), onTap: () => Navigator.pop(context, 'export_csv')),
-            if (context.read<AuthService>().user?.isAgent == true)
-              ListTile(leading: const Icon(Icons.upload_file), title: const Text('Import GeoJSON / CSV'), onTap: () => Navigator.pop(context, 'import')),
+            ListTile(leading: const Icon(Icons.near_me), title: const Text('Près de moi (5 km)'), onTap: () => Navigator.pop(sheetCtx, 'proximity')),
+            ListTile(leading: const Icon(Icons.grid_on), title: const Text('Heatmap pH'), onTap: () => Navigator.pop(sheetCtx, 'heatmap')),
+            ListTile(leading: const Icon(Icons.warning), title: const Text('Alertes sécheresse'), onTap: () => Navigator.pop(sheetCtx, 'alerts')),
+            ListTile(leading: const Icon(Icons.compare), title: const Text('Comparer 2 points'), onTap: () => Navigator.pop(sheetCtx, 'compare')),
+            ListTile(leading: const Icon(Icons.filter_list), title: const Text('Filtres pH / type'), onTap: () => Navigator.pop(sheetCtx, 'filters')),
+            ListTile(leading: const Icon(Icons.timeline), title: const Text('Ma trajectoire 24h'), onTap: () => Navigator.pop(sheetCtx, 'trajectory')),
+            ListTile(leading: const Icon(Icons.cloud), title: const Text('Prévisions météo'), onTap: () => Navigator.pop(sheetCtx, 'forecast')),
+            ListTile(leading: const Icon(Icons.download), title: const Text('Export GeoJSON'), onTap: () => Navigator.pop(sheetCtx, 'export_geojson')),
+            ListTile(leading: const Icon(Icons.table_chart), title: const Text('Export CSV'), onTap: () => Navigator.pop(sheetCtx, 'export_csv')),
+            if (isAgent)
+              ListTile(leading: const Icon(Icons.upload_file), title: const Text('Import GeoJSON / CSV'), onTap: () => Navigator.pop(sheetCtx, 'import')),
           ],
         ),
       ),
