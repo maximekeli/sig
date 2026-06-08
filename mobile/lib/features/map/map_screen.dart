@@ -10,7 +10,11 @@ import '../../core/auth/auth_service.dart';
 import '../../core/config/env.dart';
 import '../../core/i18n/locale_service.dart';
 import '../../core/live/live_location_service.dart';
+import '../../core/map/basemap_config.dart';
+import '../../core/map/geojson_parser.dart';
 import '../../core/offline/offline_sync_service.dart';
+import '../../models/parcel_analysis.dart';
+import '../../shared/widgets/external_api_cards.dart';
 import '../../models/live_peer.dart';
 import '../../models/soil_point.dart';
 import '../../services/sig_api.dart';
@@ -34,6 +38,11 @@ class _MapScreenState extends State<MapScreen> {
   bool _showSentinelNdvi = false;
   bool _showNasaNdvi = false;
   bool _addPointMode = false;
+  bool _showParcels = true;
+  String _parcelFilter = 'all';
+  BasemapType _basemap = BasemapType.osm;
+  List<GeoJsonZone> _zones = [];
+  String? _selectedParcelCode;
   bool _loading = true;
   String? _error;
   LatLng? _myPosition;
@@ -42,6 +51,34 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  Future<void> _loadParcels() async {
+    try {
+      final data = await context.read<SigApi>().parcelZonesGeoJson();
+      if (!mounted) return;
+      setState(() {
+        _zones = parseZonesGeoJson(Map<String, dynamic>.from(data as Map));
+        if (_selectedParcelCode == null && _zones.isNotEmpty) {
+          _selectedParcelCode = _zones.first.code;
+        }
+      });
+    } catch (_) {}
+  }
+
+  List<GeoJsonZone> get _filteredZones {
+    if (_parcelFilter == 'canton') {
+      return _zones.where((z) => z.zoneType == 'canton').toList();
+    }
+    if (_parcelFilter == 'degraded') {
+      return _zones.where((z) => z.zoneType == 'degraded').toList();
+    }
+    return _zones;
+  }
+
+  Color _zoneColor(GeoJsonZone z, {required bool selected}) {
+    if (selected) return const Color(0xFFC9A962);
+    return z.zoneType == 'degraded' ? Colors.orange.shade700 : Colors.teal.shade600;
   }
 
   Future<void> _load() async {
@@ -74,6 +111,7 @@ class _MapScreenState extends State<MapScreen> {
         _myPosition = pos;
         _loading = false;
       });
+      await _loadParcels();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -102,11 +140,29 @@ class _MapScreenState extends State<MapScreen> {
     if (_loading) return LoadingView(message: i18n.t('map.loading'));
     if (_error != null) return ErrorView(message: _error!, onRetry: _load);
 
+    final basemap = _basemap;
     final layers = <Widget>[
       TileLayer(
-        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        urlTemplate: basemap.urlTemplate,
+        subdomains: basemap.subdomains ?? const ['a', 'b', 'c'],
         userAgentPackageName: 'tg.dusol.sig_sols_mobile',
       ),
+      if (_showParcels && _filteredZones.isNotEmpty)
+        PolygonLayer(
+          polygons: _filteredZones.expand((z) {
+            final selected = z.code == _selectedParcelCode;
+            return z.rings.map(
+              (ring) => Polygon(
+                points: ring,
+                color: _zoneColor(z, selected: selected).withValues(alpha: selected ? 0.35 : 0.18),
+                borderColor: _zoneColor(z, selected: selected),
+                borderStrokeWidth: selected ? 3 : 1.5,
+                label: z.name,
+                labelStyle: const TextStyle(fontSize: 10, color: Colors.white),
+              ),
+            );
+          }).toList(),
+        ),
       if (_showSentinelNdvi)
         Opacity(
           opacity: 0.55,
@@ -163,12 +219,18 @@ class _MapScreenState extends State<MapScreen> {
           options: MapOptions(
             initialCenter: _myPosition ?? _togoCenter,
             initialZoom: 9,
-            onTap: (_, point) {
+            onTap: (tapPos, point) {
               if (_addPointMode) {
                 _openAddPointForm(point);
-              } else {
-                _showProbeMenu(context, point);
+                return;
               }
+              final hit = _zoneAt(point);
+              if (hit != null) {
+                setState(() => _selectedParcelCode = hit.code);
+                _showParcelSheet(hit);
+                return;
+              }
+              _showProbeMenu(context, point);
             },
           ),
           children: layers,
@@ -193,6 +255,77 @@ class _MapScreenState extends State<MapScreen> {
                       i18n.t('map.livePeers', vars: {'n': '${live.peers.length}'}),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.tealAccent),
                     ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<BasemapType>(
+                    value: _basemap,
+                    decoration: InputDecoration(
+                      labelText: i18n.t('map.basemap'),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    items: BasemapType.values
+                        .map((b) => DropdownMenuItem(value: b, child: Text(b.label)))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) setState(() => _basemap = v);
+                    },
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilterChip(
+                          label: Text(i18n.t('map.parcels.show')),
+                          selected: _showParcels,
+                          onSelected: (v) => setState(() => _showParcels = v),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_showParcels && _zones.isNotEmpty) ...[
+                    Wrap(
+                      spacing: 4,
+                      children: [
+                        ChoiceChip(
+                          label: Text(i18n.t('map.parcels.all')),
+                          selected: _parcelFilter == 'all',
+                          onSelected: (_) => setState(() => _parcelFilter = 'all'),
+                        ),
+                        ChoiceChip(
+                          label: Text(i18n.t('map.parcels.canton')),
+                          selected: _parcelFilter == 'canton',
+                          onSelected: (_) => setState(() => _parcelFilter = 'canton'),
+                        ),
+                        ChoiceChip(
+                          label: Text(i18n.t('map.parcels.degraded')),
+                          selected: _parcelFilter == 'degraded',
+                          onSelected: (_) => setState(() => _parcelFilter = 'degraded'),
+                        ),
+                      ],
+                    ),
+                    DropdownButtonFormField<String>(
+                      value: _filteredZones.any((z) => z.code == _selectedParcelCode)
+                          ? _selectedParcelCode
+                          : (_filteredZones.isNotEmpty ? _filteredZones.first.code : null),
+                      decoration: InputDecoration(
+                        labelText: i18n.t('map.parcels'),
+                        isDense: true,
+                      ),
+                      items: _filteredZones
+                          .map((z) => DropdownMenuItem(value: z.code, child: Text(z.name)))
+                          .toList(),
+                      onChanged: (code) {
+                        if (code == null) return;
+                        setState(() => _selectedParcelCode = code);
+                        final z = _filteredZones.firstWhere((x) => x.code == code);
+                        if (z.rings.isNotEmpty) {
+                          _mapController.fitCamera(
+                            CameraFit.coordinates(coordinates: z.rings.first, padding: const EdgeInsets.all(40)),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 6,
@@ -304,6 +437,104 @@ class _MapScreenState extends State<MapScreen> {
     if (s == null) return '—';
     if (s['ok'] == true || s['configured'] == true || s['available'] == true) return 'OK';
     return s['message']?.toString() ?? '—';
+  }
+
+  GeoJsonZone? _zoneAt(LatLng point) {
+    for (final z in _filteredZones) {
+      for (final ring in z.rings) {
+        if (_pointInPolygon(point, ring)) return z;
+      }
+    }
+    return null;
+  }
+
+  bool _pointInPolygon(LatLng p, List<LatLng> ring) {
+    var inside = false;
+    for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      final xi = ring[i].longitude, yi = ring[i].latitude;
+      final xj = ring[j].longitude, yj = ring[j].latitude;
+      final intersect = ((yi > p.latitude) != (yj > p.latitude)) &&
+          (p.longitude < (xj - xi) * (p.latitude - yi) / (yj - yi + 1e-12) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  Future<void> _showParcelSheet(GeoJsonZone zone) async {
+    final i18n = context.read<LocaleService>();
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(zone.name, style: Theme.of(ctx).textTheme.titleLarge),
+              Text('${zone.zoneType} · ${zone.code}'),
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  await _analyzeParcel(zone.code);
+                },
+                icon: const Icon(Icons.analytics),
+                label: Text(i18n.t('map.parcels.analyze')),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _analyzeParcel(String code) async {
+    final api = context.read<SigApi>();
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      final result = await api.analyzeParcelByZone(code);
+      if (!mounted) return;
+      Navigator.pop(context);
+      _showParcelResult(result);
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  void _showParcelResult(ParcelAnalysis r) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.55,
+        maxChildSize: 0.9,
+        builder: (_, scroll) => ListView(
+          controller: scroll,
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(r.parcelName, style: Theme.of(ctx).textTheme.titleLarge),
+            Text('${r.areaHa?.toStringAsFixed(1) ?? '—'} ha · ${r.soilPointsCount ?? 0} points'),
+            const SizedBox(height: 12),
+            ExternalApiCards(
+              weather: r.weather,
+              sentinel: r.sentinel,
+              nasa: r.nasa,
+              ml: r.mlPrediction,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showPointSheet(SoilPoint p) {

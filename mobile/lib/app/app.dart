@@ -45,9 +45,6 @@ class _SigSolsAppState extends State<SigSolsApp> {
       await _offlineSync.init();
       _authService.addListener(_onAuthChanged);
       _activity.init();
-      if (_authService.isAuthenticated) {
-        _liveLocation.connectWebSocket();
-      }
       if (mounted) setState(() => _router = createRouter(_authService));
     });
   }
@@ -56,7 +53,6 @@ class _SigSolsAppState extends State<SigSolsApp> {
     if (_authService.isAuthenticated) {
       _offlineSync.sync();
       _activity.track('auth', detail: {'action': 'session'}, category: 'auth');
-      _liveLocation.connectWebSocket();
     } else {
       _activity.flush();
       _liveLocation.stopSharing();

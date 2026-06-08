@@ -1,0 +1,463 @@
+% !TEX program = pdflatex
+% SIG Sols Togo — Rapport fonctionnel complet
+% Compilation : cd docs/rapport && ./compile-rapport.sh
+\documentclass[11pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[margin=2.2cm,headheight=14pt]{geometry}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+
+% --- Palette DUSOL ---
+\definecolor{DusolVert}{HTML}{0D2818}
+\definecolor{DusolVertClair}{HTML}{1A3D2E}
+\definecolor{DusolOr}{HTML}{C9A962}
+\definecolor{DusolAccent}{HTML}{4ADE80}
+\definecolor{DusolFond}{HTML}{F4F7F5}
+\definecolor{DusolBleu}{HTML}{1D4ED8}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=DusolVert,
+  urlcolor=DusolBleu,
+  citecolor=DusolOr,
+  pdftitle={SIG Sols Togo — Rapport fonctionnel},
+  pdfauthor={DUSOL / DISIA — Maxime Dzidula KELI},
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{DusolVert}{\textbf{SIG Sols Togo}}}
+\fancyhead[R]{\small\textcolor{DusolOr}{DUSOL / DISIA}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{DusolVert}}
+  {\filleft\Large\color{DusolOr}\chaptertitlename\ \thechapter}
+  {0.5ex}
+  {\titlerule\vspace{0.5ex}\filright}
+  [\vspace{0.5ex}]
+
+\newtcolorbox{infobox}[1]{
+  enhanced,
+  breakable,
+  colback=DusolFond,
+  colframe=DusolVertClair,
+  fonttitle=\bfseries\color{white},
+  coltitle=white,
+  attach boxed title to top left={yshift=-2mm,xshift=5mm},
+  boxed title style={colback=DusolVert,sharp corners},
+  title=#1,
+  left=8pt,right=8pt,top=8pt,bottom=8pt,
+}
+
+\newtcolorbox{apibox}[1]{
+  enhanced,
+  breakable,
+  colback=white,
+  colframe=DusolOr,
+  fonttitle=\bfseries,
+  title=#1,
+  left=6pt,right=6pt,
+}
+
+\newcommand{\endpoint}[2]{\texttt{#1} \hfill \textit{#2}\\}
+
+\begin{document}
+
+% ===== PAGE DE GARDE =====
+\begin{titlepage}
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[DusolVert] (current page.north west) rectangle ([yshift=-8cm]current page.north east);
+    \fill[DusolFond] ([yshift=-8cm]current page.north west) rectangle (current page.south east);
+    \node[anchor=west,text=DusolOr,font=\Huge\bfseries] at ([xshift=2cm,yshift=-3cm]current page.north west) {SIG Sols Togo};
+    \node[anchor=west,text=white,font=\Large] at ([xshift=2cm,yshift=-4.5cm]current page.north west) {Système d'Information Géographique des Sols};
+    \node[anchor=west,text=DusolAccent,font=\normalsize] at ([xshift=2cm,yshift=-5.8cm]current page.north west) {Région Maritime · République du Togo};
+  \end{tikzpicture}
+  \vspace*{9cm}
+  {\LARGE\bfseries\color{DusolVert} Rapport fonctionnel détaillé\par}
+  \vspace{0.8cm}
+  {\large Plateforme web PWA · Application mobile Flutter · API Django/PostGIS\par}
+  \vspace{1.5cm}
+  \begin{infobox}{Projet et porteur}
+    \textbf{DUSOL / DISIA} — Direction des Systèmes d'Information et de l'Analyse\\
+    \textbf{Développement :} Maxime Dzidula KELI · +33 754830039\\
+    \textbf{Base de données :} PostGIS \texttt{sig\_sols} (partagée web + mobile)\\
+    \textbf{URL pilote :} \url{http://localhost:8081}
+  \end{infobox}
+  \vfill
+  {\small\color{gray} Document généré pour documentation technique et présentation institutionnelle.\\
+  Juin 2026 — Version 1.0}
+\end{titlepage}
+
+\tableofcontents
+\listoffigures
+\clearpage
+
+% ===== RÉSUMÉ EXÉCUTIF =====
+\chapter{Résumé exécutif}
+
+\begin{infobox}{Vision du projet}
+SIG Sols Togo est une plateforme géospatiale pédagogique et opérationnelle dédiée à la
+\textbf{cartographie, l'analyse et la sensibilisation} autour des sols de la Région Maritime du Togo.
+Elle intègre des données terrain (pH, humidité, type de sol), des services spatiaux avancés
+(NASA Earthdata, Sentinel Hub, OpenWeather), de l'intelligence artificielle (Gemini, ML fertilité),
+ainsi qu'un volet éducatif (quiz, fiches PDF, vidéos, communauté).
+\end{infobox}
+
+\section{Objectifs principaux}
+\begin{itemize}[leftmargin=*]
+  \item Centraliser les \textbf{points sol} géoréférencés dans PostGIS avec validation agent.
+  \item Offrir une \textbf{carte interactive} multi-fonds (OSM, satellite, topographique) et multi-couches (NDVI NASA/Sentinel).
+  \item Analyser des \textbf{parcelles administratives} (cantons, zones dégradées) ou des polygones dessinés.
+  \item Sensibiliser via \textbf{quiz certifiants}, fiches pédagogiques et contenus vidéo.
+  \item Permettre le travail \textbf{terrain hors ligne} (agents) avec synchronisation automatique.
+  \item Assurer la \textbf{parité web/mobile} sur les mêmes API REST et la même base PostGIS.
+\end{itemize}
+
+\section{Schéma d'architecture global}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  node distance=1.1cm,
+  box/.style={rectangle,rounded corners,draw=DusolVert,fill=DusolFond,minimum width=3.2cm,minimum height=0.9cm,align=center,font=\small},
+  srv/.style={rectangle,rounded corners,draw=DusolOr,fill=white,minimum width=3.5cm,minimum height=0.9cm,align=center,font=\small},
+]
+  \node[box] (web) {Site web PWA\\Leaflet + JS};
+  \node[box,right=of web] (mob) {App mobile\\Flutter};
+  \node[srv,below=1.4cm of web,xshift=1.8cm] (api) {API Django REST\\+ Daphne WebSocket};
+  \node[srv,below=of api] (db) {PostgreSQL/PostGIS};
+  \node[srv,left=2.8cm of api] (ext) {APIs externes\\NASA · Sentinel · OW · Gemini};
+  \node[srv,right=2.8cm of api] (cel) {Celery + Redis\\tâches planifiées};
+  \draw[->,thick,DusolVert] (web) -- (api);
+  \draw[->,thick,DusolVert] (mob) -- (api);
+  \draw[->,thick,DusolVert] (api) -- (db);
+  \draw[->,thick,DusolOr] (api) -- (ext);
+  \draw[->,thick,DusolOr] (cel) -- (api);
+  \draw[->,thick,DusolOr] (cel) -- (db);
+\end{tikzpicture}
+\caption{Architecture trois-tiers : clients web et mobile, backend unifié, PostGIS central.}
+\end{figure}
+
+% ===== INFRASTRUCTURE =====
+\chapter{Infrastructure et déploiement}
+
+\section{Stack technique}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Composant} & \textbf{Rôle} \\
+\midrule
+PostgreSQL 15 + PostGIS 3.4 & Base spatiale \texttt{sig\_sols} \\
+Redis 7 & Cache, Celery, Channels (WebSocket) \\
+Django 4 + GeoDjango + DRF & API REST, admin, ORM spatial \\
+Daphne (ASGI) & HTTP + WebSocket \texttt{/ws/live/} \\
+Celery + Beat & Ingestion NASA, alertes sécheresse, ML, purge GPS \\
+NGINX & Reverse proxy :8081, static, WebSocket upgrade \\
+Docker Compose & Orchestration multi-conteneurs \\
+\bottomrule
+\end{tabularx}
+
+\section{Services Docker}
+\begin{itemize}[leftmargin=*]
+  \item \texttt{db} — PostGIS persistant
+  \item \texttt{web} — Daphne sur port 8000 interne
+  \item \texttt{nginx} — exposition publique port 8081
+  \item \texttt{redis}, \texttt{celery}, \texttt{celery-beat}
+\end{itemize}
+
+\section{Comptes de démonstration}
+\begin{tabular}{lll}
+\toprule
+Utilisateur & Mot de passe & Rôle \\
+\midrule
+\texttt{admin} & \texttt{admin123} & Administrateur \\
+\texttt{agent1} & \texttt{agent123} & Agent terrain \\
+\texttt{public1} & \texttt{public123} & Utilisateur public \\
+\bottomrule
+\end{tabular}
+
+% ===== CARTE ET SPATIAL =====
+\chapter{Cartographie interactive}
+
+\section{Fonds de carte (3 topographies / basemaps)}
+Le site web et l'application mobile proposent \textbf{trois fonds de carte} interchangeables :
+
+\begin{infobox}{Les 3 types de fonds cartographiques}
+\begin{enumerate}
+  \item \textbf{OpenStreetMap (Plan)} — rue, limites, toponymie standard.
+  \item \textbf{Satellite (Esri World Imagery)} — imagerie aérienne haute résolution.
+  \item \textbf{Topographique (OpenTopoMap)} — courbes de niveau, relief, sentiers.
+\end{enumerate}
+\end{infobox}
+
+\section{Couches et outils carte (web)}
+\begin{itemize}[leftmargin=*]
+  \item Points sol colorés par pH (rouge/orange/vert/bleu)
+  \item Clustering de marqueurs, heatmap pH
+  \item Tuiles NDVI NASA et Sentinel Hub (opacité réglable)
+  \item Badge météo OpenWeather sur la carte
+  \item Filtres : pH min/max, type de sol, validés, bbox visible
+  \item Export GeoJSON / CSV ; import GeoJSON/CSV (agents)
+  \item Ajout point au clic, file d'attente offline
+  \item Proximité GPS, comparaison 2 points, trajectoire 24h
+  \item Partage position live + WebSocket \texttt{/ws/live/}
+  \item Alertes sécheresse et notifications de proximité
+\end{itemize}
+
+\section{Parcelles et zones administratives}
+
+\begin{infobox}{Sélection de parcelles}
+Les \textbf{parcelles} correspondent aux \textbf{zones administratives} PostGIS :
+\begin{itemize}
+  \item \textbf{Cantons} (\texttt{zone\_type=canton}) — unités pilotes Région Maritime
+  \item \textbf{Zones dégradées} (\texttt{zone\_type=degraded}) — surfaces à risque
+  \item Filtres : Toutes / Cantons / Dégradées
+  \item Sélection : liste déroulante, clic sur carte, ou dessin polygone (web)
+\end{itemize}
+\end{infobox}
+
+\subsection{Analyse parcelle live}
+L'endpoint \texttt{POST /api/v1/spatial/parcel/live/} agrège :
+\begin{itemize}
+  \item Statistiques sols dans la zone (pH moyen, points validés)
+  \item \textbf{NASA} : NDVI MOD13Q1, humidité SMAP
+  \item \textbf{Sentinel Hub} : NDVI moyen Sentinel-2
+  \item \textbf{OpenWeather} : météo actuelle et prévisions
+  \item \textbf{ML} : prédiction fertilité (RandomForest/XGBoost)
+  \item Indice de santé, vulnérabilité, recommandations agronomiques
+\end{itemize}
+
+% ===== API BACKEND =====
+\chapter{API Backend — Inventaire des endpoints}
+
+\section{Authentification \texttt{/api/v1/auth/}}
+\begin{apibox}{Comptes, profil, social, GPS}
+\endpoint{POST /auth/register/}{Inscription étendue}
+\endpoint{POST /auth/token/}{JWT access + refresh + profil}
+\endpoint{POST /auth/token/refresh/}{Renouvellement token}
+\endpoint{GET/PATCH /auth/profile/}{Profil utilisateur}
+\endpoint{POST /auth/profile/photo/}{Photo de profil}
+\endpoint{POST /auth/password/change/}{Changement mot de passe}
+\endpoint{GET /auth/feed/}{Fil abonnements}
+\endpoint{GET/POST/DELETE /auth/favorites/}{Favoris (fiches, vidéos, points)}
+\endpoint{GET/POST /auth/messages/}{Messages directs}
+\endpoint{POST /auth/location/}{Publier position GPS}
+\endpoint{GET /auth/locations/live/}{Agents en ligne}
+\endpoint{GET /auth/trajectory/}{Historique GPS 24h}
+\end{apibox}
+
+\section{Points sol \texttt{/api/v1/points/}}
+\begin{apibox}{CRUD spatial et validation}
+\endpoint{GET/POST /points/}{Liste et création GeoJSON}
+\endpoint{GET/PATCH/DELETE /points/<id>/}{Détail point}
+\endpoint{POST /points/<id>/validate\_point/}{Valider/rejeter (admin)}
+\endpoint{GET /points/geojson/}{Export GeoJSON}
+\endpoint{GET /points/export-csv/}{Export CSV}
+\endpoint{POST /points/import\_data/}{Import fichier (agent)}
+\endpoint{GET /points/compare/}{Comparer deux points}
+\endpoint{GET /heatmap/}{Données heatmap pH}
+\endpoint{GET /dashboard/stats/}{KPIs tableau de bord}
+\endpoint{GET /validation/pending/}{File validation admin}
+\end{apibox}
+
+\section{Spatial \texttt{/api/v1/spatial/}}
+\begin{apibox}{GIS, parcelles, vulnérabilité}
+\endpoint{GET /spatial/proximity/}{Points dans un rayon}
+\endpoint{POST /spatial/intersection/}{Intersection géométrie/zones}
+\endpoint{POST /spatial/buffer/}{Tampon}
+\endpoint{POST /spatial/area/}{Surface polygone}
+\endpoint{GET /spatial/vulnerability/}{Zonage vulnérabilité}
+\endpoint{GET /spatial/ndvi-timeseries/<id>/}{Série NDVI NASA}
+\endpoint{GET /spatial/statistics/}{Stats par canton}
+\endpoint{GET /spatial/smap-correlation/}{Corrélation SMAP terrain}
+\endpoint{POST /spatial/parcel/analyze/}{Analyse complète}
+\endpoint{GET/POST /spatial/parcel/live/}{Analyse temps réel}
+\endpoint{GET /spatial/parcel/zones/}{Liste zones}
+\endpoint{GET /spatial/parcel/zones/geojson/}{GeoJSON cantons/dégradées}
+\end{apibox}
+
+\section{APIs externes intégrées}
+\begin{tabularx}{\textwidth}{@{}lXl@{}}
+\toprule
+\textbf{Service} & \textbf{Fonction} & \textbf{Préfixe API} \\
+\midrule
+NASA Earthdata / STAC & Catalogue, ingestion, tuiles NDVI & \texttt{/nasa/} \\
+Sentinel Hub & OAuth, NDVI, true color, tuiles & \texttt{/sentinel/} \\
+OpenWeatherMap & Actuel, prévisions, statut & \texttt{/weather/} \\
+Google Gemini & Chatbot pédagogique & \texttt{/assistant/} \\
+ML local & Fertilité RF/XGBoost & \texttt{/ml/} \\
+\bottomrule
+\end{tabularx}
+
+\section{Éducation \texttt{/api/v1/education/}}
+\begin{itemize}[leftmargin=*]
+  \item Quiz : démarrer, répondre, terminer, classement, badges, défi hebdo
+  \item Certificat PDF avec token de vérification
+  \item 15+ fiches pédagogiques (PDF ReportLab)
+  \item Parcours d'apprentissage adaptatif
+\end{itemize}
+
+\section{Vidéos \texttt{/api/v1/videos/}}
+\begin{itemize}[leftmargin=*]
+  \item Vidéos et shorts (upload, likes, commentaires, vues)
+  \item Stories éphémères 24h
+  \item Workflow modération : pending → published/rejected
+  \item Modération commentaires (masquer, hint IA)
+\end{itemize}
+
+\section{Plateforme \texttt{/api/v1/platform/}}
+\begin{itemize}[leftmargin=*]
+  \item Notifications, recherche globale, dashboard personnel
+  \item Admin : KPIs, analytics, exports CSV, rapports ministère/zone
+  \item Alertes sécheresse, audit, reset mot de passe
+  \item Suivi d'activité client \texttt{POST /platform/activity/}
+\end{itemize}
+
+% ===== WEB =====
+\chapter{Application web (PWA)}
+
+\section{Écrans et navigation}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Écran} & \textbf{Contenu principal} \\
+\midrule
+Carte & Filtres, parcelles, outils, couches NASA/Sentinel/météo \\
+Tableau de bord & KPIs, graphiques Chart.js, corrélation SMAP \\
+Quiz & QCM chronométrés, certificats, badges, classement \\
+Fiches & PDF intégrés, favoris \\
+Vidéos / Shorts & Upload, modération, stories \\
+Communauté & Fil, favoris, messages, profils publics \\
+Mon espace & Stats personnelles, parcours \\
+Admin & Validation, analytics, exports, ML/NASA \\
+Aide & FAQ, visite guidée, raccourcis clavier \\
+\bottomrule
+\end{tabularx}
+
+\section{Fonctionnalités transverses web}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Offline} : file \texttt{sig\_sols\_offline\_queue} (localStorage)
+  \item \textbf{WebSocket} : positions live groupe \texttt{sig\_sols\_live}
+  \item \textbf{i18n} : FR, EN, Éwé, Kabyle
+  \item \textbf{Thème} : clair / sombre
+  \item \textbf{PWA} : manifest, service worker cache statique
+  \item \textbf{Assistant Gemini} : FAB flottant contextuel
+\end{itemize}
+
+% ===== MOBILE =====
+\chapter{Application mobile Flutter}
+
+\section{Parité avec le web}
+L'application mobile (\texttt{mobile/}) consomme les \textbf{mêmes endpoints} via \texttt{SigApi} et \texttt{ApiClient} JWT.
+
+\section{Écrans mobiles}
+\begin{tabularx}{\textwidth}{@{}ll@{}}
+\toprule
+\textbf{Route} & \textbf{Fonctionnalités} \\
+\midrule
+\texttt{/} Carte & 3 fonds, parcelles, NDVI, outils, offline, live GPS \\
+\texttt{/dashboard} & KPIs, cartes APIs externes \\
+\texttt{/quiz} & Quiz complet, badges, défi hebdo \\
+\texttt{/sheets} & Fiches PDF + favoris \\
+\texttt{/videos}, \texttt{/shorts} & Upload, likes, commentaires \\
+\texttt{/community} & Fil, favoris, messages \\
+\texttt{/assistant} & Chat Gemini \\
+\texttt{/profile} & Édition profil, photo, trajectoire \\
+\texttt{/parcel} & Analyse zone canton + GPS \\
+\texttt{/search} & Recherche globale \\
+\texttt{/notifications} & Badge + liste \\
+\texttt{/my-dashboard} & Espace personnel \\
+\texttt{/admin} & KPIs, validation, exports (admin) \\
+\texttt{/help} & Aide \\
+\bottomrule
+\end{tabularx}
+
+\section{Spécificités mobiles}
+\begin{itemize}[leftmargin=*]
+  \item Synchronisation offline points sol (SharedPreferences)
+  \item WebSocket JWT \texttt{?token=} + polling GPS fallback
+  \item i18n FR/EN, thème clair/sombre
+  \item Activity tracker vers \texttt{/platform/activity/}
+\end{itemize}
+
+% ===== ADMIN =====
+\chapter{Administration et modération}
+
+\section{Panneau admin web}
+\begin{itemize}[leftmargin=*]
+  \item KPIs temps réel : utilisateurs, points, agents live, alertes
+  \item Validation points sol en attente
+  \item Modération vidéos et commentaires
+  \item Analytics : heatmap activité, top utilisateurs, timeline
+  \item Exports CSV utilisateurs et activité 30 jours
+  \item Rapport ministère HTML, rapport par zone
+  \item Réentraînement ML, ingestion NASA manuelle
+\end{itemize}
+
+% ===== TÂCHES PLANIFIÉES =====
+\chapter{Tâches planifiées (Celery)}
+
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Tâche} & \textbf{Fréquence} \\
+\midrule
+Ingestion NASA Earthdata & Hebdomadaire (lundi 02h00) \\
+Vérification réentraînement ML & Mensuelle \\
+Alertes sécheresse & Horaire \\
+Purge historique GPS & Quotidienne \\
+Rafraîchissement classement quiz & Configurable \\
+\bottomrule
+\end{tabularx}
+
+% ===== SYNTHÈSE =====
+\chapter{Synthèse des modules}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  module/.style={rectangle,rounded corners,draw=DusolVert,fill=DusolFond,minimum width=2.6cm,minimum height=0.8cm,align=center,font=\footnotesize},
+]
+  \node[module] (m1) at (0,0) {Carte\\Spatial};
+  \node[module] (m2) at (3,0) {Parcelles\\Zones};
+  \node[module] (m3) at (6,0) {NASA\\Sentinel};
+  \node[module] (m4) at (9,0) {Météo\\ML};
+  \node[module] (m5) at (0,-1.5) {Quiz\\Fiches};
+  \node[module] (m6) at (3,-1.5) {Vidéos\\Stories};
+  \node[module] (m7) at (6,-1.5) {Communauté\\Messages};
+  \node[module] (m8) at (9,-1.5) {Admin\\Audit};
+  \node[module,fill=DusolOr!30] (c) at (4.5,-3) {PostGIS sig\_sols};
+  \foreach \n in {m1,m2,m3,m4,m5,m6,m7,m8} \draw[->,thick] (\n) -- (c);
+\end{tikzpicture}
+\caption{Modules fonctionnels convergent vers la base PostGIS unique.}
+\end{figure}
+
+\chapter*{Conclusion}
+\addcontentsline{toc}{chapter}{Conclusion}
+
+SIG Sols Togo constitue une plateforme complète couvrant la chaîne de valeur
+\textbf{collecte terrain → analyse spatiale multi-sources → pédagogie → gouvernance admin},
+avec une architecture moderne (Docker, PostGIS, JWT, WebSocket, Celery) et une
+\textbf{double interface web/mobile} partageant la même source de vérité.
+
+\vspace{1cm}
+\begin{center}
+\textcolor{DusolVert}{\textbf{DUSOL / DISIA — SIG Sols Togo}}\\
+\textcolor{DusolOr}{Maxime Dzidula KELI · +33 754830039}
+\end{center}
+
+\end{document}
